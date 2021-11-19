@@ -28,4 +28,4 @@ __all__ = [
 	"requires_permission",
 	"validate_permission"
 ]
-__version__ = "1.25.2"
+__version__ = "1.25.3"

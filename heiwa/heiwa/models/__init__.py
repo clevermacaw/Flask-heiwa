@@ -16,7 +16,7 @@ from .group import Group, GroupPermissions
 from .notification import Notification
 from .openid import OpenIDAuthentication
 from .post import Post, PostVote
-from .thread import Thread, ThreadVote, thread_subscribers
+from .thread import Thread, ThreadVote, thread_subscribers, thread_viewers
 from .user import User, UserBan, UserPermissions, user_blocks, user_follows
 
 __all__ = [
@@ -39,7 +39,8 @@ __all__ = [
 	"forum_subscribers",
 	"helpers",
 	"thread_subscribers",
+	"thread_viewers",
 	"user_blocks",
 	"user_follows"
 ]
-__version__ = "0.28.9"
+__version__ = "0.28.10"

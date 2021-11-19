@@ -8,6 +8,7 @@ import uuid
 import flask
 import magic
 import sqlalchemy
+import sqlalchemy.orm
 
 from .. import (
 	authentication,
@@ -105,35 +106,38 @@ ATTR_SCHEMAS = {
 	}
 }
 ATTR_FIXERS = {
-	"is_blockee": lambda: (
-		sqlalchemy.select(models.user_blocks).
+	"is_blockee": lambda blocker_id, blockee_id: (
+		sqlalchemy.select(models.user_blocks.c.blocker_id).
 		where(
 			sqlalchemy.and_(
-				models.user_blocks.c.blocker_id == flask.g.user.id,
-				models.user_blocks.c.blockee_id == models.User.id
+				models.user_blocks.c.blocker_id == blocker_id,
+				models.user_blocks.c.blockee_id == blockee_id
 			)
 		).
-		exists()
+		exists().
+		select()
 	),
-	"is_follower": lambda: (
-		sqlalchemy.select(models.user_blocks).
+	"is_follower": lambda follower_id, followee_id: (
+		sqlalchemy.select(models.user_follows.c.follower_id).
 		where(
 			sqlalchemy.and_(
-				models.user_blocks.c.blocker_id == models.User.id,
-				models.user_blocks.c.blockee_id == flask.g.user.id
+				models.user_follows.c.follower_id == follower_id,
+				models.user_follows.c.followee_id == followee_id
 			)
 		).
-		exists()
+		exists().
+		select()
 	),
-	"is_followee": lambda: (
-		sqlalchemy.select(models.user_follows).
+	"is_followee": lambda followee_id, follower_id: (
+		sqlalchemy.select(models.user_follows.c.follower_id).
 		where(
 			sqlalchemy.and_(
-				models.user_follows.c.follower_id == flask.g.user.id,
-				models.user_follows.c.followee_id == models.User.id
+				models.user_follows.c.follower_id == followee_id,
+				models.user_follows.c.followee_id == follower_id
 			)
 		).
-		exists()
+		exists().
+		select()
 	)
 }
 
@@ -353,6 +357,10 @@ def get_user_self_or_id(
 def render_user(
 	user: models.User,
 	current_user: models.User,
+	session: typing.Union[
+		None,
+		sqlalchemy.orm.Session
+	] = None,
 	extra_attrs: typing.Union[
 		None,
 		typing.Iterable[str]
@@ -362,12 +370,12 @@ def render_user(
 	If `extra_attrs` is `None` and `user` is `current_user`, defaults to a list
 	of all possible extra attributes. Otherwise, defaults to an empty list.
 	Possible `extra_attrs`:
+		- An `is_blockee` key, which signals whether or not `user` has been
+		blocked by `current_user`.
 		- An `is_follower` key, which signals whether or not `current_user` is
 		a follower of `user`.
 		- An `is_followee` key, which signals whether or not `user` is
 		a follower of `current_user`.
-		- An `is_blockee` key, which signals whether or not `user` has been
-		blocked by `current_user`.
 	"""
 
 	result = user_blueprint.json_encoder().default(user)
@@ -383,9 +391,24 @@ def render_user(
 			]
 
 	for extra_attr_name, extra_attr_func in {
-		"is_blockee": lambda: current_user in user.blockers,
-		"is_follower": lambda: current_user in user.followers,
-		"is_followee": lambda: current_user in user.followees
+		"is_blockee": lambda: session.execute(
+			ATTR_FIXERS["is_blockee"](
+				user.id,
+				current_user.id
+			)
+		).scalars().one(),
+		"is_follower": lambda: session.execute(
+			ATTR_FIXERS["is_follower"](
+				current_user.id,
+				user.id
+			)
+		).scalars().one(),
+		"is_followee": lambda: session.execute(
+			ATTR_FIXERS["is_followee"](
+				user.id,
+				current_user.id
+			)
+		).scalars().one()
 	}.items():
 		if extra_attr_name in extra_attrs:
 			result[extra_attr_name] = extra_attr_func()
@@ -415,7 +438,20 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			parse_search(
 				flask.g.json["filter"],
 				models.User,
-				ATTR_FIXERS
+				{
+					"is_blockee": ATTR_FIXERS["is_blockee"](
+						flask.g.user.id,
+						models.User.id
+					),
+					"is_follower": ATTR_FIXERS["is_follower"](
+						flask.g.user.id,
+						models.User.id
+					),
+					"is_followee": ATTR_FIXERS["is_followee"](
+						flask.g.user.id,
+						models.User.id
+					)
+				}
 			)
 		)
 
@@ -440,7 +476,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		[
 			render_user(
 				user,
-				flask.g.user
+				flask.g.user,
+				flask.g.sa_session
 			)
 			for user in users
 		]
@@ -481,7 +518,20 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			parse_search(
 				flask.g.json["filter"],
 				models.User,
-				ATTR_FIXERS
+				{
+					"is_blockee": ATTR_FIXERS["is_blockee"](
+						flask.g.user.id,
+						models.User.id
+					),
+					"is_follower": ATTR_FIXERS["is_follower"](
+						flask.g.user.id,
+						models.User.id
+					),
+					"is_followee": ATTR_FIXERS["is_followee"](
+						flask.g.user.id,
+						models.User.id
+					)
+				}
 			)
 		)
 
@@ -611,7 +661,8 @@ def edit(
 	return flask.jsonify(
 		render_user(
 			user,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_OK
 
@@ -641,7 +692,8 @@ def view(
 	return flask.jsonify(
 		render_user(
 			user,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_OK
 
@@ -1033,7 +1085,20 @@ def list_followers(
 			parse_search(
 				flask.g.json["filter"],
 				models.User,
-				ATTR_FIXERS
+				{
+					"is_blockee": ATTR_FIXERS["is_blockee"](
+						flask.g.user.id,
+						models.User.id
+					),
+					"is_follower": ATTR_FIXERS["is_follower"](
+						flask.g.user.id,
+						models.User.id
+					),
+					"is_followee": ATTR_FIXERS["is_followee"](
+						flask.g.user.id,
+						models.User.id
+					)
+				}
 			)
 		)
 
@@ -1058,7 +1123,8 @@ def list_followers(
 		[
 			render_user(
 				follower,
-				flask.g.user
+				flask.g.user,
+				flask.g.sa_session
 			)
 			for follower in followers
 		]
@@ -1101,7 +1167,20 @@ def list_followees(
 			parse_search(
 				flask.g.json["filter"],
 				models.User,
-				ATTR_FIXERS
+				{
+					"is_blockee": ATTR_FIXERS["is_blockee"](
+						flask.g.user.id,
+						models.User.id
+					),
+					"is_follower": ATTR_FIXERS["is_follower"](
+						flask.g.user.id,
+						models.User.id
+					),
+					"is_followee": ATTR_FIXERS["is_followee"](
+						flask.g.user.id,
+						models.User.id
+					)
+				}
 			)
 		)
 
@@ -1126,7 +1205,8 @@ def list_followees(
 		[
 			render_user(
 				followee,
-				flask.g.user
+				flask.g.user,
+				flask.g.sa_session
 			)
 			for followee in followees
 		]

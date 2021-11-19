@@ -113,31 +113,27 @@ ATTR_SCHEMAS = {
 	}
 }
 ATTR_FIXERS = {
-	"is_subscribed": lambda: (
-		sqlalchemy.select(models.thread_subscribers).
+	"is_subscribed": lambda thread_id, user_id: (
+		sqlalchemy.select(models.thread_subscribers.c.thread_id).
 		where(
 			sqlalchemy.and_(
-				(
-					models.thread_subscribers.c.thread_id
-					== models.Thread.id
-				),
-				models.thread_subscribers.c.user_id == flask.g.user.id
+				models.thread_subscribers.c.thread_id == thread_id,
+				models.thread_subscribers.c.user_id == user_id
 			)
 		).
-		exists()
+		exists().
+		select()
 	),
-	"is_viewer": lambda: (
-		sqlalchemy.select(models.thread_viewers).
+	"is_viewer": lambda thread_id, user_id: (
+		sqlalchemy.select(models.thread_viewers.c.thread_id).
 		where(
 			sqlalchemy.and_(
-				(
-					models.thread_viewers.c.thread_id
-					== models.Thread.id
-				),
-				models.thread_subscribers.c.user_id == flask.g.user.id
+				models.thread_viewers.c.thread_id == thread_id,
+				models.thread_viewers.c.user_id == user_id
 			)
 		).
-		exists()
+		exists().
+		select()
 	)
 }
 
@@ -350,6 +346,10 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 def render_thread(
 	thread: models.Thread,
 	user: models.User,
+	session: typing.Union[
+		None,
+		sqlalchemy.orm.Session
+	] = None,
 	extra_attrs: typing.Iterable[str] = [
 		"is_subscribed",
 		"is_viewer"
@@ -366,8 +366,18 @@ def render_thread(
 	result = thread_blueprint.json_encoder().default(thread)
 
 	for extra_attr_name, extra_attr_func in {
-		"is_subscribed": lambda: user in thread.subscribers,
-		"is_viewer": lambda: user in thread.viewers
+		"is_subscribed": lambda: session.execute(
+			ATTR_FIXERS["is_subscribed"](
+				thread.id,
+				user.id
+			)
+		).scalars().one(),
+		"is_viewer": lambda: session.execute(
+			ATTR_FIXERS["is_viewer"](
+				thread.id,
+				user.id
+			)
+		).scalars().one()
 	}.items():
 		if extra_attr_name in extra_attrs:
 			result[extra_attr_name] = extra_attr_func()
@@ -428,7 +438,8 @@ def create() -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(
 		render_thread(
 			thread,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_CREATED
 
@@ -476,7 +487,16 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			parse_search(
 				flask.g.json["filter"],
 				models.Thread,
-				ATTR_FIXERS
+				{
+					"is_subscribed": ATTR_FIXERS["is_subscribed"](
+						models.Thread.id,
+						flask.g.user.id
+					),
+					"is_viewer": ATTR_FIXERS["is_viewer"](
+						models.Thread.id,
+						flask.g.user.id
+					)
+				}
 			)
 		)
 
@@ -529,7 +549,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		result.append(
 			render_thread(
 				row[0],
-				flask.g.user
+				flask.g.user,
+				flask.g.sa_session
 			)
 		)
 
@@ -586,7 +607,16 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			parse_search(
 				flask.g.json["filter"],
 				models.Thread,
-				ATTR_FIXERS
+				{
+					"is_subscribed": ATTR_FIXERS["is_subscribed"](
+						models.Thread.id,
+						flask.g.user.id
+					),
+					"is_viewer": ATTR_FIXERS["is_viewer"](
+						models.Thread.id,
+						flask.g.user.id
+					)
+				}
 			)
 		)
 
@@ -768,7 +798,8 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(
 		render_thread(
 			thread,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_OK
 
@@ -797,7 +828,8 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(
 		render_thread(
 			thread,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_OK
 
@@ -890,7 +922,8 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(
 		render_thread(
 			new_thread,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_OK
 

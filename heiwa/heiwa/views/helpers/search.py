@@ -1,3 +1,5 @@
+import typing
+
 import sqlalchemy
 import sqlalchemy.orm
 
@@ -18,9 +20,9 @@ OPERATORS = {
 
 
 def parse_search(
-	conditions: dict,
+	conditions: dict,  # TODO: What dict?
 	model: heiwa.models.Base,
-	attr_fixers: dict = {}
+	attr_fixers: typing.Dict[str, None] # TODO: Type
 ):
 	"""Converts the given dictionary formatted conditions to SQLAlchemy ones."""
 
@@ -51,6 +53,6 @@ def parse_search(
 	if attr not in attr_fixers:
 		parsed_attr = getattr(model, attr)
 	else:
-		parsed_attr = attr_fixers[attr]()
+		parsed_attr = attr_fixers[attr]
 
 	return OPERATORS[operator](parsed_attr, conditions[operator][attr])

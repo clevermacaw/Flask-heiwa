@@ -90,18 +90,16 @@ ATTR_SCHEMAS = {
 	}
 }
 ATTR_FIXERS = {
-	"is_subscribed": lambda: (
-		sqlalchemy.select(models.forum_subscribers).
+	"is_subscribed": lambda forum_id, user_id: (
+		sqlalchemy.select(models.forum_subscribers.c.forum_id).
 		where(
 			sqlalchemy.and_(
-				(
-					models.forum_subscribers.c.forum_id
-					== models.Forum.id
-				),
-				models.forum_subscribers.c.user_id == flask.g.user.id
+				models.forum_subscribers.c.forum_id == forum_id,
+				models.forum_subscribers.c.user_id == user_id
 			)
 		).
-		exists()
+		exists().
+		select()
 	)
 }
 
@@ -300,6 +298,10 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 def render_forum(
 	forum: models.Forum,
 	user: models.User,
+	session: typing.Union[
+		None,
+		sqlalchemy.orm.Session
+	] = None,
 	extra_attrs: typing.Iterable[str] = ["is_subscribed"]
 ) -> dict:
 	"""Renders the information that `user` has access to about `forum`.
@@ -311,7 +313,12 @@ def render_forum(
 	result = forum_blueprint.json_encoder().default(forum)
 
 	for extra_attr_name, extra_attr_func in {
-		"is_subscribed": lambda: user in forum.subscribers
+		"is_subscribed": lambda: session.execute(
+			ATTR_FIXERS["is_subscribed"](
+				forum.id,
+				user.id
+			)
+		).scalars().one()
 	}.items():
 		if extra_attr_name in extra_attrs:
 			result[extra_attr_name] = extra_attr_func()
@@ -367,7 +374,8 @@ def create() -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(
 		render_forum(
 			forum,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_CREATED
 
@@ -415,7 +423,12 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			parse_search(
 				flask.g.json["filter"],
 				models.Forum,
-				ATTR_FIXERS
+				{
+					"is_subscribed": ATTR_FIXERS["is_subscribed"](
+						models.Forum.id,
+						flask.g.user.id
+					)
+				}
 			)
 		)
 
@@ -463,7 +476,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		[
 			render_forum(
 				row[0],
-				flask.g.user
+				flask.g.user,
+				flask.g.sa_session
 			)
 			for row in rows
 		]
@@ -520,7 +534,12 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			parse_search(
 				flask.g.json["filter"],
 				models.Forum,
-				ATTR_FIXERS
+				{
+					"is_subscribed": ATTR_FIXERS["is_subscribed"](
+						models.Forum.id,
+						flask.g.user.id
+					)
+				}
 			)
 		)
 
@@ -682,7 +701,8 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(
 		render_forum(
 			forum,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_OK
 
@@ -704,7 +724,8 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				flask.g.sa_session,
 				flask.g.user
 			),
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_OK
 
@@ -800,7 +821,8 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(
 		render_forum(
 			new_forum,
-			flask.g.user
+			flask.g.user,
+			flask.g.sa_session
 		)
 	), helpers.STATUS_OK
 
