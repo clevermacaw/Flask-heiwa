@@ -84,23 +84,7 @@ ATTR_SCHEMAS = {
 		"type": "integer",
 		"min": 0,
 		"max": 2147483647
-	},
-	"is_subscribed": {
-		"type": "boolean"
 	}
-}
-ATTR_FIXERS = {
-	"is_subscribed": lambda forum_id, user_id: (
-		sqlalchemy.select(models.forum_subscribers.c.forum_id).
-		where(
-			sqlalchemy.and_(
-				models.forum_subscribers.c.forum_id == forum_id,
-				models.forum_subscribers.c.user_id == user_id
-			)
-		).
-		exists().
-		select()
-	)
 }
 
 CREATE_EDIT_SCHEMA = {
@@ -169,8 +153,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"nullable": True
 			},
 			"subscriber_count": ATTR_SCHEMAS["subscriber_count"],
-			"thread_count": ATTR_SCHEMAS["thread_count"],
-			"is_subscribed": ATTR_SCHEMAS["is_subscribed"]
+			"thread_count": ATTR_SCHEMAS["thread_count"]
 		},
 		"maxlength": 1
 	},
@@ -295,37 +278,6 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 })
 
 
-def render_forum(
-	forum: models.Forum,
-	user: models.User,
-	session: typing.Union[
-		None,
-		sqlalchemy.orm.Session
-	] = None,
-	extra_attrs: typing.Iterable[str] = ["is_subscribed"]
-) -> dict:
-	"""Renders the information that `user` has access to about `forum`.
-	Possible `extra_attrs`:
-		- An `is_subscribed` key. This signals whether or not the provided
-		`user` is subscribed to the forum.
-	"""
-
-	result = forum_blueprint.json_encoder().default(forum)
-
-	for extra_attr_name, extra_attr_func in {
-		"is_subscribed": lambda: session.execute(
-			ATTR_FIXERS["is_subscribed"](
-				forum.id,
-				user.id
-			)
-		).scalars().one()
-	}.items():
-		if extra_attr_name in extra_attrs:
-			result[extra_attr_name] = extra_attr_func()
-
-	return result
-
-
 @forum_blueprint.route("", methods=["POST"])
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
@@ -371,13 +323,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 	forum.write(flask.g.sa_session)
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		render_forum(
-			forum,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_CREATED
+	return flask.jsonify(forum), helpers.STATUS_CREATED
 
 
 @forum_blueprint.route("", methods=["GET"])
@@ -422,13 +368,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Forum,
-				{
-					"is_subscribed": ATTR_FIXERS["is_subscribed"](
-						models.Forum.id,
-						flask.g.user.id
-					)
-				}
+				models.Forum
 			)
 		)
 
@@ -474,11 +414,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		[
-			render_forum(
-				row[0],
-				flask.g.user,
-				flask.g.sa_session
-			)
+			row[0]
 			for row in rows
 		]
 	), helpers.STATUS_OK
@@ -533,13 +469,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Forum,
-				{
-					"is_subscribed": ATTR_FIXERS["is_subscribed"](
-						models.Forum.id,
-						flask.g.user.id
-					)
-				}
+				models.Forum
 			)
 		)
 
@@ -698,13 +628,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		render_forum(
-			forum,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_OK
+	return flask.jsonify(forum), helpers.STATUS_OK
 
 
 @forum_blueprint.route("/<uuid:id_>", methods=["GET"])
@@ -718,14 +642,10 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify(
-		render_forum(
-			find_forum_by_id(
-				id_,
-				flask.g.sa_session,
-				flask.g.user
-			),
-			flask.g.user,
-			flask.g.sa_session
+		find_forum_by_id(
+			id_,
+			flask.g.sa_session,
+			flask.g.user
 		)
 	), helpers.STATUS_OK
 
@@ -818,13 +738,7 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		render_forum(
-			new_forum,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_OK
+	return flask.jsonify(new_forum), helpers.STATUS_OK
 
 
 @forum_blueprint.route("/<uuid:id_>/parsed-permissions", methods=["GET"])
@@ -1270,14 +1184,12 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	Idempotent.
 	"""
 
-	forum = find_forum_by_id(
-		id_,
-		flask.g.sa_session,
-		flask.g.user
-	)
-
 	return flask.jsonify({
-		"is_subscribed": flask.g.user in forum.subscribers
+		"is_subscribed": flask.g.user in find_forum_by_id(
+			id_,
+			flask.g.sa_session,
+			flask.g.user
+		).subscribers
 	}), helpers.STATUS_OK
 
 

@@ -96,45 +96,10 @@ ATTR_SCHEMAS = {
 		"min": 0,
 		"max": 2147483647
 	},
-	"viewer_count": {
-		"type": "integer",
-		"min": 0,
-		"max": 2147483647
-	},
 	"last_post_timestamp": {
 		"type": "datetime",
 		"coerce": "convert_to_datetime"
-	},
-	"is_subscribed": {
-		"type": "boolean"
-	},
-	"is_viewer": {
-		"type": "boolean"
 	}
-}
-ATTR_FIXERS = {
-	"is_subscribed": lambda thread_id, user_id: (
-		sqlalchemy.select(models.thread_subscribers.c.thread_id).
-		where(
-			sqlalchemy.and_(
-				models.thread_subscribers.c.thread_id == thread_id,
-				models.thread_subscribers.c.user_id == user_id
-			)
-		).
-		exists().
-		select()
-	),
-	"is_viewer": lambda thread_id, user_id: (
-		sqlalchemy.select(models.thread_viewers.c.thread_id).
-		where(
-			sqlalchemy.and_(
-				models.thread_viewers.c.thread_id == thread_id,
-				models.thread_viewers.c.user_id == user_id
-			)
-		).
-		exists().
-		select()
-	)
 }
 
 CREATE_EDIT_SCHEMA = {
@@ -170,7 +135,6 @@ LIST_SCHEMA = generate_list_schema(
 		"vote_value",
 		"post_count",
 		"subscriber_count",
-		"viewer_count",
 		"last_post_timestamp"
 	),
 	default_order_by="creation_timestamp",
@@ -183,7 +147,6 @@ LT_GT_SEARCH_SCHEMA = {
 	"vote_value": ATTR_SCHEMAS["vote_value"],
 	"post_count": ATTR_SCHEMAS["post_count"],
 	"subscriber_count": ATTR_SCHEMAS["subscriber_count"],
-	"viewer_count": ATTR_SCHEMAS["viewer_count"],
 	"last_post_timestamp": ATTR_SCHEMAS["last_post_timestamp"]
 }
 SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
@@ -206,13 +169,10 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"vote_value": ATTR_SCHEMAS["vote_value"],
 			"post_count": ATTR_SCHEMAS["post_count"],
 			"subscriber_count": ATTR_SCHEMAS["subscriber_count"],
-			"viewer_count": ATTR_SCHEMAS["viewer_count"],
 			"last_post_timestamp": {
 				**ATTR_SCHEMAS["last_post_timestamp"],
 				"nullable": True
-			},
-			"is_subscribed": ATTR_SCHEMAS["is_subscribed"],
-			"is_viewer": ATTR_SCHEMAS["is_viewer"]
+			}
 		},
 		"maxlength": 1
 	},
@@ -308,12 +268,6 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"minlength": 1,
 				"maxlength": 32
 			},
-			"viewer_count": {
-				"type": "list",
-				"schema": ATTR_SCHEMAS["viewer_count"],
-				"minlength": 1,
-				"maxlength": 32
-			},
 			"last_post_timestamp": {
 				"type": "list",
 				"schema": {
@@ -341,48 +295,6 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 		"maxlength": 1
 	}
 })
-
-
-def render_thread(
-	thread: models.Thread,
-	user: models.User,
-	session: typing.Union[
-		None,
-		sqlalchemy.orm.Session
-	] = None,
-	extra_attrs: typing.Iterable[str] = [
-		"is_subscribed",
-		"is_viewer"
-	]
-) -> dict:
-	"""Renders the information that `user` has access to about `thread`.
-	Possible `extra_attrs`:
-		- An `is_subscribed` key. This signals whether or not the provided
-		`user` is subscribed to this thread.
-		- An `is_viewer` key, which signals whether or not this user has viewed
-		this thread in the past.
-	"""
-
-	result = thread_blueprint.json_encoder().default(thread)
-
-	for extra_attr_name, extra_attr_func in {
-		"is_subscribed": lambda: session.execute(
-			ATTR_FIXERS["is_subscribed"](
-				thread.id,
-				user.id
-			)
-		).scalars().one(),
-		"is_viewer": lambda: session.execute(
-			ATTR_FIXERS["is_viewer"](
-				thread.id,
-				user.id
-			)
-		).scalars().one()
-	}.items():
-		if extra_attr_name in extra_attrs:
-			result[extra_attr_name] = extra_attr_func()
-
-	return result
 
 
 @thread_blueprint.route("", methods=["POST"])
@@ -430,18 +342,9 @@ def create() -> typing.Tuple[flask.Response, int]:
 		**flask.g.json
 	)
 
-	if flask.g.user not in thread.viewers:
-		thread.viewers.append(flask.g.user)
-
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		render_thread(
-			thread,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_CREATED
+	return flask.jsonify(thread), helpers.STATUS_CREATED
 
 
 @thread_blueprint.route("", methods=["GET"])
@@ -486,17 +389,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Thread,
-				{
-					"is_subscribed": ATTR_FIXERS["is_subscribed"](
-						models.Thread.id,
-						flask.g.user.id
-					),
-					"is_viewer": ATTR_FIXERS["is_viewer"](
-						models.Thread.id,
-						flask.g.user.id
-					)
-				}
+				models.Thread
 			)
 		)
 
@@ -542,19 +435,12 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 	result = []
 
-	for row in rows:
-		if flask.g.user not in row[0].viewers:
-			row[0].viewers.append(flask.g.user)
-
-		result.append(
-			render_thread(
-				row[0],
-				flask.g.user,
-				flask.g.sa_session
-			)
-		)
-
-	return flask.jsonify(result), helpers.STATUS_OK
+	return flask.jsonify(
+		[
+			row[0]
+			for row in rows
+		]
+	), helpers.STATUS_OK
 
 
 @thread_blueprint.route("", methods=["DELETE"])
@@ -606,17 +492,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Thread,
-				{
-					"is_subscribed": ATTR_FIXERS["is_subscribed"](
-						models.Thread.id,
-						flask.g.user.id
-					),
-					"is_viewer": ATTR_FIXERS["is_viewer"](
-						models.Thread.id,
-						flask.g.user.id
-					)
-				}
+				models.Thread
 			)
 		)
 
@@ -790,18 +666,9 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	thread.edited()
 
-	if flask.g.user not in thread.viewers:
-		thread.viewers.append(flask.g.user)
-
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		render_thread(
-			thread,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_OK
+	return flask.jsonify(thread), helpers.STATUS_OK
 
 
 @thread_blueprint.route("/<uuid:id_>", methods=["GET"])
@@ -820,18 +687,7 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		flask.g.user
 	)
 
-	if flask.g.user not in thread.viewers:
-		thread.viewers.append(flask.g.user)
-
-	flask.g.sa_session.commit()
-
-	return flask.jsonify(
-		render_thread(
-			thread,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_OK
+	return flask.jsonify(thread), helpers.STATUS_OK
 
 
 @thread_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
@@ -914,18 +770,9 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	old_thread.delete()
 	new_thread.edited()
 
-	if flask.g.user not in new_thread.viewers:
-		new_thread.viewers.append(flask.g.user)
-
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		render_thread(
-			new_thread,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_OK
+	return flask.jsonify(new_thread), helpers.STATUS_OK
 
 
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])

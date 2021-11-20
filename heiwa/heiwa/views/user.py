@@ -94,51 +94,7 @@ ATTR_SCHEMAS = {
 		"type": "integer",
 		"min": 0,
 		"max": 2147483647
-	},
-	"is_blockee": {
-		"type": "boolean"
-	},
-	"is_follower": {
-		"type": "boolean"
-	},
-	"is_followee": {
-		"type": "boolean"
 	}
-}
-ATTR_FIXERS = {
-	"is_blockee": lambda blocker_id, blockee_id: (
-		sqlalchemy.select(models.user_blocks.c.blocker_id).
-		where(
-			sqlalchemy.and_(
-				models.user_blocks.c.blocker_id == blocker_id,
-				models.user_blocks.c.blockee_id == blockee_id
-			)
-		).
-		exists().
-		select()
-	),
-	"is_follower": lambda follower_id, followee_id: (
-		sqlalchemy.select(models.user_follows.c.follower_id).
-		where(
-			sqlalchemy.and_(
-				models.user_follows.c.follower_id == follower_id,
-				models.user_follows.c.followee_id == followee_id
-			)
-		).
-		exists().
-		select()
-	),
-	"is_followee": lambda followee_id, follower_id: (
-		sqlalchemy.select(models.user_follows.c.follower_id).
-		where(
-			sqlalchemy.and_(
-				models.user_follows.c.follower_id == followee_id,
-				models.user_follows.c.followee_id == follower_id
-			)
-		).
-		exists().
-		select()
-	)
 }
 
 LIST_SCHEMA = generate_list_schema(
@@ -191,10 +147,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"follower_count": ATTR_SCHEMAS["follower_count"],
 			"forum_count": ATTR_SCHEMAS["forum_count"],
 			"post_count": ATTR_SCHEMAS["post_count"],
-			"thread_count": ATTR_SCHEMAS["thread_count"],
-			"is_blockee": ATTR_SCHEMAS["is_blockee"],
-			"is_follower": ATTR_SCHEMAS["is_follower"],
-			"is_followee": ATTR_SCHEMAS["is_followee"]
+			"thread_count": ATTR_SCHEMAS["thread_count"]
 		},
 		"maxlength": 1
 	},
@@ -354,68 +307,6 @@ def get_user_self_or_id(
 	return user
 
 
-def render_user(
-	user: models.User,
-	current_user: models.User,
-	session: typing.Union[
-		None,
-		sqlalchemy.orm.Session
-	] = None,
-	extra_attrs: typing.Union[
-		None,
-		typing.Iterable[str]
-	] = None
-) -> dict:
-	"""Renders the information that `current_user` has access to about `user`.
-	If `extra_attrs` is `None` and `user` is `current_user`, defaults to a list
-	of all possible extra attributes. Otherwise, defaults to an empty list.
-	Possible `extra_attrs`:
-		- An `is_blockee` key, which signals whether or not `user` has been
-		blocked by `current_user`.
-		- An `is_follower` key, which signals whether or not `current_user` is
-		a follower of `user`.
-		- An `is_followee` key, which signals whether or not `user` is
-		a follower of `current_user`.
-	"""
-
-	result = user_blueprint.json_encoder().default(user)
-
-	if extra_attrs is None:
-		if user.id == current_user.id:
-			extra_attrs = []
-		else:
-			extra_attrs = [
-				"is_blockee",
-				"is_follower",
-				"is_followee"
-			]
-
-	for extra_attr_name, extra_attr_func in {
-		"is_blockee": lambda: session.execute(
-			ATTR_FIXERS["is_blockee"](
-				user.id,
-				current_user.id
-			)
-		).scalars().one(),
-		"is_follower": lambda: session.execute(
-			ATTR_FIXERS["is_follower"](
-				current_user.id,
-				user.id
-			)
-		).scalars().one(),
-		"is_followee": lambda: session.execute(
-			ATTR_FIXERS["is_followee"](
-				user.id,
-				current_user.id
-			)
-		).scalars().one()
-	}.items():
-		if extra_attr_name in extra_attrs:
-			result[extra_attr_name] = extra_attr_func()
-
-	return result
-
-
 @user_blueprint.route("/users", methods=["GET"])
 @validators.validate_json(
 	LIST_SCHEMA,
@@ -437,21 +328,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User,
-				{
-					"is_blockee": ATTR_FIXERS["is_blockee"](
-						flask.g.user.id,
-						models.User.id
-					),
-					"is_follower": ATTR_FIXERS["is_follower"](
-						flask.g.user.id,
-						models.User.id
-					),
-					"is_followee": ATTR_FIXERS["is_followee"](
-						flask.g.user.id,
-						models.User.id
-					)
-				}
+				models.User
 			)
 		)
 
@@ -472,16 +349,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		offset(flask.g.json["offset"])
 	).scalars().all()
 
-	return flask.jsonify(
-		[
-			render_user(
-				user,
-				flask.g.user,
-				flask.g.sa_session
-			)
-			for user in users
-		]
-	), helpers.STATUS_OK
+	return flask.jsonify(users), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users", methods=["DELETE"])
@@ -517,21 +385,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User,
-				{
-					"is_blockee": ATTR_FIXERS["is_blockee"](
-						flask.g.user.id,
-						models.User.id
-					),
-					"is_follower": ATTR_FIXERS["is_follower"](
-						flask.g.user.id,
-						models.User.id
-					),
-					"is_followee": ATTR_FIXERS["is_followee"](
-						flask.g.user.id,
-						models.User.id
-					)
-				}
+				models.User
 			)
 		)
 
@@ -658,13 +512,7 @@ def edit(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		render_user(
-			user,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_OK
+	return flask.jsonify(user), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users/<uuid:id_>", methods=["GET"])
@@ -689,13 +537,7 @@ def view(
 		flask.g.sa_session
 	)
 
-	return flask.jsonify(
-		render_user(
-			user,
-			flask.g.user,
-			flask.g.sa_session
-		)
-	), helpers.STATUS_OK
+	return flask.jsonify(user), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/authorized-actions", methods=["GET"])
@@ -1039,13 +881,11 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	Idempotent.
 	"""
 
-	user = find_user_by_id(
-		id_,
-		flask.g.sa_session
-	)
-
 	return flask.jsonify({
-		"is_blockee": flask.g.user in user.blockers
+		"is_blockee": flask.g.user in find_user_by_id(
+			id_,
+			flask.g.sa_session
+		).blockers
 	}), helpers.STATUS_OK
 
 
@@ -1084,21 +924,7 @@ def list_followers(
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User,
-				{
-					"is_blockee": ATTR_FIXERS["is_blockee"](
-						flask.g.user.id,
-						models.User.id
-					),
-					"is_follower": ATTR_FIXERS["is_follower"](
-						flask.g.user.id,
-						models.User.id
-					),
-					"is_followee": ATTR_FIXERS["is_followee"](
-						flask.g.user.id,
-						models.User.id
-					)
-				}
+				models.User
 			)
 		)
 
@@ -1119,16 +945,7 @@ def list_followers(
 		offset(flask.g.json["offset"])
 	).scalars().all()
 
-	return flask.jsonify(
-		[
-			render_user(
-				follower,
-				flask.g.user,
-				flask.g.sa_session
-			)
-			for follower in followers
-		]
-	), helpers.STATUS_OK
+	return flask.jsonify(followers), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/followees", methods=["GET"])
@@ -1166,21 +983,7 @@ def list_followees(
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User,
-				{
-					"is_blockee": ATTR_FIXERS["is_blockee"](
-						flask.g.user.id,
-						models.User.id
-					),
-					"is_follower": ATTR_FIXERS["is_follower"](
-						flask.g.user.id,
-						models.User.id
-					),
-					"is_followee": ATTR_FIXERS["is_followee"](
-						flask.g.user.id,
-						models.User.id
-					)
-				}
+				models.User
 			)
 		)
 
@@ -1201,16 +1004,7 @@ def list_followees(
 		offset(flask.g.json["offset"])
 	).scalars().all()
 
-	return flask.jsonify(
-		[
-			render_user(
-				followee,
-				flask.g.user,
-				flask.g.sa_session
-			)
-			for followee in followees
-		]
-	), helpers.STATUS_OK
+	return flask.jsonify(followees), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["PUT"])
@@ -1258,19 +1052,17 @@ def edit_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @requires_permission("view", models.User)
 @limiter.limiter.limit(get_endpoint_limit)
 def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns whether or not the current user is following the user with
-	the given ID.
+	"""Returns whether or not the current user is a follower of the user
+	with the given ID.
 
 	Idempotent.
 	"""
 
-	user = find_user_by_id(
-		id_,
-		flask.g.sa_session
-	)
-
 	return flask.jsonify({
-		"is_followee": flask.g.user in user.followers
+		"is_followee": flask.g.user in find_user_by_id(
+			id_,
+			flask.g.sa_session
+		).followers
 	}), helpers.STATUS_OK
 
 

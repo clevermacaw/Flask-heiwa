@@ -21,8 +21,7 @@ from .post import Post
 __all__ = [
 	"Thread",
 	"ThreadVote",
-	"thread_subscribers",
-	"thread_viewers"
+	"thread_subscribers"
 ]
 
 
@@ -82,32 +81,6 @@ method,
 
 thread_subscribers = sqlalchemy.Table(
 	"thread_subscribers",
-	Base.metadata,
-	sqlalchemy.Column(
-		"thread_id",
-		UUID,
-		sqlalchemy.ForeignKey(
-			"threads.id",
-			ondelete="CASCADE",
-			onupdate="CASCADE"
-		),
-		primary_key=True
-	),
-	sqlalchemy.Column(
-		"user_id",
-		UUID,
-		sqlalchemy.ForeignKey(
-			"users.id",
-			ondelete="CASCADE",
-			onupdate="CASCADE"
-		),
-		primary_key=True
-	)
-)
-
-
-thread_viewers = sqlalchemy.Table(
-	"thread_viewers",
 	Base.metadata,
 	sqlalchemy.Column(
 		"thread_id",
@@ -234,16 +207,6 @@ class Thread(
 		scalar_subquery()
 	)
 
-	viewer_count = sqlalchemy.orm.column_property(
-		sqlalchemy.select(
-			sqlalchemy.func.count(
-				thread_viewers.c.thread_id
-			)
-		).
-		where(thread_viewers.c.thread_id == sqlalchemy.text("threads.id")).
-		scalar_subquery()
-	)
-
 	last_post_timestamp = sqlalchemy.orm.column_property(
 		sqlalchemy.select(Post.creation_timestamp).
 		where(Post.thread_id == sqlalchemy.text("threads.id")).
@@ -267,12 +230,6 @@ class Thread(
 	subscribers = sqlalchemy.orm.relationship(
 		"User",
 		secondary=thread_subscribers,
-		order_by="desc(User.creation_timestamp)",
-		lazy=True
-	)
-	viewers = sqlalchemy.orm.relationship(
-		"User",
-		secondary=thread_viewers,
 		order_by="desc(User.creation_timestamp)",
 		lazy=True
 	)
