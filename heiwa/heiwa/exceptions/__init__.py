@@ -58,11 +58,13 @@ __all__ = [
 	"APIUserBlockUnchanged",
 	"APIUserCannotRemoveLastDefaultGroup",
 	"APIUserFollowUnchanged",
+	"APIUserGroupAlreadyAdded",
+	"APIUserGroupNotAdded",
 	"APIUserNotFound",
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.26.0"
+__version__ = "1.27.0"
 
 
 class APIException(Exception):
@@ -485,6 +487,22 @@ class APIUserCannotRemoveLastDefaultGroup(APIException):
 class APIUserFollowUnchanged(APIException):
 	"""Exception class for when a user attempts to follow /
 	unfollow another user, but has already done so before.
+	"""
+
+	code = helpers.STATUS_FORBIDDEN
+
+
+class APIUserGroupAlreadyAdded(APIException):
+	"""Exception class for when a user attempts to add a group to another user,
+	but it's already been added before.
+	"""
+
+	code = helpers.STATUS_FORBIDDEN
+
+
+class APIUserGroupNotAdded(APIException):
+	"""Exception class for when a user attempts to remove a group from another
+	user, but it's been removed before or never added in the first place.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN

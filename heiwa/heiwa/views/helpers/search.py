@@ -1,5 +1,3 @@
-import typing
-
 import sqlalchemy
 import sqlalchemy.orm
 

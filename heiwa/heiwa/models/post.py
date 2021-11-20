@@ -66,8 +66,7 @@ class PostVote(
 	)
 
 	def __repr__(self: PostVote) -> str:
-		"""Creates a __repr__ of the current instance. Overrides the mixin 
-method,
+		"""Creates a __repr__ of the current instance. Overrides the mixin method,
 		which uses the "id" attribute this model lacks.
 		"""
 

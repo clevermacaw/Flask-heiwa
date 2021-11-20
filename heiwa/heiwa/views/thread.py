@@ -433,8 +433,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		if thread_without_forum_permissions_exists:
 			flask.g.sa_session.commit()
 
-	result = []
-
 	return flask.jsonify(
 		[
 			row[0]
@@ -803,13 +801,29 @@ def edit_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		thread
 	)
 
-	if flask.g.json["subscribe"] is (flask.g.user in thread.subscribers):
+	existing_subscription = flask.g.sa_session.execute(
+		sqlalchemy.select(models.thread_subscribers).
+		where(
+			sqlalchemy.and_(
+				models.thread_subscribers.c.thread_id == thread.id,
+				models.thread_subscribers.c.user_id == flask.g.user.id
+			)
+		)
+	).scalars().one()
+
+	if flask.g.json["subscribe"] is (existing_subscription is not None):
 		raise exceptions.APIThreadSubscriptionUnchanged(flask.g.json["subscribe"])
 
 	if flask.g.json["subscribe"]:
-		thread.subscribers.append(flask.g.user)
+		flask.g.sa_session.execute(
+			sqlalchemy.insert(models.thread_subscribers).
+			values(
+				thread_id=thread.id,
+				user_id=flask.g.user.id
+			)
+		)
 	else:
-		thread.subscribers.remove(flask.g.user)
+		flask.g.sa_session.delete(existing_subscription)
 
 	flask.g.sa_session.commit()
 
@@ -828,11 +842,21 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify({
-		"is_subscribed": flask.g.user in find_thread_by_id(
-			id_,
-			flask.g.sa_session,
-			flask.g.user
-		).subscribers
+		"is_subscribed": flask.g.sa_session.execute(
+			sqlalchemy.select(models.c.thread_subscribers.forum_id).
+			where(
+				sqlalchemy.and_(
+					models.c.thread_subscribers.forum_id == find_thread_by_id(
+						id_,
+						flask.g.sa_session,
+						flask.g.user
+					).id,
+					models.c.thread_subscribers.user_id == flask.g.user.id
+				)
+			).
+			exists().
+			select()
+		).scalars().one()
 	})
 
 

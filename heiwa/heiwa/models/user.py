@@ -32,7 +32,8 @@ __all__ = [
 	"UserBan",
 	"UserPermissions",
 	"user_blocks",
-	"user_follows"
+	"user_follows",
+	"user_groups"
 ]
 
 
@@ -146,8 +147,7 @@ class UserBan(
 	)
 
 	def __repr__(self: UserBan) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin 
-method,
+		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
 		which uses the `id` attribute this model lacks.
 		"""
 
@@ -179,8 +179,7 @@ class UserPermissions(
 	)
 
 	def __repr__(self: UserPermissions) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin 
-method,
+		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
 		which uses the `id` attribute this model lacks.
 		"""
 

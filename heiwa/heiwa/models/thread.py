@@ -68,8 +68,7 @@ class ThreadVote(
 	)
 
 	def __repr__(self: ThreadVote) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin 
-method,
+		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
 		which uses the `id` attribute this model lacks.
 		"""
 

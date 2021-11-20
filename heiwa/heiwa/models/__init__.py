@@ -17,7 +17,14 @@ from .notification import Notification
 from .openid import OpenIDAuthentication
 from .post import Post, PostVote
 from .thread import Thread, ThreadVote, thread_subscribers
-from .user import User, UserBan, UserPermissions, user_blocks, user_follows
+from .user import (
+	User,
+	UserBan,
+	UserPermissions,
+	user_blocks,
+	user_follows,
+	user_groups
+)
 
 __all__ = [
 	"Base",
@@ -40,6 +47,7 @@ __all__ = [
 	"helpers",
 	"thread_subscribers",
 	"user_blocks",
-	"user_follows"
+	"user_follows",
+	"user_groups"
 ]
-__version__ = "0.29.0"
+__version__ = "0.29.1"

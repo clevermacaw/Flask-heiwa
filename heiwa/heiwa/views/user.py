@@ -854,16 +854,39 @@ def edit_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		user
 	)
 
-	if flask.g.json["block"] is (flask.g.user in user.blockers):
+	existing_block = flask.g.sa_session.execute(
+		sqlalchemy.select(models.user_blocks).
+		where(
+			sqlalchemy.and_(
+				models.user_blocks.c.blocker_id == flask.g.user.id,
+				models.user_blocks.c.blockee_id == user.id
+			)
+		)
+	).scalars().one()
+
+	if flask.g.json["block"] is (existing_block is not None):
 		raise exceptions.APIUserBlockUnchanged(flask.g.json["block"])
 
 	if flask.g.json["block"]:
-		if flask.g.user in user.followers:
-			user.followers.remove(flask.g.user)
+		flask.g.sa_session.execute(
+			sqlalchemy.delete(models.user_follows).
+			where(
+				sqlalchemy.and_(
+					models.user_follows.c.follower_id == flask.g.user.id,
+					models.user_follows.c.followee_id == user.id
+				)
+			)
+		)
 
-		user.blockers.append(flask.g.user)
+		flask.g.sa_session.execute(
+			sqlalchemy.insert(models.user_blocks).
+			values(
+				blocker_id=flask.g.user.id,
+				blockee_id=user.id
+			)
+		)
 	else:
-		user.blockers.remove(flask.g.user)
+		flask.g.sa_session.delete(existing_block)
 
 	flask.g.sa_session.commit()
 
@@ -882,10 +905,20 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify({
-		"is_blockee": flask.g.user in find_user_by_id(
-			id_,
-			flask.g.sa_session
-		).blockers
+		"is_blockee": flask.g.sa_session.execute(
+			sqlalchemy.select(models.user_blocks.c.blocker_id).
+			where(
+				sqlalchemy.and_(
+					models.user_blocks.c.blocker_id == flask.g.user.id,
+					models.user_blocks.c.blockee_id == find_user_by_id(
+						id_,
+						flask.g.sa_session
+					).id
+				)
+			).
+			exists().
+			select()
+		).scalars().one()
 	}), helpers.STATUS_OK
 
 
@@ -1034,13 +1067,29 @@ def edit_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		user
 	)
 
-	if flask.g.json["follow"] is (flask.g.user in user.followers):
+	existing_follow = flask.g.sa_session.execute(
+		sqlalchemy.select(models.user_follows).
+		where(
+			sqlalchemy.and_(
+				models.user_follows.c.follower_id == flask.g.user.id,
+				models.user_follows.c.followee_id == user.id
+			)
+		)
+	).scalars().one()
+
+	if flask.g.json["follow"] is (existing_follow is not None):
 		raise exceptions.APIUserFollowUnchanged(flask.g.json["follow"])
 
 	if flask.g.json["follow"]:
-		user.followers.append(flask.g.user)
+		flask.g.sa_session.execute(
+			sqlalchemy.insert(models.user_follows).
+			values(
+				follower_id=flask.g.user.id,
+				followee_id=user.id
+			)
+		)
 	else:
-		user.followers.remove(flask.g.user)
+		flask.g.sa_session.delete(existing_follow)
 
 	flask.g.sa_session.commit()
 
@@ -1059,10 +1108,20 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify({
-		"is_followee": flask.g.user in find_user_by_id(
-			id_,
-			flask.g.sa_session
-		).followers
+		"is_followee": flask.g.sa_session.execute(
+			sqlalchemy.select(models.user_follows.c.follower_id).
+			where(
+				sqlalchemy.and_(
+					models.user_follows.c.follower_id == flask.g.user.id,
+					models.user_follows.c.followee_id == find_user_by_id(
+						id_,
+						flask.g.sa_session
+					).id
+				)
+			).
+			exists().
+			select()
+		).scalars().one()
 	}), helpers.STATUS_OK
 
 
@@ -1138,7 +1197,27 @@ def add_group(
 		user
 	)
 
-	user.groups.append(group)
+	if not flask.g.sa_session.execute(
+		sqlalchemy.select(models.user_groups.c.user_id).
+		where(
+			sqlalchemy.and_(
+				models.user_groups.c.user_id == user.id,
+				models.user_groups.c.group_id == group.id
+			)
+		).
+		exists().
+		select()
+	).scalars().one():
+		raise exceptions.APIUserGroupAlreadyAdded(group.id)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.insert(models.user_groups).
+		values(
+			user_id=user.id,
+			group_id=group.id
+		)
+	)
+
 	user.reparse_permissions()
 
 	flask.g.sa_session.commit()
@@ -1185,6 +1264,19 @@ def delete_group(
 		user
 	)
 
+	existing_group_association = flask.g.sa_session.execute(
+		sqlalchemy.select(models.user_groups.c.user_id).
+		where(
+			sqlalchemy.and_(
+				models.user_groups.c.user_id == user.id,
+				models.user_groups.c.group_id == group.id
+			)
+		)
+	).scalars().one()
+
+	if existing_group_association is None:
+		raise exceptions.APIUserGroupNotAdded(group.id)
+
 	if "*" in group.default_for:
 		found_default_group = False
 
@@ -1200,7 +1292,8 @@ def delete_group(
 		if not found_default_group:
 			raise exceptions.APIUserCannotRemoveLastDefaultGroup
 
-	user.groups.remove(group)
+	flask.g.sa_session.delete(existing_group_association)
+
 	user.reparse_permissions()
 
 	flask.g.sa_session.commit()

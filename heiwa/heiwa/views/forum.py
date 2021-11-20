@@ -1160,13 +1160,29 @@ def edit_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		forum
 	)
 
-	if flask.g.json["subscribe"] is (flask.g.user in forum.subscribers):
+	existing_subscription = flask.g.sa_session.execute(
+		sqlalchemy.select(models.forum_subscribers).
+		where(
+			sqlalchemy.and_(
+				models.forum_subscribers.c.forum_id == forum.id,
+				models.forum_subscribers.c.user_id == flask.g.user.id
+			)
+		)
+	).scalars().one()
+
+	if flask.g.json["subscribe"] is (existing_subscription is not None):
 		raise exceptions.APIForumSubscriptionUnchanged(flask.g.json["subscribe"])
 
 	if flask.g.json["subscribe"]:
-		forum.subscribers.append(flask.g.user)
+		flask.g.sa_session.execute(
+			sqlalchemy.insert(models.forum_subscribers).
+			values(
+				forum_id=forum.id,
+				user_id=flask.g.user.id
+			)
+		)
 	else:
-		forum.subscribers.remove(flask.g.user)
+		flask.g.sa_session.delete(existing_subscription)
 
 	flask.g.sa_session.commit()
 
@@ -1185,11 +1201,21 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify({
-		"is_subscribed": flask.g.user in find_forum_by_id(
-			id_,
-			flask.g.sa_session,
-			flask.g.user
-		).subscribers
+		"is_subscribed": flask.g.sa_session.execute(
+			sqlalchemy.select(models.c.forum_subscribers.forum_id).
+			where(
+				sqlalchemy.and_(
+					models.c.forum_subscribers.forum_id == find_forum_by_id(
+						id_,
+						flask.g.sa_session,
+						flask.g.user
+					).id,
+					models.c.forum_subscribers.user_id == flask.g.user.id
+				)
+			).
+			exists().
+			select()
+		).scalars().one()
 	}), helpers.STATUS_OK
 
 

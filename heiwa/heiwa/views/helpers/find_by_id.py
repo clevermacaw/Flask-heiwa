@@ -41,8 +41,7 @@ def find_forum_by_id(
 			sqlalchemy.select(
 				heiwa.models.Forum,
 				(
-					
-sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
+					sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
 					where(inner_conditions).
 					exists()
 				)
@@ -52,19 +51,16 @@ sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
 					heiwa.models.Forum.id == id_,
 					sqlalchemy.or_(
 						~(
-							
-sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
+							sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
 							where(inner_conditions).
 							exists()
 						),
 						(
-							
-sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
+							sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
 							where(
 								sqlalchemy.and_(
 									inner_conditions,
-									
-heiwa.models.ForumParsedPermissions.forum_view.is_(True)
+									heiwa.models.ForumParsedPermissions.forum_view.is_(True)
 								)
 							).
 							exists()
@@ -130,8 +126,7 @@ def find_thread_by_id(
 			sqlalchemy.select(
 				heiwa.models.Thread,
 				(
-					
-sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
+					sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
 					where(inner_conditions).
 					exists()
 				)
@@ -141,19 +136,16 @@ sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
 					heiwa.models.Thread.id == id_,
 					sqlalchemy.or_(
 						~(
-							
-sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
+							sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
 							where(inner_conditions).
 							exists()
 						),
 						(
-							
-sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
+							sqlalchemy.select(heiwa.models.ForumParsedPermissions.forum_id).
 							where(
 								sqlalchemy.and_(
 									inner_conditions,
-									
-heiwa.models.ForumParsedPermissions.thread_view.is_(True)
+									heiwa.models.ForumParsedPermissions.thread_view.is_(True)
 								)
 							).
 							exists()
