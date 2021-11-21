@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import typing
+
 import datetime
 import enum
 import json
@@ -12,7 +14,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 __all__ = ["JSONEncoder"]
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 
 # Flask does have a custom encoder already that would take care of UUID
@@ -30,7 +32,11 @@ class JSONEncoder(json.JSONEncoder):
 	def default(
 		self: JSONEncoder,
 		object_: object
-	) -> dict:
+	) -> typing.Union[
+		typing.Any,
+		str,
+		typing.Dict[str, typing.Any]
+	]:
 		"""Converts:
 			- SQLAlchemy ORM mapped object → dict, where only the attributes
 			`flask.g.user` has access to are included.

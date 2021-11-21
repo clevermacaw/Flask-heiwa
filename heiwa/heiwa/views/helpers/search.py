@@ -1,3 +1,5 @@
+import typing
+
 import sqlalchemy
 import sqlalchemy.orm
 
@@ -18,7 +20,10 @@ OPERATORS = {
 
 
 def parse_search(
-	conditions: dict,  # TODO: What dict?
+	conditions: typing.Dict[
+		str,
+		typing.Union[typing.Dict, typing.Any]
+	],
 	model: heiwa.models.Base
 ):
 	"""Converts the given dictionary formatted conditions to SQLAlchemy ones."""

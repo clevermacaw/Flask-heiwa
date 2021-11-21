@@ -36,7 +36,7 @@ class OpenIDAuthentication(
 		nullable=False
 	)
 
-	def __repr__(self) -> str:
+	def __repr__(self: OpenIDAuthentication) -> str:
 		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
 		which uses the `id` attribute this model lacks.
 		"""

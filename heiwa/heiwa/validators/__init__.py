@@ -18,7 +18,7 @@ import validators
 from .. import exceptions
 
 __all__ = ["APIValidator", "validate_json"]
-__version__ = "1.8.2"
+__version__ = "1.8.3"
 
 
 class APIValidator(cerberus.Validator):
@@ -32,6 +32,8 @@ class APIValidator(cerberus.Validator):
 		field: str,
 		value: str
 	) -> None:
+		"""Checks whether or not `value` is a valid regular expression."""
+
 		try:
 			re.compile(value)
 		except re.error:
@@ -87,8 +89,8 @@ class APIValidator(cerberus.Validator):
 		makes_required: typing.Dict[
 			str,
 			typing.Union[
-				typing.Any,
-				typing.Iterable[typing.Any]
+				typing.Iterable[typing.Any],
+				typing.Any
 			]
 		],  # TODO: PEP 604
 		field: str,
@@ -127,7 +129,10 @@ class APIValidator(cerberus.Validator):
 
 
 def validate_json(
-	schema: dict,
+	schema: typing.Dict[
+		str,
+		typing.Union[str, typing.Dict]
+	],
 	*args,
 	**kwargs
 ) -> collections.abc.Callable[

@@ -1,11 +1,12 @@
 import uuid
 
 import sqlalchemy
+import sqlalchemy.engine
 
 __all__ = ["generate_uuid"]
 
 
-def generate_uuid(ctx) -> str:
+def generate_uuid(ctx: sqlalchemy.engine.ExecutionContext) -> str:
 	"""Keeps generating an UUID4,
 	until it is not present in the current column.
 	"""

@@ -553,6 +553,8 @@ class User(
 
 	@sqlalchemy.ext.hybrid.hybrid_property
 	def has_content(self: User) -> bool:
+		"""Returns whether or not this user has any forums, posts or threads."""
+
 		if (
 			self.forum_count != 0 or
 			self.post_count != 0 or
@@ -564,6 +566,10 @@ class User(
 
 	@has_content.expression
 	def has_content(cls: User) -> sqlalchemy.sql.elements.BooleanClauseList:
+		"""Returns a `BooleanClauseList` that represents whether or not
+		this user has any forums, posts or threads.
+		"""
+
 		return sqlalchemy.or_(
 			cls.forum_count > 0,
 			cls.post_count > 0,
@@ -572,12 +578,18 @@ class User(
 
 	@sqlalchemy.ext.hybrid.hybrid_property
 	def highest_group(self: User) -> Group:
+		"""Returns the group with the highest `level` this user has."""
+
 		return sqlalchemy.orm.object_session(self).execute(
 			User.highest_group
 		).scalars().one()
 
 	@highest_group.expression
 	def highest_group(cls: User) -> sqlalchemy.sql.Select:
+		"""Returns a selection query that represents the group with the highest
+		`level` this user has.
+		"""
+
 		return (
 			sqlalchemy.select(Group).
 			where(
@@ -591,6 +603,8 @@ class User(
 
 	@property
 	def avatar_filename(self: User) -> typing.Union[None, str]:
+		"""Returns the filename for this user's avatar."""
+
 		if self.avatar_type is None:
 			return None
 
@@ -602,6 +616,8 @@ class User(
 
 	@property
 	def avatar_location(self: User) -> typing.Union[None, str]:
+		"""Returns the full path to this user's avatar."""
+
 		if self.avatar_type is None:
 			return None
 
@@ -633,6 +649,8 @@ class User(
 			bytes
 		]
 	) -> None:
+		"""Sets this user's avatar. If `value` is `None`, the avatar is removed."""
+
 		if value is None:
 			if self.avatar_type is not None:
 				os.remove(self.avatar_location)
@@ -672,7 +690,7 @@ class User(
 
 		self.ban.delete()
 
-	def reparse_permissions(self) -> None:
+	def reparse_permissions(self: User) -> None:
 		"""Sets the `self.parsed_permissions` attribute to the combination of:
 			- This user's group permissions, where the group with the highest level
 			is most important.

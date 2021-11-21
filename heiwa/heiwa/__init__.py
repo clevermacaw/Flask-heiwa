@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import os
 
@@ -10,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.17"
+__version__ = "0.13.18"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -21,7 +23,7 @@ class ConfiguredLockFlask(flask.Flask):
 
 	@property
 	@functools.lru_cache()
-	def configured(self) -> bool:
+	def configured(self: ConfiguredLockFlask) -> bool:
 		"""Returns whether or not this instance has been configured.
 		This value depends on whether or not either the file located at
 		the `CONFIGURED_LOCK_LOCATION` environment variable exists, or the
@@ -38,7 +40,7 @@ class ConfiguredLockFlask(flask.Flask):
 
 	@configured.setter
 	def configured(
-		self,
+		self: ConfiguredLockFlask,
 		configured: bool
 	) -> None:
 		"""Sets whether or not this instance has been configured, and clears

@@ -64,7 +64,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.27.0"
+__version__ = "1.27.1"
 
 
 class APIException(Exception):
@@ -81,6 +81,10 @@ class APIException(Exception):
 		self: APIException,
 		details: typing.Union[dict, str] = details  # TODO: PEP 604
 	) -> None:
+		"""Sets the `details` class variable to the given value.
+		If this method isn't used, it remains `None`.
+		"""
+
 		self.details = details
 
 

@@ -435,7 +435,4 @@ class Thread(
 				content=self.to_notification()
 			)
 
-		CDWMixin.write(
-			self,
-			session
-		)
+		CDWMixin.write(self, session)

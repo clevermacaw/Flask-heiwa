@@ -24,7 +24,8 @@ __all__ = [
 @sqlalchemy.orm.declarative_mixin
 class BasePermissionMixin:
 	"""Adds columns with all possible permissions,
-	as well as the `to_permissions` method to convert them to a dict.
+	as well as the `to_permissions` method to convert them to a dict,
+	and a static dictionary with the default values.
 	"""
 
 	forum_create = sqlalchemy.Column(
@@ -196,7 +197,60 @@ class BasePermissionMixin:
 		nullable=True
 	)
 
-	def to_permissions(self) -> dict:
+	DEFAULT_PERMISSIONS = {
+		"forum_create": None,
+		"forum_delete_own": None,
+		"forum_delete_any": None,
+		"forum_edit_own": None,
+		"forum_edit_any": None,
+		"forum_merge_own": None,
+		"forum_merge_any": None,
+		"forum_move_own": None,
+		"forum_move_any": None,
+		"forum_view": None,
+		"group_create": None,
+		"group_delete": None,
+		"group_edit": None,
+		"group_edit_permissions": None,
+		"post_create": None,
+		"post_delete_own": None,
+		"post_delete_any": None,
+		"post_edit_own": None,
+		"post_edit_any": None,
+		"post_edit_vote": None,
+		"post_move_own": None,
+		"post_move_any": None,
+		"post_view": None,
+		"thread_create": None,
+		"thread_delete_own": None,
+		"thread_delete_any": None,
+		"thread_edit_own": None,
+		"thread_edit_any": None,
+		"thread_edit_lock_own": None,
+		"thread_edit_lock_any": None,
+		"thread_edit_pin": None,
+		"thread_edit_vote": None,
+		"thread_merge_own": None,
+		"thread_merge_any": None,
+		"thread_move_own": None,
+		"thread_move_any": None,
+		"thread_view": None,
+		"user_delete": None,
+		"user_edit": None,
+		"user_edit_ban": None,
+		"user_edit_groups": None,
+		"user_edit_permissions": None
+	}
+
+	def to_permissions(self: BasePermissionMixin) -> typing.Dict[
+		str,
+		typing.Union[None, bool]
+	]:
+		"""Transforms the values in this instance to the standard format for
+		permissions. (A dictionary, where string keys represent permissions,
+		and their value represents whether or not they're granted.
+		"""
+
 		return {
 			"forum_create": self.forum_create,
 			"forum_delete_own": self.forum_delete_own,
@@ -249,7 +303,7 @@ class CDWMixin:
 
 	@classmethod
 	def create(
-		cls,
+		cls: CDWMixin,
 		session: sqlalchemy.orm.Session,
 		*args,
 		**kwargs
@@ -474,7 +528,7 @@ class ReprMixin:
 
 
 class ToNotificationMixin:
-	def to_notification(self: ToNotificationMixin) -> dict:
+	def to_notification(self: ToNotificationMixin) -> typing.Dict[str, str]:
 		"""Transforms this object into a JSON-compatible format for notifications.
 		Since the ID should never change, this value can later be used to find
 		notifications corresponding to this thread.

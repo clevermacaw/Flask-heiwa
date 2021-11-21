@@ -226,7 +226,15 @@ class ForumPermissionMixin:
 		"thread_view": None
 	}
 
-	def to_permissions(self) -> dict:
+	def to_permissions(self: ForumPermissionMixin) -> typing.Dict[
+		str,
+		typing.Union[None, bool]
+	]:
+		"""Transforms the values in this instance to the standard format for
+		permissions. (A dictionary, where string keys represent permissions,
+		and their value represents whether or not they're granted.
+		"""
+
 		return {
 			"forum_create": self.forum_create,
 			"forum_delete_own": self.forum_delete_own,
@@ -266,6 +274,7 @@ class ForumPermissionMixin:
 
 class ForumParsedPermissions(
 	CDWMixin,
+	ForumPermissionMixin,
 	ReprMixin,
 	Base
 ):
@@ -428,9 +437,6 @@ class ForumParsedPermissions(
 		uselist=False,
 		lazy=True
 	)
-
-	def to_permissions(self) -> dict:
-		return ForumPermissionMixin.to_permissions(self)
 
 	def __repr__(self: ForumParsedPermissions) -> str:
 		"""Creates a `__repr__` of the current instance. Overrides the mixin method,

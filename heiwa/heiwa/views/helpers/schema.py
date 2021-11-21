@@ -15,7 +15,29 @@ def generate_list_schema(
 	default_order_asc: bool = None,
 	limit_max: int = 512,
 	offset_max: int = 512
-) -> dict:
+) -> typing.Dict[
+		str,
+		typing.Dict[
+			str,
+			typing.Union[
+				str,
+				bool,
+				int,
+				typing.Dict[
+					str,
+					typing.Union[
+						str,
+						bool,
+						typing.List[str]
+					]
+				]
+			]
+		]
+	]:  # TODO: PEP 604
+	"""Generates a Cerberus schema used for validating input to
+	all `list_` API endpoints.
+	"""
+
 	result = {
 		"order": {
 			"type": "dict",
@@ -82,7 +104,16 @@ def generate_list_schema(
 
 
 def generate_search_schema_registry(
-	rules: dict,
+	rules: typing.Dict[
+		str,
+		typing.Dict[
+			str,
+			typing.Union[
+				typing.Dict,
+				typing.Any
+			]
+		]
+	],
 	schema_name: str = "search"
 ) -> cerberus.schema.SchemaRegistry:
 	"""Generates a search schema registry with `$and`, `$or` and `$not` rules
