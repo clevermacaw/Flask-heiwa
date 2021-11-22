@@ -79,7 +79,18 @@ class APIException(Exception):
 
 	def __init__(
 		self: APIException,
-		details: typing.Union[dict, str] = details  # TODO: PEP 604
+		details: typing.Union[
+			None,
+			str,
+			int,
+			typing.Dict[
+				str,
+				typing.Union[
+					typing.Dict,
+					typing.Any
+				]
+			],
+		] = details
 	) -> None:
 		"""Sets the `details` class variable to the given value.
 		If this method isn't used, it remains `None`.

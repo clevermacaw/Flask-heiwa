@@ -14,7 +14,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 __all__ = ["JSONEncoder"]
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 
 # Flask does have a custom encoder already that would take care of UUID
@@ -23,7 +23,7 @@ __version__ = "1.2.1"
 # that feels somewhat hacky. So I'll just use json.JSONEncoder instead.
 class JSONEncoder(json.JSONEncoder):
 	"""A JSON encoder for the Heiwa API. Adds support for:
-		- SQLAlchemy ORM mapped objects. (Converted to dicts)
+		- SQLAlchemy ORM mapped objects. (Converted to dictionaries)
 		- Date(time) objects. (Converted to ISO strings)
 		- UUID objects. (Converted to equivalent strings)
 		- Enum objects. (Converted to their associated value)
@@ -35,10 +35,13 @@ class JSONEncoder(json.JSONEncoder):
 	) -> typing.Union[
 		typing.Any,
 		str,
-		typing.Dict[str, typing.Any]
+		typing.Dict[
+			str,
+			typing.Any
+		]
 	]:
 		"""Converts:
-			- SQLAlchemy ORM mapped object → dict, where only the attributes
+			- SQLAlchemy ORM mapped object → dictionary, where only the attributes
 			`flask.g.user` has access to are included.
 			- Date(time) object → ISO formatted string
 			- UUID object → UUID string
@@ -65,7 +68,7 @@ class JSONEncoder(json.JSONEncoder):
 				datetime.time,
 				datetime.datetime
 			)
-		):  # TODO: PEP 604
+		):
 			return object_.isoformat()
 
 		if isinstance(object_, uuid.UUID):

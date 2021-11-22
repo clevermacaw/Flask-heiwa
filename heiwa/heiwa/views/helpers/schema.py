@@ -33,7 +33,7 @@ def generate_list_schema(
 				]
 			]
 		]
-	]:  # TODO: PEP 604
+	]:
 	"""Generates a Cerberus schema used for validating input to
 	all `list_` API endpoints.
 	"""

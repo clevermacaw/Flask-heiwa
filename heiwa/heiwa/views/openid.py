@@ -25,7 +25,10 @@ openid_blueprint.json_encoder = encoders.JSONEncoder
 
 def get_config(client_name: str) -> typing.Dict[
 		str,
-		typing.Dict[str, str]
+		typing.Dict[
+			str,
+			str
+		]
 	]:
 	"""Returns the current app's config for the given OpenID service.
 	If the `scope` parameter is missing or lacks `'openid'`, it's added.

@@ -228,7 +228,10 @@ class ForumPermissionMixin:
 
 	def to_permissions(self: ForumPermissionMixin) -> typing.Dict[
 		str,
-		typing.Union[None, bool]
+		typing.Union[
+			None,
+			bool
+		]
 	]:
 		"""Transforms the values in this instance to the standard format for
 		permissions. (A dictionary, where string keys represent permissions,
@@ -893,11 +896,13 @@ class Forum(
 			if parent_permissions is None:
 				return parsed_group_permissions
 
-			for key, value in parent_permissions.to_permissions().items():
-				if value is None:
+			for permission_name, permission_value in (
+				parent_permissions.to_permissions().items()
+			):
+				if permission_value is None:
 					continue
 
-				parsed_group_permissions[key] = value
+				parsed_group_permissions[permission_name] = permission_value
 
 			return parsed_group_permissions
 		else:
@@ -925,11 +930,13 @@ class Forum(
 			if parent_permissions is None:
 				return parsed_user_permissions
 
-			for key, value in parent_permissions.to_permissions().items():
-				if value is None:
+			for permission_name, permission_value in (
+				parent_permissions.to_permissions().items()
+			):
+				if permission_value is None:
 					continue
 
-				parsed_user_permissions[key] = value
+				parsed_user_permissions[permission_name] = permission_value
 
 			return parsed_user_permissions
 		else:
@@ -1008,11 +1015,13 @@ class Forum(
 		}
 
 		for permissions in group_permission_sets:
-			for key, value in permissions.to_permissions().items():
-				if key in permissions or key is None:
+			for permission_name, permission_value in (
+				permissions.to_permissions().items()
+			):
+				if permission_name in permissions or permission_name is None:
 					continue
 
-				permissions_to_add[key] = value
+				permissions_to_add[permission_name] = permission_value
 
 		if permissions_to_add == {}:
 			permissions_to_add = ForumPermissionMixin.DEFAULT_PERMISSIONS
@@ -1028,19 +1037,23 @@ class Forum(
 		).scalars().one_or_none()
 
 		if user_permissions is not None:
-			for key, value in user_permissions.to_permissions().items():
-				if value is None:
+			for permission_name, permission_value in (
+				user_permissions.to_permissions().items()
+			):
+				if permission_value is None:
 					continue
 
-				permissions_to_add[key] = value
+				permissions_to_add[permission_name] = permission_value
 
 		parsed_permissions = {}
 
-		for key, value in permissions_to_add.items():
-			parsed_permissions[key] = (
-				value
-				if value is not None
-				else user.parsed_permissions[key]
+		for permission_name, permission_value in (
+			permissions_to_add.items()
+		):
+			parsed_permissions[permission_name] = (
+				permission_value
+				if permission_value is not None
+				else user.parsed_permissions[permission_name]
 			)
 
 		existing_parsed_permissions = self.get_parsed_permissions(user.id)

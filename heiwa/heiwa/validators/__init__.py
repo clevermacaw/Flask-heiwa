@@ -92,7 +92,7 @@ class APIValidator(cerberus.Validator):
 				typing.Iterable[typing.Any],
 				typing.Any
 			]
-		],  # TODO: PEP 604
+		],
 		field: str,
 		value: typing.Any
 	) -> None:
@@ -131,7 +131,10 @@ class APIValidator(cerberus.Validator):
 def validate_json(
 	schema: typing.Dict[
 		str,
-		typing.Union[str, typing.Dict]
+		typing.Union[
+			str,
+			typing.Dict
+		]
 	],
 	*args,
 	**kwargs

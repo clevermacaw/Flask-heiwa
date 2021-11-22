@@ -244,7 +244,10 @@ class BasePermissionMixin:
 
 	def to_permissions(self: BasePermissionMixin) -> typing.Dict[
 		str,
-		typing.Union[None, bool]
+		typing.Union[
+			None,
+			bool
+		]
 	]:
 		"""Transforms the values in this instance to the standard format for
 		permissions. (A dictionary, where string keys represent permissions,

@@ -26,9 +26,9 @@ class UUID(sqlalchemy.types.TypeDecorator):
 
 	def process_bind_param(
 		self: UUID,
-		value: typing.Union[None, str, uuid.UUID],  # TODO: PEP 604
+		value: typing.Union[None, str, uuid.UUID],
 		dialect: sqlalchemy.engine.Dialect
-	) -> typing.Union[None, str]:  # TODO: PEP 604
+	) -> typing.Union[None, str]:
 		if value is None:
 			return value
 		elif dialect.name == "postgresql":
@@ -41,9 +41,9 @@ class UUID(sqlalchemy.types.TypeDecorator):
 
 	def process_result_value(
 		self: UUID,
-		value: typing.Union[None, str, uuid.UUID],  # TODO: PEP 604
+		value: typing.Union[None, str, uuid.UUID],
 		dialect: sqlalchemy.engine.Dialect
-	) -> typing.Union[None, uuid.UUID]:  # TODO: PEP 604
+	) -> typing.Union[None, uuid.UUID]:
 		if value is None:
 			return value
 		else:

@@ -22,7 +22,10 @@ OPERATORS = {
 def parse_search(
 	conditions: typing.Dict[
 		str,
-		typing.Union[typing.Dict, typing.Any]
+		typing.Union[
+			typing.Dict,
+			typing.Any
+		]
 	],
 	model: heiwa.models.Base
 ):

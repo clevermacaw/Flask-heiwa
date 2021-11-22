@@ -644,10 +644,7 @@ class User(
 	@avatar.setter
 	def avatar(
 		self: User,
-		value: typing.Union[
-			None,
-			bytes
-		]
+		value: typing.Union[None, bytes]
 	) -> None:
 		"""Sets this user's avatar. If `value` is `None`, the avatar is removed."""
 
@@ -703,21 +700,25 @@ class User(
 			if group.permissions is None:
 				continue
 
-			for key, value in group.permissions.to_permissions().items():
+			for permission_name, permission_value in (
+				group.permissions.to_permissions().items()
+			):
 				# Populates all permissions regardless of whether or not they are set.
-				if key in result:
+				if permission_name in result:
 					continue
 
-				if value is not None:
-					result[key] = value
+				if permission_value is not None:
+					result[permission_name] = permission_value
 				elif len(self.groups) - 1 == group_number:
-					result[key] = False
+					result[permission_name] = False
 
 		if self.permissions is not None:
-			for key, value in self.permissions.to_permissions().items():
-				if value is None:
+			for permission_name, permission_value in (
+				self.permissions.to_permissions().items()
+			):
+				if permission_value is None:
 					continue
 
-				result[key] = value
+				result[permission_name] = permission_value
 
 		self.parsed_permissions = result

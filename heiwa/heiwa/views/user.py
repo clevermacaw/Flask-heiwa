@@ -651,7 +651,7 @@ def edit_avatar(
 			flask.g.json["b64_avatar"],
 			validate=True
 		)
-	except (ValueError, binascii.Error):  # TODO: PEP 604
+	except (ValueError, binascii.Error):
 		raise exceptions.APIUserAvatarInvalid
 
 	avatar_type = magic.Magic(mime=True).from_buffer(avatar)
