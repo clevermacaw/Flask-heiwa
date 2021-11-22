@@ -237,7 +237,7 @@ class ForumPermissionMixin:
 
 		return {
 			permission_name: getattr(self, permission_name)
-			for permission_name in self.DEFAULT_PERMISSIONS.items()
+			for permission_name in self.DEFAULT_PERMISSIONS.keys()
 		}
 
 
