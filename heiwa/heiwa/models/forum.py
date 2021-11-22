@@ -236,39 +236,8 @@ class ForumPermissionMixin:
 		"""
 
 		return {
-			"forum_create": self.forum_create,
-			"forum_delete_own": self.forum_delete_own,
-			"forum_delete_any": self.forum_delete_any,
-			"forum_edit_own": self.forum_edit_own,
-			"forum_edit_any": self.forum_edit_any,
-			"forum_merge_own": self.forum_merge_own,
-			"forum_merge_any": self.forum_merge_any,
-			"forum_move_own": self.forum_move_own,
-			"forum_move_any": self.forum_move_any,
-			"forum_view": self.forum_view,
-			"post_create": self.post_create,
-			"post_delete_own": self.post_delete_own,
-			"post_delete_any": self.post_delete_any,
-			"post_edit_own": self.post_edit_own,
-			"post_edit_any": self.post_edit_any,
-			"post_edit_vote": self.post_edit_vote,
-			"post_move_own": self.post_move_own,
-			"post_move_any": self.post_move_any,
-			"post_view": self.post_view,
-			"thread_create": self.thread_create,
-			"thread_delete_own": self.thread_delete_own,
-			"thread_delete_any": self.thread_delete_any,
-			"thread_edit_own": self.thread_edit_own,
-			"thread_edit_any": self.thread_edit_any,
-			"thread_edit_lock_own": self.thread_edit_lock_own,
-			"thread_edit_lock_any": self.thread_edit_lock_any,
-			"thread_edit_pin": self.thread_edit_pin,
-			"thread_edit_vote": self.thread_edit_vote,
-			"thread_merge_own": self.thread_merge_own,
-			"thread_merge_any": self.thread_merge_any,
-			"thread_move_own": self.thread_move_own,
-			"thread_move_any": self.thread_move_any,
-			"thread_view": self.thread_view
+			permission_name: getattr(self, permission_name)
+			for permission_name in self.DEFAULT_PERMISSIONS.items()
 		}
 
 
