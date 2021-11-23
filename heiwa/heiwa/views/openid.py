@@ -53,10 +53,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify(
-		[
-			service
-			for service in flask.current_app.config["OPENID_SERVICES"].keys()
-		]
+		list(flask.current_app.config["OPENID_SERVICES"])
 	), helpers.STATUS_OK
 
 
@@ -165,8 +162,8 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 		if avatar_url is not None:
 			avatar = requests.get(avatar_url)
 
-			m = magic.Magic(mime=True)
-			avatar_type = m.from_buffer(avatar)
+			libmagic = magic.Magic(mime=True)
+			avatar_type = libmagic.from_buffer(avatar)
 
 		if user is None:
 			user = models.User.create(

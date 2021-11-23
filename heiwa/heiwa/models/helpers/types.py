@@ -21,33 +21,33 @@ class UUID(sqlalchemy.types.TypeDecorator):
 	):
 		if dialect.name == "postgresql":
 			return dialect.type_descriptor(sqlalchemy.dialects.postgresql.UUID())
-		else:
-			return dialect.type_descriptor(sqlalchemy.types.CHAR(32))
+
+		return dialect.type_descriptor(sqlalchemy.types.CHAR(32))
 
 	def process_bind_param(
 		self: UUID,
 		value: typing.Union[None, str, uuid.UUID],
 		dialect: sqlalchemy.engine.Dialect
 	) -> typing.Union[None, str]:
-		if value is None:
-			return value
-		elif dialect.name == "postgresql":
-			return str(value)
-		else:
-			if not isinstance(value, uuid.UUID):
-				return "%.32x" % uuid.UUID(value).int
+		if value is not None:
+			if isinstance(value, uuid.UUID):
+				value = value.hex
 			else:
-				return "%.32x" % value.int
+				value = uuid.UUID(value).hex
+
+			value = str(value)
+
+		return value
 
 	def process_result_value(
 		self: UUID,
 		value: typing.Union[None, str, uuid.UUID],
 		dialect: sqlalchemy.engine.Dialect
 	) -> typing.Union[None, uuid.UUID]:
-		if value is None:
-			return value
-		else:
-			if not isinstance(value, uuid.UUID):
-				value = uuid.UUID(value)
+		if (
+			value is not None and
+			not isinstance(value, uuid.UUID)
+		):
+			value = uuid.UUID(value)
 
-			return value
+		return value

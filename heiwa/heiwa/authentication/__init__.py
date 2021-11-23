@@ -11,7 +11,7 @@ import flask
 from .. import exceptions, models
 
 __all__ = ["authenticate_via_jwt"]
-__version__ = "3.2.0"
+__version__ = "3.2.1"
 
 
 def authenticate_via_jwt(
@@ -31,7 +31,7 @@ def authenticate_via_jwt(
 	@functools.wraps(function)
 	def wrapped_function(*args, **kwargs) -> typing.Any:
 		if "Authorization" not in flask.request.headers:
-			exceptions.APIAuthorizationHeaderMissing
+			raise exceptions.APIAuthorizationHeaderMissing
 
 		if not flask.request.headers["Authorization"][:7] == "Bearer ":
 			raise exceptions.APIAuthorizationHeaderInvalid

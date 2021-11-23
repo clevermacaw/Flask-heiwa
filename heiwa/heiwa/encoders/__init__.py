@@ -14,7 +14,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 __all__ = ["JSONEncoder"]
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 
 # Flask does have a custom encoder already that would take care of UUID
@@ -31,7 +31,7 @@ class JSONEncoder(json.JSONEncoder):
 
 	def default(
 		self: JSONEncoder,
-		object_: object
+		o: object
 	) -> typing.Union[
 		typing.Any,
 		str,
@@ -48,33 +48,33 @@ class JSONEncoder(json.JSONEncoder):
 			- Enum object → Enum object value
 		"""
 
-		if isinstance(object_.__class__, sqlalchemy.orm.DeclarativeMeta):
-			if hasattr(object_, "get_allowed_columns"):
+		if isinstance(o.__class__, sqlalchemy.orm.DeclarativeMeta):
+			if hasattr(o, "get_allowed_columns"):
 				return {
-					column: getattr(object_, column)
-					for column in object_.get_allowed_columns(flask.g.user)
-				}
-			else:
-				return {
-					column.key: getattr(object_, column.key)
-					for column in sqlalchemy.inspect(object_).mapper.column_attrs
-					if not column.key.startswith("_")
+					column: getattr(o, column)
+					for column in o.get_allowed_columns(flask.g.user)
 				}
 
+			return {
+				column.key: getattr(o, column.key)
+				for column in sqlalchemy.inspect(o).mapper.column_attrs
+				if not column.key.startswith("_")
+			}
+
 		if isinstance(
-			object_,
+			o,
 			(
 				datetime.date,
 				datetime.time,
 				datetime.datetime
 			)
 		):
-			return object_.isoformat()
+			return o.isoformat()
 
-		if isinstance(object_, uuid.UUID):
-			return str(object_)
+		if isinstance(o, uuid.UUID):
+			return str(o)
 
-		if isinstance(object_, enum.Enum):
-			return object_.value
+		if isinstance(o, enum.Enum):
+			return o.value
 
-		return json.JSONEncoder.default(self, object_)
+		return json.JSONEncoder.default(self, o)

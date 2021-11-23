@@ -256,7 +256,7 @@ class BasePermissionMixin:
 
 		return {
 			permission_name: getattr(self, permission_name)
-			for permission_name in self.DEFAULT_PERMISSIONS.keys()
+			for permission_name in self.DEFAULT_PERMISSIONS
 		}
 
 
@@ -416,12 +416,12 @@ class PermissionControlMixin:
 				column.key
 				for column in sqlalchemy.inspect(self).mapper.column_attrs
 			]
-		else:
-			return [
-				column_name
-				for column_name, column_func in self.viewable_columns.items()
-				if column_func(self, user)
-			]
+
+		return [
+			column_name
+			for column_name, column_func in self.viewable_columns.items()
+			if column_func(self, user)
+		]
 
 	@classmethod
 	def get_class_permission(

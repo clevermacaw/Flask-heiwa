@@ -240,7 +240,7 @@ class ForumPermissionMixin:
 
 		return {
 			permission_name: getattr(self, permission_name)
-			for permission_name in self.DEFAULT_PERMISSIONS.keys()
+			for permission_name in self.DEFAULT_PERMISSIONS
 		}
 
 
@@ -861,8 +861,8 @@ class Forum(
 				parent_forum_id,
 				child_level
 			)
-		else:
-			return child_level
+
+		return child_level
 
 	def get_child_level(self: Forum) -> None:
 		"""Returns how "deep" this forum is. For example, if there is a parent
@@ -905,8 +905,8 @@ class Forum(
 				parsed_group_permissions[permission_name] = permission_value
 
 			return parsed_group_permissions
-		else:
-			return {}
+
+		return {}
 
 	def _get_parent_permissions_user(
 		self: Forum,
@@ -939,8 +939,8 @@ class Forum(
 				parsed_user_permissions[permission_name] = permission_value
 
 			return parsed_user_permissions
-		else:
-			return {}
+
+		return {}
 
 	@functools.lru_cache()
 	def get_parsed_permissions(

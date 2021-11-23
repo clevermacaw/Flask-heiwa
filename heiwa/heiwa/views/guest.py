@@ -60,19 +60,20 @@ def token() -> typing.Tuple[flask.Response, int]:
 		raise exceptions.APIGuestSessionLimitReached
 
 	# Delete all expired sessions with no content
-	for existing_guest in flask.g.sa_session.execute(
-		sqlalchemy.select(models.User).
+	flask.g.sa_session.execute(
+		sqlalchemy.delete(models.User).
 		where(
 			sqlalchemy.and_(
 				models.User.creation_timestamp > max_creation_timestamp,
 				models.User.registered_by == "guest",
-				models.User.has_content.is_(False)
+				~models.User.has_content
 			)
-		)
-	).scalars().all():
-		# No need to commit here, unless something's very wrong,
-		# no exceptions will be raised
-		existing_guest.delete()
+		).
+		execution_options(synchronize_session="fetch")
+	)
+
+	# No need to commit here, unless something's very wrong,
+	# no exceptions will be raised
 
 	user = models.User(
 		registered_by="guest",

@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.20"
+__version__ = "0.13.21"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -111,7 +111,7 @@ def create_app() -> ConfiguredLockFlask:
 		from .errorhandlers import handle_api_exception, handle_http_exception
 		from .exceptions import APIException
 
-		for handler in {
+		for handler in (
 			(
 				APIException,
 				handle_api_exception
@@ -120,7 +120,7 @@ def create_app() -> ConfiguredLockFlask:
 				werkzeug.exceptions.HTTPException,
 				handle_http_exception
 			)
-		}:
+		):
 			app.register_error_handler(*handler)
 
 		from .views import (
@@ -135,7 +135,7 @@ def create_app() -> ConfiguredLockFlask:
 			user_blueprint
 		)
 
-		for blueprint in {
+		for blueprint in (
 			forum_blueprint,
 			group_blueprint,
 			guest_blueprint,
@@ -145,7 +145,7 @@ def create_app() -> ConfiguredLockFlask:
 			post_blueprint,
 			thread_blueprint,
 			user_blueprint
-		}:
+		):
 			app.register_blueprint(blueprint)
 
 		if not app.configured:

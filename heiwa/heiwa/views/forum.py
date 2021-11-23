@@ -1202,15 +1202,15 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify({
 		"is_subscribed": flask.g.sa_session.execute(
-			sqlalchemy.select(models.c.forum_subscribers.forum_id).
+			sqlalchemy.select(models.forum_subscribers.c.forum_id).
 			where(
 				sqlalchemy.and_(
-					models.c.forum_subscribers.forum_id == find_forum_by_id(
+					models.forum_subscribers.c.forum_id == find_forum_by_id(
 						id_,
 						flask.g.sa_session,
 						flask.g.user
 					).id,
-					models.c.forum_subscribers.user_id == flask.g.user.id
+					models.forum_subscribers.c.user_id == flask.g.user.id
 				)
 			).
 			exists().
