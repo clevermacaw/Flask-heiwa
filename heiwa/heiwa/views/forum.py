@@ -1133,17 +1133,59 @@ def view_permissions_user(
 
 
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
-@validators.validate_json({
-	"subscribe": {
-		"type": "boolean",
-		"required": True
-	}
-})
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Forum)
 @limiter.limiter.limit(get_endpoint_limit)
-def edit_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Subscribes to / unsubscribes from the forum with the provided ID.
+def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+	"""Subscribes to the forum with the provided ID.
+
+	Idempotent.
+	"""
+
+	forum = find_forum_by_id(
+		id_,
+		flask.g.sa_session,
+		flask.g.user
+	)
+
+	validate_permission(
+		flask.g.user,
+		"edit_subscription",
+		forum
+	)
+
+	if (
+		flask.g.sa_session.execute(
+			sqlalchemy.select(models.forum_subscribers).
+			where(
+				sqlalchemy.and_(
+					models.forum_subscribers.c.forum_id == forum.id,
+					models.forum_subscribers.c.user_id == flask.g.user.id
+				)
+			)
+		).scalars().one()
+	) is not None:
+		raise exceptions.APIForumSubscriptionAlreadyExists(forum.id)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.insert(models.forum_subscribers).
+		values(
+			forum_id=forum.id,
+			user_id=flask.g.user.id
+		)
+	)
+
+	flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
+@forum_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
+@authentication.authenticate_via_jwt
+@requires_permission("edit_subscription", models.Forum)
+@limiter.limiter.limit(get_endpoint_limit)
+def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+	"""Unsubscribes from the forum with the provided ID.
 
 	Idempotent.
 	"""
@@ -1170,19 +1212,10 @@ def edit_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		)
 	).scalars().one()
 
-	if flask.g.json["subscribe"] is (existing_subscription is not None):
-		raise exceptions.APIForumSubscriptionUnchanged(flask.g.json["subscribe"])
+	if existing_subscription is None:
+		raise exceptions.APIForumSubscriptionNotFound(forum.id)
 
-	if flask.g.json["subscribe"]:
-		flask.g.sa_session.execute(
-			sqlalchemy.insert(models.forum_subscribers).
-			values(
-				forum_id=forum.id,
-				user_id=flask.g.user.id
-			)
-		)
-	else:
-		flask.g.sa_session.delete(existing_subscription)
+	flask.g.sa_session.delete(existing_subscription)
 
 	flask.g.sa_session.commit()
 
@@ -1200,8 +1233,8 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	Idempotent.
 	"""
 
-	return flask.jsonify({
-		"is_subscribed": flask.g.sa_session.execute(
+	return flask.jsonify(
+		flask.g.sa_session.execute(
 			sqlalchemy.select(models.forum_subscribers.c.forum_id).
 			where(
 				sqlalchemy.and_(
@@ -1216,7 +1249,7 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			exists().
 			select()
 		).scalars().one()
-	}), helpers.STATUS_OK
+	), helpers.STATUS_OK
 
 
 @forum_blueprint.route("/authorized-actions", methods=["GET"])

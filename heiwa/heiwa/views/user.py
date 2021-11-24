@@ -701,22 +701,42 @@ def view_avatar(
 	return generate_avatar_response(user), helpers.STATUS_OK
 
 
+@user_blueprint.route("/users/<uuid:id_>/ban", methods=["DELETE"])
+@authentication.authenticate_via_jwt
+@requires_permission("edit_ban", models.User)
+@limiter.limiter.limit(get_endpoint_limit)
+def delete_ban(
+	id_: typing.Union[None, uuid.UUID]
+) -> typing.Tuple[flask.Response, int]:
+	"""Deletes the user with the given ID's ban.
+
+	Idempotent.
+	"""
+
+	user = find_user_by_id(
+		id_,
+		flask.g.sa_session
+	)
+
+	validate_permission(
+		flask.g.user,
+		"edit_ban",
+		user
+	)
+
+	if not user.is_banned:
+		raise exceptions.APIUserBanNotFound(user.id)
+
+	user.remove_ban()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
 @user_blueprint.route("/users/<uuid:id_>/ban", methods=["PUT"])
 @validators.validate_json({
-	"ban": {
-		"type": "boolean",
-		"makes_required": {
-			"expiration_timestamp": True,
-			"reason": True
-		},
-		"required": True
-	},
 	"expiration_timestamp": {
 		"type": "datetime",
 		"coerce": "convert_to_datetime",
-		"dependencies": {
-			"ban": True
-		},
 		"required": False
 	},
 	"reason": {
@@ -724,16 +744,13 @@ def view_avatar(
 		"minlength": 1,
 		"maxlength": 65536,
 		"nullable": True,
-		"dependencies": {
-			"ban": True
-		},
 		"required": False
 	}
 })
 @authentication.authenticate_via_jwt
 @requires_permission("edit_ban", models.User)
 @limiter.limiter.limit(get_endpoint_limit)
-def ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Bans the user with the given ID. Requires an expiration timestamp,
 	the reason is optional.
 
@@ -751,20 +768,20 @@ def ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		user
 	)
 
-	if (
-		flask.g.json["ban"] is user.is_banned and (
-			(
-				user.is_banned and
-				user.ban.expiration_timestamp == flask.g.json["expiration_timestamp"] and
-				user.ban.reason == flask.g.json["reason"]
-			) or
-			not user.is_banned
-		)
-	):
-		raise exceptions.APIUserBanUnchanged(user.ban)
+	if user.is_banned:
+		if (
+			datetime.datetime.now(tz=datetime.timezone.utc)
+			> user.ban.expiration_timestamp
+		):
+			user.remove_ban()
+
+		if (
+			user.ban.expiration_timestamp == flask.g.json["expiration_timestamp"] and
+			user.ban.reason == flask.g.json["reason"]
+		):
+			raise exceptions.APIUserBanUnchanged(user.ban)
 
 	if (
-		flask.g.json["ban"] and
 		datetime.datetime.now(tz=flask.g.json["expiration_timestamp"].tzinfo)
 		> flask.g.json["expiration_timestamp"]
 	):
@@ -772,23 +789,20 @@ def ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			flask.g.json["expiration_timestamp"]
 		)
 
-	status = helpers.STATUS_OK
+	if user.is_banned:
+		user.ban.expiration_timestamp = flask.g.json["expiration_timestamp"]
+		user.ban.reason = flask.g.json["reason"]
 
-	if flask.g.json["ban"]:
-		if user.is_banned:
-			user.ban.expiration_timestamp = flask.g.json["expiration_timestamp"]
-			user.ban.reason = flask.g.json["reason"]
+		user.ban.edited()
 
-			user.ban.edited()
-		else:
-			user.create_ban(
-				expiration_timestamp=flask.g.json["expiration_timestamp"],
-				reason=flask.g.json["reason"]
-			)
-
-			status = helpers.STATUS_CREATED
+		status = helpers.STATUS_OK
 	else:
-		user.remove_ban()
+		user.create_ban(
+			expiration_timestamp=flask.g.json["expiration_timestamp"],
+			reason=flask.g.json["reason"]
+		)
+
+		status = helpers.STATUS_CREATED
 
 	flask.g.sa_session.commit()
 
@@ -823,22 +837,79 @@ def view_ban(
 		user
 	)
 
+	if (
+		datetime.datetime.now(tz=datetime.timezone.utc)
+		> user.ban.expiration_timestamp
+	):
+		user.remove_ban()
+
 	return flask.jsonify(user.ban), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["PUT"])
-@validators.validate_json({
-	"block": {
-		"type": "boolean",
-		"required": True
-	}
-})
 @authentication.authenticate_via_jwt
 @requires_permission("edit_block", models.User)
 @limiter.limiter.limit(get_endpoint_limit)
-def edit_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Blocks the user with the given ID. If `flask.g.user` is a follower of
 	`user`, they're automatically removed.
+
+	Idempotent.
+	"""
+
+	user = find_user_by_id(
+		id_,
+		flask.g.sa_session
+	)
+
+	validate_permission(
+		flask.g.user,
+		"edit_block",
+		user
+	)
+
+	if (
+		flask.g.sa_session.execute(
+			sqlalchemy.select(models.user_blocks).
+			where(
+				sqlalchemy.and_(
+					models.user_blocks.c.blocker_id == flask.g.user.id,
+					models.user_blocks.c.blockee_id == user.id
+				)
+			)
+		).scalars().one()
+	)is not None:
+		raise exceptions.APIUserBlockAlreadyExists(user.id)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.delete(models.user_follows).
+		where(
+			sqlalchemy.and_(
+				models.user_follows.c.follower_id == flask.g.user.id,
+				models.user_follows.c.followee_id == user.id
+			)
+		)
+	)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.insert(models.user_blocks).
+		values(
+			blocker_id=flask.g.user.id,
+			blockee_id=user.id
+		)
+	)
+
+	flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
+@user_blueprint.route("/users/<uuid:id_>/block", methods=["DELETE"])
+@authentication.authenticate_via_jwt
+@requires_permission("edit_block", models.User)
+@limiter.limiter.limit(get_endpoint_limit)
+def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+	"""Unblocks the user with the given ID.
 
 	Idempotent.
 	"""
@@ -864,30 +935,10 @@ def edit_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		)
 	).scalars().one()
 
-	if flask.g.json["block"] is (existing_block is not None):
-		raise exceptions.APIUserBlockUnchanged(flask.g.json["block"])
+	if existing_block is None:
+		raise exceptions.APIUserBlockNotFound(user.id)
 
-	if flask.g.json["block"]:
-		flask.g.sa_session.execute(
-			sqlalchemy.delete(models.user_follows).
-			where(
-				sqlalchemy.and_(
-					models.user_follows.c.follower_id == flask.g.user.id,
-					models.user_follows.c.followee_id == user.id
-				)
-			)
-		)
-
-		flask.g.sa_session.execute(
-			sqlalchemy.insert(models.user_blocks).
-			values(
-				blocker_id=flask.g.user.id,
-				blockee_id=user.id
-			)
-		)
-	else:
-		flask.g.sa_session.delete(existing_block)
-
+	flask.g.sa_session.delete(existing_block)
 	flask.g.sa_session.commit()
 
 	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
@@ -904,8 +955,8 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	Idempotent.
 	"""
 
-	return flask.jsonify({
-		"is_blockee": flask.g.sa_session.execute(
+	return flask.jsonify(
+		flask.g.sa_session.execute(
 			sqlalchemy.select(models.user_blocks.c.blocker_id).
 			where(
 				sqlalchemy.and_(
@@ -919,7 +970,7 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			exists().
 			select()
 		).scalars().one()
-	}), helpers.STATUS_OK
+	), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/followers", methods=["GET"])
@@ -1041,17 +1092,58 @@ def list_followees(
 
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["PUT"])
-@validators.validate_json({
-	"follow": {
-		"type": "boolean",
-		"required": True
-	}
-})
 @authentication.authenticate_via_jwt
 @requires_permission("edit_follow", models.User)
 @limiter.limiter.limit(get_endpoint_limit)
-def edit_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Follows / unfollows the user with the given ID.
+def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+	"""Follows the user with the given ID.
+
+	Idempotent.
+	"""
+
+	user = find_user_by_id(
+		id_,
+		flask.g.sa_session
+	)
+
+	validate_permission(
+		flask.g.user,
+		"edit_follow",
+		user
+	)
+
+	if (
+		flask.g.sa_session.execute(
+			sqlalchemy.select(models.user_follows).
+			where(
+				sqlalchemy.and_(
+					models.user_follows.c.follower_id == flask.g.user.id,
+					models.user_follows.c.followee_id == user.id
+				)
+			)
+		).scalars().one()
+	)is not None:
+		raise exceptions.APIUserFollowAlreadyExists(user.id)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.insert(models.user_follows).
+		values(
+			follower_id=flask.g.user.id,
+			followee_id=user.id
+		)
+	)
+
+	flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
+@user_blueprint.route("/users/<uuid:id_>/follow", methods=["DELETE"])
+@authentication.authenticate_via_jwt
+@requires_permission("edit_follow", models.User)
+@limiter.limiter.limit(get_endpoint_limit)
+def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+	"""Unollows the user with the given ID.
 
 	Idempotent.
 	"""
@@ -1077,19 +1169,10 @@ def edit_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		)
 	).scalars().one()
 
-	if flask.g.json["follow"] is (existing_follow is not None):
-		raise exceptions.APIUserFollowUnchanged(flask.g.json["follow"])
+	if existing_follow is None:
+		raise exceptions.APIUserFollowNotFound(user.id)
 
-	if flask.g.json["follow"]:
-		flask.g.sa_session.execute(
-			sqlalchemy.insert(models.user_follows).
-			values(
-				follower_id=flask.g.user.id,
-				followee_id=user.id
-			)
-		)
-	else:
-		flask.g.sa_session.delete(existing_follow)
+	flask.g.sa_session.delete(existing_follow)
 
 	flask.g.sa_session.commit()
 
@@ -1301,19 +1384,19 @@ def delete_group(
 	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
 
 
-@user_blueprint.route("/users/<uuid:id_>/permissions", methods=["GET"])
+@user_blueprint.route("/users/<uuid:id_>/permissions", methods=["PUT"])
 @user_blueprint.route(
 	"/self/permissions",
 	defaults={"id_": None},
-	methods=["GET"]
+	methods=["PUT"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view_permissions", models.User)
+@requires_permission("edit_permissions", models.User)
 @limiter.limiter.limit(get_endpoint_limit)
-def view_permissions(
+def delete_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the user with the given ID's specific permissions.
+	"""Deletes the user with the given ID's specific permissions.
 
 	Idempotent.
 	"""
@@ -1325,11 +1408,16 @@ def view_permissions(
 
 	validate_permission(
 		flask.g.user,
-		"view_permissions",
+		"edit_permissions",
 		user
 	)
 
-	return flask.jsonify(user.permissions), helpers.STATUS_OK
+	if user.permissions is None:
+		raise exceptions.APIUserPermissionsNotFound(user.id)
+
+	user.permissions.delete()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/permissions", methods=["PUT"])
@@ -1385,7 +1473,9 @@ def view_permissions(
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions", models.User)
 @limiter.limiter.limit(get_endpoint_limit)
-def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+def edit_permissions(
+	id_: typing.Union[None, uuid.UUID]
+) -> typing.Tuple[flask.Response, int]:
 	"""Updates the user with the given ID's specific permissions.
 	Automatically creates them if they don't exist.
 
@@ -1429,6 +1519,37 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	flask.g.sa_session.commit()
 
 	return flask.jsonify(user.permissions), status
+
+
+@user_blueprint.route("/users/<uuid:id_>/permissions", methods=["GET"])
+@user_blueprint.route(
+	"/self/permissions",
+	defaults={"id_": None},
+	methods=["GET"]
+)
+@authentication.authenticate_via_jwt
+@requires_permission("view_permissions", models.User)
+@limiter.limiter.limit(get_endpoint_limit)
+def view_permissions(
+	id_: typing.Union[None, uuid.UUID]
+) -> typing.Tuple[flask.Response, int]:
+	"""Returns the user with the given ID's specific permissions.
+
+	Idempotent.
+	"""
+
+	user = get_user_self_or_id(
+		id_,
+		flask.g.sa_session
+	)
+
+	validate_permission(
+		flask.g.user,
+		"view_permissions",
+		user
+	)
+
+	return flask.jsonify(user.permissions), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users/authorized-actions", methods=["GET"])

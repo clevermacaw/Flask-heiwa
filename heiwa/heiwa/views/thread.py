@@ -774,17 +774,59 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
-@validators.validate_json({
-	"subscribe": {
-		"type": "boolean",
-		"required": True
-	}
-})
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Thread)
 @limiter.limiter.limit(get_endpoint_limit)
-def edit_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Subscribes to / unsubscribes from the thread with the given ID.
+def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+	"""Subscribes to the thread with the given ID.
+
+	Idempotent.
+	"""
+
+	thread = find_thread_by_id(
+		id_,
+		flask.g.sa_session,
+		flask.g.user
+	)
+
+	validate_permission(
+		flask.g.user,
+		"edit_subscription",
+		thread
+	)
+
+	if (
+		flask.g.sa_session.execute(
+			sqlalchemy.select(models.thread_subscribers).
+			where(
+				sqlalchemy.and_(
+					models.thread_subscribers.c.thread_id == thread.id,
+					models.thread_subscribers.c.user_id == flask.g.user.id
+				)
+			)
+		).scalars().one()
+	) is not None:
+		raise exceptions.APIThreadSubscriptionAlreadyExists(thread.id)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.insert(models.thread_subscribers).
+		values(
+			thread_id=thread.id,
+			user_id=flask.g.user.id
+		)
+	)
+
+	flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
+@thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
+@authentication.authenticate_via_jwt
+@requires_permission("edit_subscription", models.Thread)
+@limiter.limiter.limit(get_endpoint_limit)
+def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
+	"""Unsubscribes from the thread with the provided ID.
 
 	Idempotent.
 	"""
@@ -811,19 +853,10 @@ def edit_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		)
 	).scalars().one()
 
-	if flask.g.json["subscribe"] is (existing_subscription is not None):
-		raise exceptions.APIThreadSubscriptionUnchanged(flask.g.json["subscribe"])
+	if existing_subscription is None:
+		raise exceptions.APIThreadSubscriptionNotFound(thread.id)
 
-	if flask.g.json["subscribe"]:
-		flask.g.sa_session.execute(
-			sqlalchemy.insert(models.thread_subscribers).
-			values(
-				thread_id=thread.id,
-				user_id=flask.g.user.id
-			)
-		)
-	else:
-		flask.g.sa_session.delete(existing_subscription)
+	flask.g.sa_session.delete(existing_subscription)
 
 	flask.g.sa_session.commit()
 
@@ -841,8 +874,8 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	Idempotent.
 	"""
 
-	return flask.jsonify({
-		"is_subscribed": flask.g.sa_session.execute(
+	return flask.jsonify(
+		flask.g.sa_session.execute(
 			sqlalchemy.select(models.thread_subscribers.c.forum_id).
 			where(
 				sqlalchemy.and_(
@@ -857,7 +890,7 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			exists().
 			select()
 		).scalars().one()
-	})
+	)
 
 
 @thread_blueprint.route("/<uuid:id_>/vote", methods=["PUT"])

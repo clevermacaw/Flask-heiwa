@@ -17,7 +17,8 @@ __all__ = [
 	"APIForumPermissionsGroupUnchanged",
 	"APIForumPermissionsUserNotFound",
 	"APIForumPermissionsUserUnchanged",
-	"APIForumSubscriptionUnchanged",
+	"APIForumSubscriptionAlreadyExists",
+	"APIForumSubscriptionNotFound",
 	"APIForumUnchanged",
 	"APIGroupCannotDeleteLastDefault",
 	"APIGroupCannotDeletePermissionsForLastDefault",
@@ -45,7 +46,8 @@ __all__ = [
 	"APIPostVoteUnchanged",
 	"APIThreadLocked",
 	"APIThreadNotFound",
-	"APIThreadSubscriptionUnchanged",
+	"APIThreadSubscriptionAlreadyExists",
+	"APIThreadSubscriptionNotFound",
 	"APIThreadUnchanged",
 	"APIThreadVoteNotFound",
 	"APIThreadVoteUnchanged",
@@ -53,18 +55,20 @@ __all__ = [
 	"APIUserAvatarNotAllowedType",
 	"APIUserAvatarTooLarge",
 	"APIUserBanAlreadyExpired",
+	"APIUserBanNotFound",
 	"APIUserBanUnchanged",
 	"APIUserBanned",
-	"APIUserBlockUnchanged",
+	"APIUserBlockAlreadyExists",
+	"APIUserBlockNotFound",
 	"APIUserCannotRemoveLastDefaultGroup",
-	"APIUserFollowUnchanged",
+	"APIUserFollowAlreadyExists",
 	"APIUserGroupAlreadyAdded",
 	"APIUserGroupNotAdded",
 	"APIUserNotFound",
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.27.1"
+__version__ = "1.28.0"
 
 
 class APIException(Exception):
@@ -173,12 +177,20 @@ class APIForumPermissionsUserUnchanged(APIException):
 	code = helpers.STATUS_FORBIDDEN
 
 
-class APIForumSubscriptionUnchanged(APIException):
-	"""Exception class for when a user attempts to subscribe to /
-	unsubscribe from a forum, but has already done so before.
+class APIForumSubscriptionAlreadyExists(APIException):
+	"""Exception class for when a user attempts to subscribe to a forum,
+	but has already done so before.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
+
+
+class APIForumSubscriptionNotFound(APIException):
+	"""Exception class for when a user attempts to unsubscribe from a forum,
+	but there is no subscription in the first place.
+	"""
+
+	code = helpers.STATUS_NOT_FOUND
 
 
 class APIForumUnchanged(APIException):
@@ -395,12 +407,20 @@ class APIThreadNotFound(APIException):
 	code = helpers.STATUS_NOT_FOUND
 
 
-class APIThreadSubscriptionUnchanged(APIException):
-	"""Exception class for when a user attempts to subscribe to /
-	unsubscribe from a thread, but has already done so before.
+class APIThreadSubscriptionAlreadyExists(APIException):
+	"""Exception class for when a user attempts to subscribe to a thread,
+	but has already done so before.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
+
+
+class APIThreadSubscriptionNotFound(APIException):
+	"""Exception class for when a user attempts to unsubscribe from a thread,
+	but there is no subscription in the first place.
+	"""
+
+	code = helpers.STATUS_NOT_FOUND
 
 
 class APIThreadUnchanged(APIException):
@@ -460,11 +480,19 @@ class APIUserAvatarTooLarge(APIException):
 
 
 class APIUserBanAlreadyExpired(APIException):
-	"""Exception class for when a user attempst to ban another user,
+	"""Exception class for when a user attempts to ban another user,
 	but the expiration timestamp is in the past.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
+
+
+class APIUserBanNotFound(APIException):
+	"""Exception class for when a user attempts to delete another user's ban,
+	but there is none.
+	"""
+
+	code = helpers.STATUS_NOT_FOUND
 
 
 class APIUserBanUnchanged(APIException):
@@ -483,12 +511,20 @@ class APIUserBanned(APIException):
 	code = helpers.STATUS_FORBIDDEN
 
 
-class APIUserBlockUnchanged(APIException):
-	"""Exception class for when a user attempts to block / unblock another user,
+class APIUserBlockAlreadyExists(APIException):
+	"""Exception class for when a user attempts to block another user,
 	but has already done so before.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
+
+
+class APIUserBlockNotFound(APIException):
+	"""Exception class for when a user attempts to unblock another user,
+	but has never blocked them in the first place.
+	"""
+
+	code = helpers.STATUS_NOT_FOUND
 
 
 class APIUserCannotRemoveLastDefaultGroup(APIException):
@@ -499,12 +535,20 @@ class APIUserCannotRemoveLastDefaultGroup(APIException):
 	code = helpers.STATUS_FORBIDDEN
 
 
-class APIUserFollowUnchanged(APIException):
-	"""Exception class for when a user attempts to follow /
-	unfollow another user, but has already done so before.
+class APIUserFollowAlreadyExists(APIException):
+	"""Exception class for when a user attempts to follow another user,
+	but has already done so before.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
+
+
+class APIUserFollowNotFound(APIException):
+	"""Exception class for when a user attempts to unfollow another user,
+	but has never followed them in the first place.
+	"""
+
+	code = helpers.STATUS_NOT_FOUND
 
 
 class APIUserGroupAlreadyAdded(APIException):
@@ -526,6 +570,14 @@ class APIUserGroupNotAdded(APIException):
 class APIUserNotFound(APIException):
 	"""Exception class for when a requested user
 	(e.g. /users/invalid-uuid) does not exist.
+	"""
+
+	code = helpers.STATUS_NOT_FOUND
+
+
+class APIUserPermissionsNotFound(APIException):
+	"""Exception class for when a user attempts to delete another user's
+	permissions (specific to them), but there are none.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
