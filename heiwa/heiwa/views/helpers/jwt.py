@@ -30,8 +30,8 @@ def create_jwt(
 			),
 			"iat": current_timestamp,
 			"exp": (
-				current_timestamp +
-				(
+				current_timestamp
+				+ (
 					flask.current_app.config["JWT_EXPIRES_AFTER"]
 					if expires_after is None
 					else expires_after

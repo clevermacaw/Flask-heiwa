@@ -1190,8 +1190,8 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	Idempotent.
 	"""
 
-	return flask.jsonify({
-		"is_followee": flask.g.sa_session.execute(
+	return flask.jsonify(
+		flask.g.sa_session.execute(
 			sqlalchemy.select(models.user_follows.c.follower_id).
 			where(
 				sqlalchemy.and_(
@@ -1205,7 +1205,7 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			exists().
 			select()
 		).scalars().one()
-	}), helpers.STATUS_OK
+	), helpers.STATUS_OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/groups", methods=["GET"])
