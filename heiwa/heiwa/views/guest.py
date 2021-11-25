@@ -29,11 +29,28 @@ def token() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	max_creation_timestamp = (
-		datetime.datetime.now(tz=datetime.timezone.utc) +
-		datetime.timedelta(seconds=flask.current_app.config[
+		datetime.datetime.now(tz=datetime.timezone.utc)
+		- datetime.timedelta(seconds=flask.current_app.config[
 			"GUEST_SESSION_EXPIRES_AFTER"
 		])
 	)
+
+	# Delete all expired sessions with no content
+	flask.g.sa_session.execute(
+		sqlalchemy.delete(models.User).
+		where(
+			sqlalchemy.and_(
+				models.User.creation_timestamp <= max_creation_timestamp,
+				models.User.registered_by == "guest",
+				~models.User.has_content
+			)
+		).
+		execution_options(synchronize_session="fetch")
+	)
+
+	# Commit just in case there is something wrong with user input,
+	# and an exception is raised
+	flask.g.sa_session.commit()
 
 	existing_session_count = flask.g.sa_session.execute(
 		sqlalchemy.select(
@@ -43,7 +60,7 @@ def token() -> typing.Tuple[flask.Response, int]:
 		).
 		where(
 			sqlalchemy.and_(
-				models.User.creation_timestamp < max_creation_timestamp,
+				models.User.creation_timestamp <= max_creation_timestamp,
 				models.User.registered_by == "guest",
 				models.User.external_id == flask.g.identifier
 			)
@@ -58,22 +75,6 @@ def token() -> typing.Tuple[flask.Response, int]:
 		# basic information about other users. Potentially sensitive config
 		# information could also be obtained.
 		raise exceptions.APIGuestSessionLimitReached
-
-	# Delete all expired sessions with no content
-	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.User).
-		where(
-			sqlalchemy.and_(
-				models.User.creation_timestamp > max_creation_timestamp,
-				models.User.registered_by == "guest",
-				~models.User.has_content
-			)
-		).
-		execution_options(synchronize_session="fetch")
-	)
-
-	# No need to commit here, unless something's very wrong,
-	# no exceptions will be raised
 
 	user = models.User(
 		registered_by="guest",

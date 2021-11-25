@@ -429,7 +429,7 @@ class User(
 	instance_actions = {
 		"delete": lambda self, user: (
 			self.id == user.id or (
-				self.get_class_permission(user, "view") and
+				self.get_instance_permission(user, "view") and
 				user.parsed_permissions["user_delete"] and
 				user.highest_group.level > self.highest_group.level
 			)
@@ -437,13 +437,13 @@ class User(
 		"delete_self": lambda self, user: True,
 		"edit": lambda self, user: (
 			self.id == user.id or (
-				self.get_class_permission(user, "view") and
+				self.get_instance_permission(user, "view") and
 				user.parsed_permissions["user_edit"] and
 				user.highest_group.level > self.highest_group.level
 			)
 		),
 		"edit_ban": lambda self, user: (
-			self.get_class_permission(user, "view") and
+			self.get_instance_permission(user, "view") and
 			user.parsed_permissions["user_edit_ban"] and (
 				self.id == user.id or
 				user.highest_group.level > self.highest_group.level
@@ -451,14 +451,14 @@ class User(
 		),
 		"edit_block": lambda self, user: (
 			self.id != user.id and
-			self.get_class_permission(user, "view")
+			self.get_instance_permission(user, "view")
 		),
 		"edit_follow": lambda self, user: (
 			self.id != user.id and
-			self.get_class_permission(user, "view")
+			self.get_instance_permission(user, "view")
 		),
 		"edit_group": lambda self, user: (
-			self.get_class_permission(user, "view") and
+			self.get_instance_permission(user, "view") and
 			user.parsed_permissions["user_edit_groups"] and
 			user.highest_group.level > self.highest_group.level and
 			(
@@ -467,15 +467,15 @@ class User(
 			)
 		),
 		"edit_permissions": lambda self, user: (
-			self.get_class_permission(user, "view") and
+			self.get_instance_permission(user, "view") and
 			user.parsed_permissions["user_edit_permissions"] and
 			user.highest_group.level > self.highest_group.level
 		),
 		"view": lambda self, user: True,
-		"view_ban": lambda self, user: self.get_class_permission(user, "view"),
-		"view_groups": lambda self, user: self.get_class_permission(user, "view"),
+		"view_ban": lambda self, user: self.get_instance_permission(user, "view"),
+		"view_groups": lambda self, user: self.get_instance_permission(user, "view"),
 		"view_permissions": lambda self, user: (
-			self.get_class_permission(user, "view")
+			self.get_instance_permission(user, "view")
 		)
 	}
 
@@ -581,7 +581,14 @@ class User(
 		"""Returns the group with the highest `level` this user has."""
 
 		return sqlalchemy.orm.object_session(self).execute(
-			User.highest_group
+			sqlalchemy.select(Group).
+			where(
+				Group.users.any(id=self.id)
+			).
+			order_by(
+				sqlalchemy.desc(Group.level)
+			).
+			limit(1)
 		).scalars().one()
 
 	@highest_group.expression

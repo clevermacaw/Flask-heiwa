@@ -94,8 +94,8 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 		where(
 			models.OpenIDAuthentication.creation_timestamp
 			> (
-				datetime.datetime.now(tz=datetime.timezone.utc) +
-				datetime.timedelta(seconds=flask.current_app.config[
+				datetime.datetime.now(tz=datetime.timezone.utc)
+				+ datetime.timedelta(seconds=flask.current_app.config[
 					"OPENID_AUTHENTICATION_EXPIRES_AFTER"
 				])
 			)
