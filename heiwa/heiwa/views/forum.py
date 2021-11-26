@@ -9,7 +9,6 @@ from .. import (
 	encoders,
 	exceptions,
 	helpers,
-	limiter,
 	models,
 	validators
 )
@@ -20,7 +19,6 @@ from .helpers import (
 	find_user_by_id,
 	generate_list_schema,
 	generate_search_schema_registry,
-	get_endpoint_limit,
 	parse_search,
 	requires_permission,
 	validate_permission
@@ -282,7 +280,6 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("create", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def create() -> typing.Tuple[flask.Response, int]:
 	"""Creates a forum with the provided name and description.
 	If given, assigns a parent forum with the ID of `parent_forum_id`.
@@ -333,7 +330,6 @@ def create() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists the available forums.
 
@@ -427,7 +423,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all forums that match the given conditions.
 
@@ -531,7 +526,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @forum_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the forum with the provided ID.
 
@@ -561,7 +555,6 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the forum with the provided ID with the given name,
 	description and parent forum ID.
@@ -634,7 +627,6 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @forum_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the forum with the provided ID.
 
@@ -653,7 +645,6 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @forum_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_forum(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -683,7 +674,6 @@ def authorized_actions_forum(
 })
 @authentication.authenticate_via_jwt
 @requires_permission("merge", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Moves all threads from the forum with the given `id` to
 	the one the provided `new_id` corresponds to, then deletes this forum.
@@ -744,7 +734,6 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @forum_blueprint.route("/<uuid:id_>/parsed-permissions", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_parsed_permissions(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -771,7 +760,6 @@ def view_parsed_permissions(
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions_group", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
@@ -833,7 +821,6 @@ def delete_permissions_group(
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions_group", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
@@ -910,7 +897,6 @@ def edit_permissions_group(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view_permissions_group", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
@@ -955,7 +941,6 @@ def view_permissions_group(
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions_user", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
@@ -1017,7 +1002,6 @@ def delete_permissions_user(
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions_user", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
@@ -1094,7 +1078,6 @@ def edit_permissions_user(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view_permissions_user", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
@@ -1135,7 +1118,6 @@ def view_permissions_user(
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Subscribes to the forum with the provided ID.
 
@@ -1183,7 +1165,6 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Unsubscribes from the forum with the provided ID.
 
@@ -1225,7 +1206,6 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns whether or not the current user is subscribed to the forum with
 	the given ID.
@@ -1254,7 +1234,6 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @forum_blueprint.route("/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""Returns all actions that the current `flask.g.user` is authorized to
 	perform without any knowledge on which forum they'll be done on.

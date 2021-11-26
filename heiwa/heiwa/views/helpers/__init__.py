@@ -7,7 +7,6 @@ from .find_by_id import (
 	find_user_by_id
 )
 from .jwt import create_jwt
-from .limit import get_endpoint_limit
 from .permissions import requires_permission, validate_permission
 from .schema import generate_list_schema, generate_search_schema_registry
 from .search import parse_search
@@ -23,9 +22,8 @@ __all__ = [
 	"find_user_by_id",
 	"generate_list_schema",
 	"generate_search_schema_registry",
-	"get_endpoint_limit",
 	"parse_search",
 	"requires_permission",
 	"validate_permission"
 ]
-__version__ = "1.25.4"
+__version__ = "1.26.0"

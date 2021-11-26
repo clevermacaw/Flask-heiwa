@@ -11,7 +11,6 @@ from .. import (
 	enums,
 	exceptions,
 	helpers,
-	limiter,
 	models,
 	validators
 )
@@ -19,7 +18,6 @@ from .helpers import (
 	find_thread_by_id,
 	generate_list_schema,
 	generate_search_schema_registry,
-	get_endpoint_limit,
 	parse_search,
 	requires_permission,
 	validate_permission
@@ -268,7 +266,6 @@ def find_post_by_id(
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("create_post", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def create() -> typing.Tuple[flask.Response, int]:
 	"""Creates a post with the given thread ID and content.
 
@@ -309,7 +306,6 @@ def create() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists the available posts.
 
@@ -411,7 +407,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all posts that match the given conditions.
 
@@ -542,7 +537,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @post_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the post with the given ID.
 
@@ -572,7 +566,6 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the post with the given ID with the provided content,
 	and thread ID.
@@ -632,7 +625,6 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @post_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the post with the provided ID.
 
@@ -651,7 +643,6 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @post_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_post(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -680,7 +671,6 @@ def authorized_actions_post(
 })
 @authentication.authenticate_via_jwt
 @requires_permission("edit_vote", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def add_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Adds a vote to the post with the provided ID,
 	or changes the existing one.
@@ -740,7 +730,6 @@ def add_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @post_blueprint.route("/<uuid:id_>/vote", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_vote", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the current user's vote from the post with the given ID.
 
@@ -782,7 +771,6 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @post_blueprint.route("/<uuid:id_>/vote", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view_vote", models.Post)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the current user's vote for the post with the given ID.
 
@@ -814,7 +802,6 @@ def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @post_blueprint.route("/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""Returns all actions that the current `flask.g.user` is authorized to
 	perform without any knowledge on which post they'll be done on.

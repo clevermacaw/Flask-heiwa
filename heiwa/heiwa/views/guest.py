@@ -4,8 +4,8 @@ import typing
 import flask
 import sqlalchemy
 
-from .. import encoders, exceptions, helpers, limiter, models
-from .helpers import create_jwt, get_endpoint_limit
+from .. import encoders, exceptions, helpers, models
+from .helpers import create_jwt
 
 __all__ = ["guest_blueprint"]
 
@@ -18,7 +18,6 @@ guest_blueprint.json_encoder = encoders.JSONEncoder
 
 
 @guest_blueprint.route("/token", methods=["GET"])
-@limiter.limiter.limit(get_endpoint_limit)
 def token() -> typing.Tuple[flask.Response, int]:
 	"""Returns the access token for a temporary user account.
 	The token expires after `GUEST_SESSION_EXPIRES_AFTER`.

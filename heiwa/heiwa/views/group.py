@@ -11,7 +11,6 @@ from .. import (
 	encoders,
 	exceptions,
 	helpers,
-	limiter,
 	models,
 	validators
 )
@@ -20,7 +19,6 @@ from .helpers import (
 	find_group_by_id,
 	generate_list_schema,
 	generate_search_schema_registry,
-	get_endpoint_limit,
 	parse_search,
 	requires_permission,
 	validate_permission
@@ -261,7 +259,6 @@ def check_if_last_default_group(group: models.Group) -> bool:
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("create", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def create() -> typing.Tuple[flask.Response, int]:
 	"""Creates a group with the given name, description and level.
 
@@ -285,7 +282,6 @@ def create() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists all available groups.
 
@@ -330,7 +326,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all groups that match the given conditions.
 
@@ -387,7 +382,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @group_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the group with the given ID.
 
@@ -419,7 +413,6 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the given group with the given values.
 
@@ -457,7 +450,6 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @group_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the group with the given ID.
 
@@ -475,7 +467,6 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @group_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_group(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -497,7 +488,6 @@ def authorized_actions_group(
 @group_blueprint.route("/<uuid:id_>/permissions", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the group with the given ID's permissions.
 
@@ -532,7 +522,6 @@ def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the group with the given ID's permissions.
 	Automatically creates them if they don't exist.
@@ -590,7 +579,6 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @group_blueprint.route("/<uuid:id_>/permissions", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view_permissions", models.Group)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the group with the given ID's permissions.
 
@@ -613,7 +601,6 @@ def view_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @group_blueprint.route("/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""Returns all actions that the current `flask.g.user` is authorized to
 	perform without any knowledge on which group they'll be done on.

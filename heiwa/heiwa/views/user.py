@@ -15,7 +15,6 @@ from .. import (
 	encoders,
 	exceptions,
 	helpers,
-	limiter,
 	models,
 	validators
 )
@@ -25,7 +24,6 @@ from .helpers import (
 	find_user_by_id,
 	generate_list_schema,
 	generate_search_schema_registry,
-	get_endpoint_limit,
 	parse_search,
 	requires_permission,
 	validate_permission
@@ -314,7 +312,6 @@ def get_user_self_or_id(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists all the available users.
 
@@ -359,7 +356,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all users that match the given conditions.
 
@@ -431,7 +427,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	),
 	models.User
 )
-@limiter.limiter.limit(get_endpoint_limit)
 def delete(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -478,7 +473,6 @@ def delete(
 })
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -523,7 +517,6 @@ def edit(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def view(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -548,7 +541,6 @@ def view(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_user(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -575,7 +567,6 @@ def authorized_actions_user(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -619,7 +610,6 @@ def delete_avatar(
 })
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -681,7 +671,6 @@ def edit_avatar(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -704,7 +693,6 @@ def view_avatar(
 @user_blueprint.route("/users/<uuid:id_>/ban", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_ban", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_ban(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -749,7 +737,6 @@ def delete_ban(
 })
 @authentication.authenticate_via_jwt
 @requires_permission("edit_ban", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Bans the user with the given ID. Requires an expiration timestamp,
 	the reason is optional.
@@ -817,7 +804,6 @@ def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view_ban", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_ban(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -849,7 +835,6 @@ def view_ban(
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["PUT"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_block", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Blocks the user with the given ID. If `flask.g.user` is a follower of
 	`user`, they're automatically removed.
@@ -878,7 +863,7 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				)
 			)
 		).scalars().one()
-	)is not None:
+	) is not None:
 		raise exceptions.APIUserBlockAlreadyExists(user.id)
 
 	flask.g.sa_session.execute(
@@ -907,7 +892,6 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_block", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Unblocks the user with the given ID.
 
@@ -947,7 +931,6 @@ def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns whether or not the current user has blocked the user with
 	the given ID.
@@ -985,7 +968,6 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def list_followers(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1044,7 +1026,6 @@ def list_followers(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def list_followees(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1094,7 +1075,6 @@ def list_followees(
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["PUT"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_follow", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Follows the user with the given ID.
 
@@ -1122,7 +1102,7 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				)
 			)
 		).scalars().one()
-	)is not None:
+	) is not None:
 		raise exceptions.APIUserFollowAlreadyExists(user.id)
 
 	flask.g.sa_session.execute(
@@ -1141,7 +1121,6 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_follow", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Unollows the user with the given ID.
 
@@ -1182,7 +1161,6 @@ def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns whether or not the current user is a follower of the user
 	with the given ID.
@@ -1216,7 +1194,6 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view_groups", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def list_groups(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1252,7 +1229,6 @@ def list_groups(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("edit_group", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def add_group(
 	user_id: typing.Union[None, uuid.UUID],
 	group_id: uuid.UUID
@@ -1319,7 +1295,6 @@ def add_group(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("edit_group", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_group(
 	user_id: typing.Union[None, uuid.UUID],
 	group_id: uuid.UUID
@@ -1392,7 +1367,6 @@ def delete_group(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1472,7 +1446,6 @@ def delete_permissions(
 })
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1529,7 +1502,6 @@ def edit_permissions(
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view_permissions", models.User)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1554,7 +1526,6 @@ def view_permissions(
 
 @user_blueprint.route("/users/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""Returns all actions that the current `flask.g.user` is authorized to
 	perform without any knowledge on which user they'll be done on.

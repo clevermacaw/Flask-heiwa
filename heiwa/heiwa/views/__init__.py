@@ -23,4 +23,4 @@ __all__ = [
 	"thread_blueprint",
 	"user_blueprint"
 ]
-__version__ = "0.55.6"
+__version__ = "0.55.7"

@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.24"
+__version__ = "0.13.25"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -83,13 +83,15 @@ def create_app() -> ConfiguredLockFlask:
 			)
 		)
 
-		from .limiter import limiter
-
-		limiter.init_app(app)
-
 		from .encoders import JSONEncoder
+		from .limiter import Limiter
 
 		app.json_encoder = JSONEncoder
+		app.limiter = Limiter(
+			key_func=lambda: flask.g.identifier
+		)
+
+		from .exceptions import APIException, APIRateLimitExceeded
 
 		@app.before_request
 		def before_request() -> None:
@@ -98,18 +100,26 @@ def create_app() -> ConfiguredLockFlask:
 			"""
 
 			flask.g.identifier = flask.request.remote_addr
+
+			is_rate_limit_exceeded, retry_on = (
+				flask.current_app.limiter.check(add_retry_on=True)
+			)
+
+			if not is_rate_limit_exceeded:
+				raise APIRateLimitExceeded(details=retry_on)
+
 			flask.g.sa_session = flask.current_app.SASession()
 
 		@app.teardown_request
 		def teardown_request(response: flask.Response) -> flask.Response:
 			"""Closes and removes the `flask.current_app.SASession`."""
 
-			flask.current_app.SASession.remove()
+			if "sa_session" in flask.g:
+				flask.current_app.SASession.remove()
 
 			return response
 
 		from .errorhandlers import handle_api_exception, handle_http_exception
-		from .exceptions import APIException
 
 		for handler in (
 			(

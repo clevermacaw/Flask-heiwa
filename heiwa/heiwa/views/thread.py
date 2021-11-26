@@ -11,7 +11,6 @@ from .. import (
 	enums,
 	exceptions,
 	helpers,
-	limiter,
 	models,
 	validators
 )
@@ -20,7 +19,6 @@ from .helpers import (
 	find_thread_by_id,
 	generate_list_schema,
 	generate_search_schema_registry,
-	get_endpoint_limit,
 	parse_search,
 	requires_permission,
 	validate_permission
@@ -301,7 +299,6 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("create_thread", models.Forum)
-@limiter.limiter.limit(get_endpoint_limit)
 def create() -> typing.Tuple[flask.Response, int]:
 	"""Creates a thread with the given forum ID, locked status, pinned status,
 	name and content.
@@ -354,7 +351,6 @@ def create() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists the available threads.
 
@@ -448,7 +444,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all threads that match the given conditions.
 
@@ -571,7 +566,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the thread with the given ID.
 
@@ -601,7 +595,6 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the thread with the given ID with the provided forum ID,
 	locked status, pinned status, name and content.
@@ -672,7 +665,6 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the thread with the given ID.
 
@@ -691,7 +683,6 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_thread(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -721,7 +712,6 @@ def authorized_actions_thread(
 })
 @authentication.authenticate_via_jwt
 @requires_permission("merge", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Moves all posts from the thread with the given `id` to
 	the one the provided `flask.g.json["id"]` corresponds to,
@@ -776,7 +766,6 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Subscribes to the thread with the given ID.
 
@@ -824,7 +813,6 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Unsubscribes from the thread with the provided ID.
 
@@ -866,7 +854,6 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns whether or not the current user is subscribed to the thread with
 	the given ID.
@@ -876,10 +863,10 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.thread_subscribers.c.forum_id).
+			sqlalchemy.select(models.thread_subscribers.c.thread_id).
 			where(
 				sqlalchemy.and_(
-					models.thread_subscribers.c.forum_id == find_thread_by_id(
+					models.thread_subscribers.c.thread_id == find_thread_by_id(
 						id_,
 						flask.g.sa_session,
 						flask.g.user
@@ -902,7 +889,6 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 })
 @authentication.authenticate_via_jwt
 @requires_permission("edit_vote", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def add_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Adds a vote to the thread with the provided ID,
 	or changes the existing one.
@@ -962,7 +948,6 @@ def add_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>/vote", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 @requires_permission("edit_vote", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the current user's vote from the thread with the given ID.
 
@@ -1004,7 +989,6 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>/vote", methods=["GET"])
 @authentication.authenticate_via_jwt
 @requires_permission("view_vote", models.Thread)
-@limiter.limiter.limit(get_endpoint_limit)
 def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the current user's vote for the thread with the given ID.
 
@@ -1036,7 +1020,6 @@ def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""Returns all actions that the current `flask.g.user` is authorized to
 	perform without any knowledge on which thread they'll be done on.

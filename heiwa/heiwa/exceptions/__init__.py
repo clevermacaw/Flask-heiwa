@@ -33,7 +33,6 @@ __all__ = [
 	"APIJWTInvalid",
 	"APIJWTInvalidClaims",
 	"APIJWTUserNotFound",
-	"APIMessageNotFound",
 	"APINoPermission",
 	"APINotificationNotFound",
 	"APIOpenIDAuthenticationFailed",
@@ -44,6 +43,7 @@ __all__ = [
 	"APIPostUnchanged",
 	"APIPostVoteNotFound",
 	"APIPostVoteUnchanged",
+	"APIRateLimitExceeded",
 	"APIThreadLocked",
 	"APIThreadNotFound",
 	"APIThreadSubscriptionAlreadyExists",
@@ -305,14 +305,6 @@ class APIJWTUserNotFound(APIException):
 	code = helpers.STATUS_NOT_FOUND
 
 
-class APIMessageNotFound(APIException):
-	"""Exception class for when a requested message
-	(e.g. /messages/invalid-uuid) does not exist.
-	"""
-
-	code = helpers.STATUS_NOT_FOUND
-
-
 class APINoPermission(APIException):
 	"""Exception class for when a user attempts to perform an action they do not
 	have permission to.
@@ -391,6 +383,12 @@ class APIPostVoteUnchanged(APIException):
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
+
+
+class APIRateLimitExceeded(APIException):
+	"""Exception class for when a given user has exceeded the rate limit."""
+
+	code = 429
 
 
 class APIThreadLocked(APIException):

@@ -10,14 +10,12 @@ from .. import (
 	encoders,
 	exceptions,
 	helpers,
-	limiter,
 	models,
 	validators
 )
 from .helpers import (
 	generate_list_schema,
 	generate_search_schema_registry,
-	get_endpoint_limit,
 	parse_search
 )
 
@@ -163,7 +161,6 @@ def find_notification_by_id(
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists the available notifications.
 
@@ -203,7 +200,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 @notification_blueprint.route("/confirm-read", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def confirm_read_all() -> typing.Tuple[flask.Response, int]:
 	"""Confirms that all notifications have been read.
 
@@ -225,7 +221,6 @@ def confirm_read_all() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all notifications that match the given conditions.
 
@@ -269,7 +264,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 @notification_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the notification with the provided ID.
 
@@ -291,7 +285,6 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @notification_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the notification with the provided ID.
 
@@ -309,7 +302,6 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @notification_blueprint.route("/<uuid:id_>/confirm-read", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@limiter.limiter.limit(get_endpoint_limit)
 def confirm_read(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Confirms that the notification with the provided ID has been read.
 

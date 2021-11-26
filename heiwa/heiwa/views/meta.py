@@ -3,8 +3,7 @@ import typing
 
 import flask
 
-from .. import encoders, helpers, limiter
-from .helpers import get_endpoint_limit
+from .. import encoders, helpers
 
 __all__ = ["meta_blueprint"]
 
@@ -17,7 +16,6 @@ meta_blueprint.json_encoder = encoders.JSONEncoder
 
 
 @meta_blueprint.route("/config", methods=["GET"])
-@limiter.limiter.limit(get_endpoint_limit)
 def view_config() -> typing.Tuple[flask.Response, int]:
 	"""Returns basic information about this service's config. Keys which should be
 	returned are defined in the `PUBLIC_CONFIG_KEYS` variable.
@@ -30,7 +28,6 @@ def view_config() -> typing.Tuple[flask.Response, int]:
 
 
 @meta_blueprint.route("/icon", methods=["GET"])
-@limiter.limiter.limit(get_endpoint_limit)
 def view_icon() -> typing.Tuple[flask.Response, int]:
 	"""Returns this service's icon, if there is one."""
 
@@ -56,7 +53,6 @@ def view_icon() -> typing.Tuple[flask.Response, int]:
 
 
 @meta_blueprint.route("/info", methods=["GET"])
-@limiter.limiter.limit(get_endpoint_limit)
 def view_info() -> typing.Tuple[flask.Response, int]:
 	"""Returns all meta information about this service. Not hardcoded to accept
 	certain config keys, looks for all keys beginning with `'META_'`.

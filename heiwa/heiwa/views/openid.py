@@ -10,8 +10,8 @@ import magic
 import requests
 import sqlalchemy
 
-from .. import encoders, exceptions, helpers, limiter, models, validators
-from .helpers import create_jwt, get_endpoint_limit
+from .. import encoders, exceptions, helpers, models, validators
+from .helpers import create_jwt
 
 __all__ = ["openid_blueprint"]
 
@@ -45,7 +45,6 @@ def get_config(client_name: str) -> typing.Dict[
 
 
 @openid_blueprint.route("", methods=["GET"])
-@limiter.limiter.limit(get_endpoint_limit)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Returns all available OpenID services.
 
@@ -75,7 +74,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		"required": True
 	}
 })
-@limiter.limiter.limit(get_endpoint_limit)
 def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 	"""Gets OpenID's `userinfo` by logging in through an OAuth session,
 	and creates a JWT for the associated user. If there is none, the user
@@ -206,7 +204,6 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 		"required": True
 	}
 })
-@limiter.limiter.limit(get_endpoint_limit)
 def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 	"""Creates a URL for a user with access to a browser to log in through.
 
