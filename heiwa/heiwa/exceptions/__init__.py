@@ -68,7 +68,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.28.0"
+__version__ = "1.28.1"
 
 
 class APIException(Exception):
