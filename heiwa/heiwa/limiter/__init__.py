@@ -9,7 +9,7 @@ import limits.storage
 import limits.strategies
 
 __all__ = ["Limiter"]
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 
 class Limiter:
@@ -64,8 +64,11 @@ class Limiter:
 			)
 		]
 		self.endpoint_limits = {
-			endpoint: limits.parse(limit)
-			for endpoint, limit in (
+			endpoint: [
+				limits.parse(limit)
+				for limit in limit_set
+			]
+			for endpoint, limit_set in (
 				endpoint_limits.items()
 				if endpoint_limits is not None
 				else (
@@ -116,21 +119,33 @@ class Limiter:
 		identifier = self.key_func() if identifier is None else identifier
 		endpoint = self.endpoint_func() if endpoint is None else endpoint
 
-		for limit in (
-			self.endpoint_limits
+		limit_set = (
+			self.endpoint_limits[endpoint]
 			if endpoint in self.endpoint_limits
 			else self.default_limits
-		):
-			if self.strategy.hit(
-				limit,
-				identifier,
-				endpoint
-			):
-				return True, None
+		)
+
+		passed_rate_limit = False
+
+		if len(limit_set) != 0:
+			for limit in limit_set:
+				if self.strategy.hit(
+					limit,
+					identifier,
+					endpoint
+				):
+					passed_rate_limit = True
+		else:
+			# If there are no rate limits specified, we can assume
+			# this endpoint has none. For example, a rate limit
+			# specific to this endpoint is `[]`, overrides the default,
+			# and that endpoint then has no rate limit.
+
+			passed_rate_limit = True
 
 		if add_retry_on:
 			return (
-				False,
+				passed_rate_limit,
 				datetime.datetime.fromtimestamp(
 					self.strategy.get_window_stats(
 						limit,
@@ -140,5 +155,5 @@ class Limiter:
 					tz=datetime.timezone.utc
 				)
 			)
-		else:
-			return False
+
+		return passed_rate_limit

@@ -201,10 +201,10 @@ PUBLIC_CONFIG_KEYS = (
 )
 
 # Rate limit config
-RATELIMIT_DEFAULT = "200/10 second"
+RATELIMIT_DEFAULT = ("200/10second",)
 RATELIMIT_SPECIFIC = {
-	"openid.login": "5/day",
-	"openid.authorize": "5/day"
+	"openid.login": ("5/6hour",),
+	"openid.authorize": ("5/6hour",)
 }
 
 # Flask config
