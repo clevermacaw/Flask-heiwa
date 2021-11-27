@@ -9,7 +9,7 @@ import limits.storage
 import limits.strategies
 
 __all__ = ["Limiter"]
-__version__ = "2.1.1"
+__version__ = "2.2.0"
 
 
 class Limiter:
@@ -112,8 +112,10 @@ class Limiter:
 		"""Returns whether or not the user with the given identifier
 		(the output of `self.key_func` by default) can access `endpoint`
 		(the output of `self.endpoint_func` by default) with its rate limit.
-		If `add_expires` is `True`, the time when the rate limit storage entries
-		expire is also added.
+		If `add_expires` is `True` and the user has passed the check,
+		the time when the lowest rate limit's entry in the storage expires
+		is also returned. Otherwise, if the user has not passed the check,
+		the storage expiration time of the rate limit it failed on is returned.
 		"""
 
 		identifier = self.key_func() if identifier is None else identifier
@@ -125,30 +127,37 @@ class Limiter:
 			else self.default_limits
 		)
 
-		passed_rate_limit = False
+		passed_limit = True
+		soonest_expiration_limit = None
 
 		if len(limit_set) != 0:
 			for limit in limit_set:
-				if self.strategy.hit(
+				if (
+					soonest_expiration_limit is None or
+					soonest_expiration_limit.get_expiry() > limit.get_expiry()
+				):
+					soonest_expiration_limit = limit
+
+				if not self.strategy.hit(
 					limit,
 					identifier,
 					endpoint
 				):
-					passed_rate_limit = True
-		else:
-			# If there are no rate limits specified, we can assume
-			# this endpoint has none. For example, a rate limit
-			# specific to this endpoint is `[]`, overrides the default,
-			# and that endpoint then has no rate limit.
+					soonest_expiration_limit = limit
+					passed_limit = False
 
-			passed_rate_limit = True
+		# If there are no rate limits specified, we can assume
+		# this endpoint has none. For example, a rate limit
+		# specific to this endpoint is `[]`, overrides the default,
+		# and that endpoint then has no rate limit.
+
 
 		if add_expires:
 			return (
-				passed_rate_limit,
+				passed_limit,
 				datetime.datetime.fromtimestamp(
 					self.strategy.get_window_stats(
-						limit,
+						soonest_expiration_limit,
 						identifier,
 						endpoint
 					)[0],
@@ -156,4 +165,4 @@ class Limiter:
 				)
 			)
 
-		return passed_rate_limit
+		return passed_limit

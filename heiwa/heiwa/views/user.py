@@ -367,7 +367,10 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		(
 			sqlalchemy.select(models.Group.level).
 			where(
-				models.Group.users.any(id=models.User.id)
+				models.Group.id.in_(
+					sqlalchemy.select(models.user_groups.c.group_id).
+					where(models.user_groups.c.user_id == models.User.id)
+				)
 			).
 			order_by(
 				sqlalchemy.desc(models.Group.level)
@@ -981,8 +984,13 @@ def list_followers(
 		flask.g.sa_session
 	)
 
-	conditions = models.User.followees.any(
-		id_=user.id
+	conditions = (
+		models.User.id.in_(
+			sqlalchemy.select(models.user_follows.followee_id).
+			where(
+				models.user_follows.follower_id == user.id
+			)
+		)
 	)
 
 	if "filter" in flask.g.json:
@@ -1039,8 +1047,13 @@ def list_followees(
 		flask.g.sa_session
 	)
 
-	conditions = models.User.followers.any(
-		id_=user.id
+	conditions = (
+		models.User.id.in_(
+			sqlalchemy.select(models.user_follows.follower_id).
+			where(
+				models.user_follows.followee_id == user.id
+			)
+		)
 	)
 
 	if "filter" in flask.g.json:
@@ -1209,7 +1222,12 @@ def list_groups(
 
 	group_ids = flask.g.sa_session.execute(
 		sqlalchemy.select(models.Group.id).
-		where(models.Group.users.any(id=user.id)).
+		where(
+			models.Group.id.in_(
+				sqlalchemy.select(models.user_groups.c.group_id).
+				where(models.user_groups.c.user_id == user.id)
+			)
+		).
 		order_by(
 			sqlalchemy.asc(models.Group.level)
 		)
@@ -1469,7 +1487,7 @@ def edit_permissions(
 	if user.permissions is None:
 		models.UserPermissions.create(
 			flask.g.sa_session,
-			user=user,
+			user_id=user.id,
 			**flask.g.json
 		)
 

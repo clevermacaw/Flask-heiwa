@@ -8,7 +8,6 @@ import sqlalchemy
 import sqlalchemy.orm
 
 from . import Base
-from .group import Group
 from .helpers import (
 	CDWMixin,
 	CreationTimestampMixin,
@@ -18,7 +17,6 @@ from .helpers import (
 	ReprMixin,
 	UUID
 )
-from .thread import Thread
 
 __all__ = [
 	"Forum",
@@ -404,12 +402,6 @@ class ForumParsedPermissions(
 		nullable=False
 	)
 
-	user = sqlalchemy.orm.relationship(
-		"User",
-		uselist=False,
-		lazy=True
-	)
-
 	def __repr__(self: ForumParsedPermissions) -> str:
 		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
 		which uses the `id` attribute this model lacks.
@@ -450,12 +442,6 @@ class ForumPermissionsGroup(
 		primary_key=True
 	)
 
-	group = sqlalchemy.orm.relationship(
-		"Group",
-		uselist=False,
-		lazy=True
-	)
-
 	def write(
 		self: ForumPermissionsGroup,
 		session: sqlalchemy.orm.Session
@@ -464,7 +450,23 @@ class ForumPermissionsGroup(
 		Adds this instance to the `session`.
 		"""
 
-		self.forum.reparse_permissions()
+		session.execute(
+			sqlalchemy.select(ForumParsedPermissions).
+			where(
+				sqlalchemy.and_(
+					ForumParsedPermissions.forum_id == self.forum_id,
+					ForumParsedPermissions.user_id.in_(
+						sqlalchemy.select(sqlalchemy.text("user_groups.user_id")).
+						select_from(sqlalchemy.text("user_groups")).
+						where(
+							sqlalchemy.text("user_groups.group_id") == self.group_id
+						)
+					)
+				)
+			)
+		)
+
+		# TODO ^
 
 		CDWMixin.write(self, session)
 
@@ -508,21 +510,23 @@ class ForumPermissionsUser(
 		primary_key=True
 	)
 
-	user = sqlalchemy.orm.relationship(
-		"User",
-		uselist=False,
-		lazy=True
-	)
-
 	def write(
 		self: ForumPermissionsUser,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Reparses the parent forum's `parsed_permissions`.
+		"""Deletes the parsed permissions for the associated user.
 		Adds this instance to the `session`.
 		"""
 
-		self.forum.reparse_permissions()
+		session.execute(
+			sqlalchemy.delete(ForumParsedPermissions).
+			where(
+				sqlalchemy.and_(
+					ForumParsedPermissions.forum_id == self.forum_id,
+					ForumParsedPermissions.user_id == self.user_id
+				)
+			)
+		)
 
 		CDWMixin.write(self, session)
 
@@ -589,10 +593,13 @@ class Forum(
 	)
 
 	last_thread_timestamp = sqlalchemy.orm.column_property(
-		sqlalchemy.select(Thread.creation_timestamp).
-		where(Thread.forum_id == sqlalchemy.text("forums.id")).
+		sqlalchemy.select(sqlalchemy.text("threads.creation_timestamp")).
+		select_from(sqlalchemy.text("threads")).
+		where(
+			sqlalchemy.text("threads.forum_id = forums.id")
+		).
 		order_by(
-			sqlalchemy.desc(Thread.creation_timestamp)
+			sqlalchemy.desc(sqlalchemy.text("threads.creation_timestamp"))
 		).
 		limit(1).
 		scalar_subquery()
@@ -600,9 +607,7 @@ class Forum(
 
 	subscriber_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(
-				forum_subscribers.c.forum_id
-			)
+			sqlalchemy.func.count(forum_subscribers.c.forum_id)
 		).
 		where(forum_subscribers.c.forum_id == sqlalchemy.text("forums.id")).
 		scalar_subquery()
@@ -610,9 +615,12 @@ class Forum(
 
 	thread_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(Thread.id)
+			sqlalchemy.func.count(sqlalchemy.text("threads.id"))
 		).
-		where(Thread.forum_id == sqlalchemy.text("forums.id")).
+		select_from(sqlalchemy.text("threads")).
+		where(
+			sqlalchemy.text("threads.forum_id = forums.id")
+		).
 		scalar_subquery()
 	)
 
@@ -622,52 +630,6 @@ class Forum(
 			"parent_forum",
 			uselist=False,
 			remote_side=lambda: Forum.id
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-
-	subscribers = sqlalchemy.orm.relationship(
-		"User",
-		secondary=forum_subscribers,
-		order_by="desc(User.creation_timestamp)",
-		lazy=True
-	)
-	threads = sqlalchemy.orm.relationship(
-		"Thread",
-		order_by="desc(Thread.creation_timestamp)",
-		backref=sqlalchemy.orm.backref(
-			"forum",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-
-	parsed_permissions = sqlalchemy.orm.relationship(
-		ForumParsedPermissions,
-		backref=sqlalchemy.orm.backref(
-			"forum",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-	permissions_group = sqlalchemy.orm.relationship(
-		ForumPermissionsGroup,
-		backref=sqlalchemy.orm.backref(
-			"forum",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-	permissions_user = sqlalchemy.orm.relationship(
-		ForumPermissionsUser,
-		uselist=False,
-		backref=sqlalchemy.orm.backref(
-			"forum",
-			uselist=False
 		),
 		passive_deletes="all",
 		lazy=True
@@ -684,7 +646,7 @@ class Forum(
 		),
 		"create_thread": lambda cls, user: (
 			cls.get_class_permission(user, "view") and
-			Thread.get_class_permission(user, "view") and
+			user.parsed_permissions["thread_view"] and
 			user.parsed_permissions["thread_create"]
 		),
 		"create_thread_locked": lambda cls, user: (
@@ -749,7 +711,7 @@ class Forum(
 		),
 		"create_thread": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			Thread.get_class_permission(user, "view") and
+			self.get_parsed_permissions(user.id).thread_view and
 			self.get_parsed_permissions(user.id).thread_create
 		),
 		"create_thread_locked": lambda self, user: (
@@ -878,7 +840,7 @@ class Forum(
 		self: Forum,
 		group_id: uuid.UUID
 	) -> typing.Dict[str, bool]:
-		if self.parent_forum is not None:
+		if self.parent_forum_id is not None:
 			parent_permissions = sqlalchemy.orm.object_session(self).execute(
 				sqlalchemy.select(ForumPermissionsGroup).
 				where(
@@ -912,7 +874,7 @@ class Forum(
 		self: Forum,
 		user_id: uuid.UUID
 	) -> typing.Dict[str, bool]:
-		if self.parent_forum is not None:
+		if self.parent_forum_id is not None:
 			parent_permissions = sqlalchemy.orm.object_session(self).execute(
 				sqlalchemy.select(ForumPermissionsUser).
 				where(
@@ -978,12 +940,18 @@ class Forum(
 		self.get_parsed_permissions.cache_clear()
 
 		group_ids = sqlalchemy.orm.object_session(self).execute(
-			sqlalchemy.select(Group.id).
+			sqlalchemy.select(sqlalchemy.text("groups.id")).
+			select_from(sqlalchemy.text("groups")).
 			where(
-				Group.users.any(id=user.id)
-			).
-			order_by(
-				sqlalchemy.asc(Group.level)
+				sqlalchemy.text(
+					"groups.id IN ("
+					+ str(
+						sqlalchemy.select(sqlalchemy.text("user_groups.group_id")).
+						select_from(sqlalchemy.text("user_groups")).
+						where(sqlalchemy.text("user_groups.user_id") == user.id)
+					)
+					+ ")"
+				)
 			)
 		).scalars().all()
 
@@ -995,9 +963,16 @@ class Forum(
 					ForumPermissionsGroup.forum_id == self.id
 				)
 			).
-			join(ForumPermissionsGroup.group).
 			order_by(
-				sqlalchemy.desc(Group.level)
+				sqlalchemy.desc(
+					sqlalchemy.select(sqlalchemy.text("groups.level")).
+					select_from(sqlalchemy.text("groups")).
+					where(
+						sqlalchemy.text("groups.id")
+						== ForumPermissionsGroup.group_id
+					).
+					scalar_subquery()
+				)
 			)
 		).scalars().all()
 
@@ -1066,7 +1041,9 @@ class Forum(
 				**parsed_permissions
 			)
 		else:
-			# TODO: PEP 584
-
-			for key, value in parsed_permissions.items():
-				setattr(existing_parsed_permissions, key, value)
+			for permission_name, permission_value in parsed_permissions.items():
+				setattr(
+					existing_parsed_permissions,
+					permission_name,
+					permission_value
+				)

@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.27"
+__version__ = "0.13.29"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -182,7 +182,7 @@ def create_app() -> ConfiguredLockFlask:
 					if "permissions" in group_attrs:
 						GroupPermissions.create(
 							sa_session,
-							group=group_to_add,
+							group_id=group_to_add.id,
 							**group_attrs["permissions"]
 						)
 

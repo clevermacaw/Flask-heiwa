@@ -289,8 +289,8 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 	post = models.Post.create(
 		flask.g.sa_session,
-		thread=thread,
-		user=flask.g.user,
+		thread_id=thread.id,
+		user_id=flask.g.user.id,
 		**flask.g.json
 	)
 
@@ -709,8 +709,8 @@ def add_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	if vote is None:
 		vote = models.PostVote.create(
 			flask.g.sa_session,
-			post=post,
-			user=flask.g.user,
+			post_id=post.id,
+			user_id=flask.g.user.id,
 			upvote=flask.g.json["upvote"]
 		)
 

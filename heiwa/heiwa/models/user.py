@@ -11,8 +11,7 @@ import sqlalchemy.ext.hybrid
 import sqlalchemy.orm
 
 from . import Base
-from .forum import Forum
-from .group import Group
+from .group import Group, GroupPermissions
 from .helpers import (
 	BasePermissionMixin,
 	CDWMixin,
@@ -23,9 +22,6 @@ from .helpers import (
 	ReprMixin,
 	UUID
 )
-from .notification import Notification
-from .post import Post
-from .thread import Thread
 
 __all__ = [
 	"User",
@@ -280,87 +276,48 @@ class User(
 
 	forum_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(Forum.id)
+			sqlalchemy.func.count(sqlalchemy.text("forums.id"))
 		).
-		where(Forum.user_id == sqlalchemy.text("users.id")).
+		select_from(sqlalchemy.text("forums")).
+		where(sqlalchemy.text("forums.user_id = users.id")).
 		scalar_subquery(),
 		deferred=True
 	)
 
 	notification_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(Notification.id)
+			sqlalchemy.func.count(sqlalchemy.text("notifications.id"))
 		).
-		where(Notification.user_id == sqlalchemy.text("users.id")).
+		select_from(sqlalchemy.text("notifications")).
+		where(
+			sqlalchemy.text("notifications.user_id = users.id")
+		).
 		scalar_subquery(),
 		deferred=True
 	)
 
 	post_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(Post.id)
+			sqlalchemy.func.count(sqlalchemy.text("posts.id"))
 		).
-		where(Post.user_id == sqlalchemy.text("users.id")).
+		select_from(sqlalchemy.text("posts")).
+		where(
+			sqlalchemy.text("posts.user_id = users.id")
+		).
 		scalar_subquery(),
 		deferred=True
 	)
 
 	thread_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(Thread.id)
+			sqlalchemy.func.count(sqlalchemy.text("threads.id"))
 		).
-		where(Thread.user_id == sqlalchemy.text("users.id")).
+		select_from(sqlalchemy.text("threads")).
+		where(
+			sqlalchemy.text("threads.user_id = users.id")
+		).
 		scalar_subquery(),
 		deferred=True
-	)
-
-	groups = sqlalchemy.orm.relationship(
-		"Group",
-		secondary=user_groups,
-		order_by="desc(Group.level)",
-		backref="users",
-		passive_deletes="all",
-		lazy=True
-	)
-	forums = sqlalchemy.orm.relationship(
-		"Forum",
-		order_by="desc(Forum.creation_timestamp)",
-		backref=sqlalchemy.orm.backref(
-			"user",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-	notifications = sqlalchemy.orm.relationship(
-		"Notification",
-		order_by="desc(Notification.creation_timestamp)",
-		backref=sqlalchemy.orm.backref(
-			"user",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-	posts = sqlalchemy.orm.relationship(
-		"Post",
-		order_by="desc(Post.creation_timestamp)",
-		backref=sqlalchemy.orm.backref(
-			"user",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-	threads = sqlalchemy.orm.relationship(
-		"Thread",
-		order_by="desc(Thread.creation_timestamp)",
-		backref=sqlalchemy.orm.backref(
-			"user",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
 	)
 
 	blockees = sqlalchemy.orm.relationship(
@@ -515,7 +472,17 @@ class User(
 		Adds the current instance to the `session`.
 		"""
 
-		if self.groups == []:
+		if session.execute(
+			sqlalchemy.select(Group).
+			where(
+				Group.id.in_(
+					sqlalchemy.select(user_groups.c.group_id).
+					where(user_groups.c.user_id == self.id)
+				)
+			).
+			exists().
+			select()
+		).scalars().one():
 			group_conditions = sqlalchemy.or_(
 				Group.default_for.any(
 					"*",
@@ -535,15 +502,22 @@ class User(
 
 				flask.current_app.configured = True
 
-			self.groups = session.execute(
-				sqlalchemy.select(Group).
+			group_ids = session.execute(
+				sqlalchemy.select(Group.id).
 				where(group_conditions).
 				order_by(
-					sqlalchemy.desc(
-						Group.level
-					)
+					sqlalchemy.desc(Group.level)
 				)
 			).scalars().all()
+
+			for group_id in group_ids:
+				session.execute(
+					sqlalchemy.insert(user_groups).
+					values(
+						user_id=self.id,
+						group_id=group_id
+					)
+				)
 
 		if self.parsed_permissions is None:
 			with session.no_autoflush:
@@ -583,7 +557,10 @@ class User(
 		return sqlalchemy.orm.object_session(self).execute(
 			sqlalchemy.select(Group).
 			where(
-				Group.users.any(id=self.id)
+				Group.id.in_(
+					sqlalchemy.select(user_groups.c.group_id).
+					where(user_groups.c.user_id == self.id)
+				)
 			).
 			order_by(
 				sqlalchemy.desc(Group.level)
@@ -600,7 +577,10 @@ class User(
 		return (
 			sqlalchemy.select(Group).
 			where(
-				Group.users.any(id=cls.id)
+				Group.id.in_(
+					sqlalchemy.select(user_groups.c.group_id).
+					where(user_groups.c.user_id == cls.id)
+				)
 			).
 			order_by(
 				sqlalchemy.desc(Group.level)
@@ -682,7 +662,7 @@ class User(
 
 		UserBan.create(
 			sqlalchemy.orm.object_session(self),
-			user=self,
+			user_id=self.id,
 			expiration_timestamp=expiration_timestamp,
 			reason=reason
 		)
@@ -703,12 +683,31 @@ class User(
 
 		result = {}
 
-		for group_number, group in enumerate(self.groups):
-			if group.permissions is None:
+		group_permission_sets = sqlalchemy.orm.object_session(self).execute(
+			sqlalchemy.select(
+				GroupPermissions
+			).
+			where(
+				GroupPermissions.group_id.in_(
+					sqlalchemy.select(user_groups.c.group_id).
+					where(user_groups.c.user_id == self.id)
+				)
+			).
+			order_by(
+				sqlalchemy.desc(
+					sqlalchemy.select(Group.level).
+					where(Group.id == GroupPermissions.group_id).
+					scalar_subquery()
+				)
+			)
+		).scalars().all()
+
+		for group_number, group_permissions in enumerate(group_permission_sets):
+			if group_permissions is None:
 				continue
 
 			for permission_name, permission_value in (
-				group.permissions.to_permissions().items()
+				group_permissions.to_permissions().items()
 			):
 				# Populates all permissions regardless of whether or not they are set.
 				if permission_name in result:
@@ -716,12 +715,17 @@ class User(
 
 				if permission_value is not None:
 					result[permission_name] = permission_value
-				elif len(self.groups) - 1 == group_number:
+				elif len(group_permission_sets) - 1 == group_number:
 					result[permission_name] = False
 
-		if self.permissions is not None:
+		own_permissions = sqlalchemy.orm.object_session(self).execute(
+			sqlalchemy.select(UserPermissions).
+			where(UserPermissions.user_id == self.id)
+		).scalars().one_or_none()
+
+		if own_permissions is not None:
 			for permission_name, permission_value in (
-				self.permissions.to_permissions().items()
+				own_permissions.to_permissions().items()
 			):
 				if permission_value is None:
 					continue

@@ -551,7 +551,7 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	if group.permissions is None:
 		models.GroupPermissions.create(
 			flask.g.sa_session,
-			group=group,
+			group_id=group.id,
 			**flask.g.json
 		)
 

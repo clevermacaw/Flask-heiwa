@@ -61,12 +61,6 @@ class ThreadVote(
 		nullable=False
 	)
 
-	user = sqlalchemy.orm.relationship(
-		"User",
-		uselist=False,
-		lazy=True
-	)
-
 	def __repr__(self: ThreadVote) -> str:
 		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
 		which uses the `id` attribute this model lacks.
@@ -163,9 +157,7 @@ class Thread(
 
 	vote_value = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(
-				ThreadVote.upvote
-			)
+			sqlalchemy.func.count(ThreadVote.upvote)
 		).
 		where(
 			sqlalchemy.and_(
@@ -190,58 +182,34 @@ class Thread(
 
 	post_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(Post.id)
+			sqlalchemy.func.count(sqlalchemy.text("posts.id"))
 		).
-		where(Post.thread_id == sqlalchemy.text("threads.id")).
+		select_from(sqlalchemy.text("posts")).
+		where(
+			sqlalchemy.text("posts.thread_id = threads.id")
+		).
 		scalar_subquery()
 	)
 
 	subscriber_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(
-				thread_subscribers.c.thread_id
-			)
+			sqlalchemy.func.count(thread_subscribers.c.thread_id)
 		).
 		where(thread_subscribers.c.thread_id == sqlalchemy.text("threads.id")).
 		scalar_subquery()
 	)
 
 	last_post_timestamp = sqlalchemy.orm.column_property(
-		sqlalchemy.select(Post.creation_timestamp).
-		where(Post.thread_id == sqlalchemy.text("threads.id")).
+		sqlalchemy.select(sqlalchemy.text("posts.creation_timestamp")).
+		select_from(sqlalchemy.text("posts")).
+		where(
+			sqlalchemy.text("posts.thread_id = threads.id")
+		).
 		order_by(
 			sqlalchemy.desc(Post.creation_timestamp)
 		).
 		limit(1).
 		scalar_subquery()
-	)
-
-	posts = sqlalchemy.orm.relationship(
-		"Post",
-		order_by="desc(Post.creation_timestamp)",
-		backref=sqlalchemy.orm.backref(
-			"thread",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-	subscribers = sqlalchemy.orm.relationship(
-		"User",
-		secondary=thread_subscribers,
-		order_by="desc(User.creation_timestamp)",
-		lazy=True
-	)
-
-	votes = sqlalchemy.orm.relationship(
-		ThreadVote,
-		order_by=sqlalchemy.desc(ThreadVote.creation_timestamp),
-		backref=sqlalchemy.orm.backref(
-			"thread",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
 	)
 
 	class_actions = {
@@ -419,20 +387,21 @@ class Thread(
 		Adds the current instance to the `session`.
 		"""
 
-		for subscriber in self.forum.subscribers:
-			Notification.create(
-				session,
-				user=subscriber,
-				type_=enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM,
-				content=self.to_notification()
-			)
+		# TODO
+		#for subscriber in self.forum.subscribers:
+			#Notification.create(
+				#session,
+				#user=subscriber,
+				#type_=enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM,
+				#content=self.to_notification()
+			#)
 
-		for follower in self.user.followers:
-			Notification.create(
-				session,
-				user=follower,
-				type_=enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWED_USER,
-				content=self.to_notification()
-			)
+		#for follower in self.user.followers:
+			#Notification.create(
+				#session,
+				#user=follower,
+				#type_=enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWED_USER,
+				#content=self.to_notification()
+			#)
 
 		CDWMixin.write(self, session)

@@ -84,17 +84,6 @@ class Group(
 		nullable=True
 	)
 
-	permissions = sqlalchemy.orm.relationship(
-		GroupPermissions,
-		uselist=False,
-		backref=sqlalchemy.orm.backref(
-			"group",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
-	)
-
 	class_actions = {
 		"create": lambda cls, user: user.parsed_permissions["group_create"],
 		"delete": lambda cls, user: user.parsed_permissions["group_delete"],

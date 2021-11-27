@@ -289,7 +289,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	forum = models.Forum(
-		user=flask.g.user,
+		user_id=flask.g.user.id,
 		**flask.g.json
 	)
 
@@ -318,6 +318,8 @@ def create() -> typing.Tuple[flask.Response, int]:
 		forum.parent_forum = parent_forum
 
 	forum.write(flask.g.sa_session)
+	forum.reparse_permissions(flask.g.user)
+
 	flask.g.sa_session.commit()
 
 	return flask.jsonify(forum), helpers.STATUS_CREATED
@@ -791,8 +793,10 @@ def delete_permissions_group(
 	permissions = flask.g.sa_session.execute(
 		sqlalchemy.select(models.ForumPermissionsGroup).
 		where(
-			models.ForumPermissionsGroup.forum_id == forum.id,
-			models.ForumPermissionsGroup.group_id == group.id
+			sqlalchemy.and_(
+				models.ForumPermissionsGroup.forum_id == forum.id,
+				models.ForumPermissionsGroup.group_id == group.id
+			)
 		)
 	).scalars().one_or_none()
 
@@ -852,16 +856,18 @@ def edit_permissions_group(
 	permissions = flask.g.sa_session.execute(
 		sqlalchemy.select(models.ForumPermissionsGroup).
 		where(
-			models.ForumPermissionsGroup.forum_id == forum.id,
-			models.ForumPermissionsGroup.group_id == group.id
+			sqlalchemy.and_(
+				models.ForumPermissionsGroup.forum_id == forum.id,
+				models.ForumPermissionsGroup.group_id == group.id
+			)
 		)
 	).scalars().one_or_none()
 
 	if permissions is None:
 		permissions = models.ForumPermissionsGroup.create(
 			flask.g.sa_session,
-			forum=forum,
-			group=group,
+			forum_id=forum.id,
+			group_id=group.id,
 			**flask.g.json
 		)
 
@@ -926,8 +932,10 @@ def view_permissions_group(
 	permissions = flask.g.sa_session.execute(
 		sqlalchemy.select(models.ForumPermissionsGroup).
 		where(
-			models.ForumPermissionsGroup.forum_id == forum.id,
-			models.ForumPermissionsGroup.group_id == group.id
+			sqlalchemy.and_(
+				models.ForumPermissionsGroup.forum_id == forum.id,
+				models.ForumPermissionsGroup.group_id == group.id
+			)
 		)
 	).scalars().one_or_none()
 
@@ -1041,8 +1049,8 @@ def edit_permissions_user(
 	if permissions is None:
 		permissions = models.ForumPermissionsUser.create(
 			flask.g.sa_session,
-			forum=forum,
-			user=user,
+			forum_id=forum.id,
+			user_id=user.id,
 			**flask.g.json
 		)
 

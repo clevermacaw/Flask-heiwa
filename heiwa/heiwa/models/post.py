@@ -15,7 +15,6 @@ from .helpers import (
 	ToNotificationMixin,
 	UUID
 )
-from .notification import Notification
 
 __all__ = [
 	"Post",
@@ -57,12 +56,6 @@ class PostVote(
 		sqlalchemy.Boolean,
 		index=True,
 		nullable=False
-	)
-
-	user = sqlalchemy.orm.relationship(
-		"User",
-		uselist=False,
-		lazy=True
 	)
 
 	def __repr__(self: PostVote) -> str:
@@ -118,9 +111,7 @@ class Post(
 
 	vote_value = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(
-				PostVote.upvote
-			)
+			sqlalchemy.func.count(PostVote.upvote)
 		).
 		where(
 			sqlalchemy.and_(
@@ -141,17 +132,6 @@ class Post(
 			)
 		).
 		scalar_subquery()
-	)
-
-	votes = sqlalchemy.orm.relationship(
-		PostVote,
-		order_by=sqlalchemy.desc(PostVote.creation_timestamp),
-		backref=sqlalchemy.orm.backref(
-			"post",
-			uselist=False
-		),
-		passive_deletes="all",
-		lazy=True
 	)
 
 	class_actions = {
@@ -241,14 +221,17 @@ class Post(
 		"""
 
 		sqlalchemy.orm.object_session(self).execute(
-			sqlalchemy.delete(Notification).
+			sqlalchemy.delete(sqlalchemy.text("notifications")).
+			select_from(sqlalchemy.text("notifications")).
 			where(
 				sqlalchemy.and_(
 					(
-						Notification.type_
+						sqlalchemy.text("notifications.type")
 						== enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD
 					),
-					Notification.content["id"].as_string() == str(self.id)
+					sqlalchemy.text("notifications.content") == {
+						"id": str(self.id)
+					}  # TODO?
 				)
 			).
 			execution_options(synchronize_session="fetch")
@@ -267,20 +250,21 @@ class Post(
 		Adds the current instance to the `session`.
 		"""
 
-		for subscriber in self.thread.subscribers:
-			Notification.create(
-				session,
-				user=subscriber,
-				type_=enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD,
-				content=self.to_notification()
-			)
+		# TODO
+		#for subscriber in self.thread.subscribers:
+			#Notification.create(
+				#session,
+				#user=subscriber,
+				#type_=enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD,
+				#content=self.to_notification()
+			#)
 
-		for follower in self.user.followers:
-			Notification.create(
-				session,
-				user=follower,
-				type_=enums.NotificationTypes.NEW_POST_FROM_FOLLOWED_USER,
-				content=self.to_notification()
-			)
+		#for follower in self.user.followers:
+			#Notification.create(
+				#session,
+				#user=follower,
+				#type_=enums.NotificationTypes.NEW_POST_FROM_FOLLOWED_USER,
+				#content=self.to_notification()
+			#)
 
 		CDWMixin.write(self, session)
