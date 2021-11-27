@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.26"
+__version__ = "0.13.27"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -101,12 +101,12 @@ def create_app() -> ConfiguredLockFlask:
 
 			flask.g.identifier = flask.request.remote_addr
 
-			is_rate_limit_exceeded, retry_on = (
+			is_rate_limit_exceeded, rate_limit_expires = (
 				flask.current_app.limiter.check(add_retry_on=True)
 			)
 
 			if not is_rate_limit_exceeded:
-				raise APIRateLimitExceeded(details=retry_on)
+				raise APIRateLimitExceeded(details=rate_limit_expires)
 
 			flask.g.sa_session = flask.current_app.SASession()
 

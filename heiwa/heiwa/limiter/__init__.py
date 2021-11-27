@@ -9,7 +9,7 @@ import limits.storage
 import limits.strategies
 
 __all__ = ["Limiter"]
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 
 class Limiter:
@@ -44,7 +44,7 @@ class Limiter:
 		If `default_limits` is `None`, and this method is running within
 		a Flask app context, it's set to the current Flask app's
 		`'RATELIMIT_DEFAULT'` config key as long there is one.
-		The applies to `endpoint_limits` as well, but with the
+		The same applies to `endpoint_limits` as well, but with the
 		`'RATELIMIT_SPECIFIC'` config key.
 		"""
 
@@ -98,7 +98,7 @@ class Limiter:
 			None,
 			str
 		] = None,
-		add_retry_on: bool = False
+		add_expires: bool = False
 	) -> typing.Union[
 		bool,
 		typing.Tuple[
@@ -112,8 +112,8 @@ class Limiter:
 		"""Returns whether or not the user with the given identifier
 		(the output of `self.key_func` by default) can access `endpoint`
 		(the output of `self.endpoint_func` by default) with its rate limit.
-		If `add_retry_on` is `True` and they can't access the endpoint right now,
-		the time when they'll be able to do so again is also returned.
+		If `add_expires` is `True`, the time when the rate limit storage entries
+		expire is also added.
 		"""
 
 		identifier = self.key_func() if identifier is None else identifier
@@ -143,7 +143,7 @@ class Limiter:
 
 			passed_rate_limit = True
 
-		if add_retry_on:
+		if add_expires:
 			return (
 				passed_rate_limit,
 				datetime.datetime.fromtimestamp(
