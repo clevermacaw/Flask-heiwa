@@ -102,7 +102,7 @@ def create_app() -> ConfiguredLockFlask:
 			flask.g.identifier = flask.request.remote_addr
 
 			is_rate_limit_exceeded, rate_limit_expires = (
-				flask.current_app.limiter.check(add_retry_on=True)
+				flask.current_app.limiter.check(add_expires=True)
 			)
 
 			if not is_rate_limit_exceeded:
