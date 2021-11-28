@@ -334,7 +334,6 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 	thread = models.Thread.create(
 		flask.g.sa_session,
-		forum_id=forum.id,
 		user_id=flask.g.user.id,
 		**flask.g.json
 	)
@@ -793,7 +792,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 					models.thread_subscribers.c.user_id == flask.g.user.id
 				)
 			)
-		).scalars().one()
+		).scalars().one_or_none()
 	) is not None:
 		raise exceptions.APIThreadSubscriptionAlreadyExists(thread.id)
 
@@ -839,7 +838,7 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				models.thread_subscribers.c.user_id == flask.g.user.id
 			)
 		)
-	).scalars().one()
+	).scalars().one_or_none()
 
 	if existing_subscription is None:
 		raise exceptions.APIThreadSubscriptionNotFound(thread.id)

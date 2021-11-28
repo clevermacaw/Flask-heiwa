@@ -325,8 +325,8 @@ class User(
 		secondary=user_blocks,
 		primaryjoin=lambda: User.id == user_blocks.c.blocker_id,
 		secondaryjoin=lambda: User.id == user_blocks.c.blockee_id,
-		order_by=lambda: sqlalchemy.desc(User.creation_timestamp),
 		backref="blockers",
+		order_by=lambda: sqlalchemy.desc(User.creation_timestamp),
 		passive_deletes="all",
 		lazy=True
 	)
@@ -335,8 +335,8 @@ class User(
 		secondary=user_follows,
 		primaryjoin=lambda: User.id == user_follows.c.follower_id,
 		secondaryjoin=lambda: User.id == user_follows.c.followee_id,
-		order_by=lambda: sqlalchemy.desc(User.creation_timestamp),
 		backref="followers",
+		order_by=lambda: sqlalchemy.desc(User.creation_timestamp),
 		passive_deletes="all",
 		lazy=True
 	)
@@ -344,14 +344,20 @@ class User(
 	ban = sqlalchemy.orm.relationship(
 		UserBan,
 		uselist=False,
-		backref="user",
+		backref=sqlalchemy.orm.backref(
+			"user",
+			uselist=False
+		),
 		passive_deletes="all",
 		lazy=True
 	)
 	permissions = sqlalchemy.orm.relationship(
 		UserPermissions,
 		uselist=False,
-		backref="user",
+		backref=sqlalchemy.orm.backref(
+			"user",
+			uselist=False
+		),
 		passive_deletes="all",
 		lazy=True
 	)

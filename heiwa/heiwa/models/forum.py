@@ -8,6 +8,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 from . import Base
+from .group import Group
 from .helpers import (
 	CDWMixin,
 	CreationTimestampMixin,
@@ -17,6 +18,7 @@ from .helpers import (
 	ReprMixin,
 	UUID
 )
+from .user import user_groups
 
 __all__ = [
 	"Forum",
@@ -456,11 +458,8 @@ class ForumPermissionsGroup(
 				sqlalchemy.and_(
 					ForumParsedPermissions.forum_id == self.forum_id,
 					ForumParsedPermissions.user_id.in_(
-						sqlalchemy.select(sqlalchemy.text("user_groups.user_id")).
-						select_from(sqlalchemy.text("user_groups")).
-						where(
-							sqlalchemy.text("user_groups.group_id") == self.group_id
-						)
+						sqlalchemy.select(user_groups.c.user_id).
+						where(user_groups.c.group_id == self.group_id)
 					)
 				)
 			)
@@ -624,6 +623,38 @@ class Forum(
 		scalar_subquery()
 	)
 
+	parsed_permissions = sqlalchemy.orm.relationship(
+		ForumParsedPermissions,
+		backref=sqlalchemy.orm.backref(
+			"forum",
+			uselist=False
+		),
+		passive_deletes="all",
+		lazy=True
+	)
+
+	permissions_groups = sqlalchemy.orm.relationship(
+		ForumPermissionsGroup,
+		backref=sqlalchemy.orm.backref(
+			"forum",
+			uselist=False
+		),
+		order_by=sqlalchemy.desc(ForumPermissionsGroup.creation_timestamp),
+		passive_deletes="all",
+		lazy=True
+	)
+
+	permissions_users = sqlalchemy.orm.relationship(
+		ForumPermissionsUser,
+		backref=sqlalchemy.orm.backref(
+			"forum",
+			uselist=False
+		),
+		order_by=sqlalchemy.desc(ForumPermissionsUser.creation_timestamp),
+		passive_deletes="all",
+		lazy=True
+	)
+
 	child_forums = sqlalchemy.orm.relationship(
 		lambda: Forum,
 		backref=sqlalchemy.orm.backref(
@@ -631,6 +662,7 @@ class Forum(
 			uselist=False,
 			remote_side=lambda: Forum.id
 		),
+		order_by=lambda: sqlalchemy.desc(Forum.creation_timestamp),
 		passive_deletes="all",
 		lazy=True
 	)
@@ -836,73 +868,71 @@ class Forum(
 
 		return self._parse_child_level(self.id)
 
-	def _get_parent_permissions_group(
+	def _get_permissions_group(
 		self: Forum,
 		group_id: uuid.UUID
 	) -> typing.Dict[str, bool]:
-		if self.parent_forum_id is not None:
-			parent_permissions = sqlalchemy.orm.object_session(self).execute(
-				sqlalchemy.select(ForumPermissionsGroup).
-				where(
-					sqlalchemy.and_(
-						ForumPermissionsGroup.group_id == group_id,
-						ForumPermissionsGroup.forum_id == self.parent_forum_id
-					)
+		parsed_group_permissions = {}
+
+		own_group_permissions = sqlalchemy.orm.object_session(self).execute(
+			sqlalchemy.select(ForumPermissionsGroup).
+			where(
+				sqlalchemy.and_(
+					ForumPermissionsGroup.group_id == group_id,
+					ForumPermissionsGroup.forum_id == self.id
 				)
-			).scalars().one_or_none()
-
-			parsed_group_permissions = self.parent_forum._get_parent_permissions_group(
-				group_id
 			)
+		).scalars().one_or_none()
 
-			if parent_permissions is None:
-				return parsed_group_permissions
+		if own_group_permissions is not None:
+			parsed_group_permissions = own_group_permissions.to_permissions()
 
+		if self.parent_forum_id is not None:
 			for permission_name, permission_value in (
-				parent_permissions.to_permissions().items()
+				self.parent_forum._get_permissions_group(group_id).items()
 			):
-				if permission_value is None:
+				if (
+					permission_value is None or
+					parsed_group_permissions.get(permission_name) is not None
+				):
 					continue
 
 				parsed_group_permissions[permission_name] = permission_value
 
-			return parsed_group_permissions
+		return parsed_group_permissions
 
-		return {}
-
-	def _get_parent_permissions_user(
+	def _get_permissions_user(
 		self: Forum,
 		user_id: uuid.UUID
 	) -> typing.Dict[str, bool]:
-		if self.parent_forum_id is not None:
-			parent_permissions = sqlalchemy.orm.object_session(self).execute(
-				sqlalchemy.select(ForumPermissionsUser).
-				where(
-					sqlalchemy.and_(
-						ForumPermissionsUser.user_id == user_id,
-						ForumPermissionsUser.forum_id == self.parent_forum.id
-					)
+		parsed_user_permissions = {}
+
+		own_user_permissions = sqlalchemy.orm.object_session(self).execute(
+			sqlalchemy.select(ForumPermissionsUser).
+			where(
+				sqlalchemy.and_(
+					ForumPermissionsUser.user_id == user_id,
+					ForumPermissionsUser.forum_id == self.id
 				)
-			).scalars().one_or_none()
-
-			parsed_user_permissions = self.parent_forum._get_parent_permissions_user(
-				user_id
 			)
+		).scalars().one_or_none()
 
-			if parent_permissions is None:
-				return parsed_user_permissions
+		if own_user_permissions is not None:
+			parsed_user_permissions = own_user_permissions.to_permissions()
 
+		if self.parent_forum_id is not None:
 			for permission_name, permission_value in (
-				parent_permissions.to_permissions().items()
+				self.parent_forum._get_permissions_user(user_id).items()
 			):
-				if permission_value is None:
+				if (
+					permission_value is None or
+					parsed_user_permissions.get(permission_name) is not None
+				):
 					continue
 
 				parsed_user_permissions[permission_name] = permission_value
 
-			return parsed_user_permissions
-
-		return {}
+		return parsed_user_permissions
 
 	@functools.lru_cache()
 	def get_parsed_permissions(
@@ -939,97 +969,43 @@ class Forum(
 
 		self.get_parsed_permissions.cache_clear()
 
-		group_ids = sqlalchemy.orm.object_session(self).execute(
-			sqlalchemy.select(sqlalchemy.text("groups.id")).
-			select_from(sqlalchemy.text("groups")).
-			where(
-				sqlalchemy.text(
-					"groups.id IN ("
-					+ str(
-						sqlalchemy.select(sqlalchemy.text("user_groups.group_id")).
-						select_from(sqlalchemy.text("user_groups")).
-						where(sqlalchemy.text("user_groups.user_id") == user.id)
-					)
-					+ ")"
-				)
-			)
-		).scalars().all()
+		parsed_permissions = {}
 
-		group_permission_sets = sqlalchemy.orm.object_session(self).execute(
-			sqlalchemy.select(ForumPermissionsGroup).
-			where(
-				sqlalchemy.and_(
-					ForumPermissionsGroup.group_id.in_(group_ids),
-					ForumPermissionsGroup.forum_id == self.id
-				)
-			).
+		for group_id in sqlalchemy.orm.object_session(self).execute(
+			sqlalchemy.select(user_groups.c.group_id).
+			where(user_groups.c.user_id == user.id).
 			order_by(
 				sqlalchemy.desc(
-					sqlalchemy.select(sqlalchemy.text("groups.level")).
-					select_from(sqlalchemy.text("groups")).
-					where(
-						sqlalchemy.text("groups.id")
-						== ForumPermissionsGroup.group_id
-					).
+					sqlalchemy.select(Group.level).
+					where(Group.id == user_groups.c.group_id).
 					scalar_subquery()
 				)
 			)
-		).scalars().all()
-
-		permissions_to_add = {}
-
-		for group_id in group_ids:
-			permissions_to_add = {
-				**permissions_to_add,
-				**self._get_parent_permissions_group(group_id)
-			}
-
-		permissions_to_add = {
-			**permissions_to_add,
-			**self._get_parent_permissions_user(user.id)
-		}
-
-		for permissions in group_permission_sets:
-			for permission_name, permission_value in (
-				permissions.to_permissions().items()
+		).scalars().all():
+			for permission_name, permission_value in self._get_permissions_group(
+				group_id
 			):
-				if permission_name in permissions or permission_name is None:
+				if (
+					permission_value is None or
+					parsed_permissions.get(permission_name) is not None
+				):
 					continue
 
-				permissions_to_add[permission_name] = permission_value
+				parsed_permissions[permission_name] = permission_value
 
-		if permissions_to_add == {}:
-			permissions_to_add = ForumPermissionMixin.DEFAULT_PERMISSIONS
+		for permission_name, permission_value in self._get_permissions_user(user.id):
+			if permission_value is None:
+				continue
 
-		user_permissions = sqlalchemy.orm.object_session(self).execute(
-			sqlalchemy.select(ForumPermissionsUser).
-			where(
-				sqlalchemy.and_(
-					ForumPermissionsUser.user_id == user.id,
-					ForumPermissionsUser.forum_id == self.id
-				)
-			)
-		).scalars().one_or_none()
+			parsed_permissions[permission_name] = permission_value
 
-		if user_permissions is not None:
-			for permission_name, permission_value in (
-				user_permissions.to_permissions().items()
-			):
-				if permission_value is None:
-					continue
-
-				permissions_to_add[permission_name] = permission_value
-
-		parsed_permissions = {}
-
-		for permission_name, permission_value in (
-			permissions_to_add.items()
-		):
-			parsed_permissions[permission_name] = (
-				permission_value
-				if permission_value is not None
-				else user.parsed_permissions[permission_name]
-			)
+		for permission_name in ForumPermissionMixin.DEFAULT_PERMISSIONS:
+			if parsed_permissions.get(permission_name) is None:
+				parsed_permissions[
+					permission_name
+				] = user.parsed_permissions[
+					permission_name
+				]
 
 		existing_parsed_permissions = self.get_parsed_permissions(user.id)
 

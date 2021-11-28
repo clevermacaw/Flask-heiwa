@@ -5,6 +5,7 @@ import sqlalchemy.orm
 
 from .. import enums
 from . import Base
+from .forum import forum_subscribers
 from .helpers import (
 	CDWMixin,
 	CreationTimestampMixin,
@@ -16,7 +17,7 @@ from .helpers import (
 	UUID
 )
 from .notification import Notification
-from .post import Post
+from .user import user_follows
 
 __all__ = [
 	"Thread",
@@ -206,10 +207,21 @@ class Thread(
 			sqlalchemy.text("posts.thread_id = threads.id")
 		).
 		order_by(
-			sqlalchemy.desc(Post.creation_timestamp)
+			sqlalchemy.desc(sqlalchemy.text("posts.creation_timestamp"))
 		).
 		limit(1).
 		scalar_subquery()
+	)
+
+	votes = sqlalchemy.orm.relationship(
+		ThreadVote,
+		backref=sqlalchemy.orm.backref(
+			"thread",
+			uselist=False
+		),
+		order_by=sqlalchemy.desc(ThreadVote.creation_timestamp),
+		passive_deletes="all",
+		lazy=True
 	)
 
 	class_actions = {
@@ -219,7 +231,7 @@ class Thread(
 		),
 		"create_post": lambda cls, user: (
 			cls.get_class_permission(user, "view") and
-			Post.get_class_permission(user, "view") and
+			user.parsed_permissions["post_view"] and
 			user.parsed_permissions["post_create"]
 		),
 		"delete": lambda cls, user: (
@@ -270,7 +282,7 @@ class Thread(
 	instance_actions = {
 		"create_post": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			Post.get_class_permission(user, "view") and
+			self.forum.get_parsed_permissions(user.id).post_view and
 			self.forum.get_parsed_permissions(user.id).post_create
 		),
 		"delete": lambda self, user: (
@@ -382,26 +394,38 @@ class Thread(
 	) -> None:
 		"""Creates a notification about this thread for:
 			Users subscribed to the parent forum.
-			The author's followers.
+			The author's followers. (Who aren't subscribed to the forum)
 
 		Adds the current instance to the `session`.
 		"""
 
-		# TODO
-		#for subscriber in self.forum.subscribers:
-			#Notification.create(
-				#session,
-				#user=subscriber,
-				#type_=enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM,
-				#content=self.to_notification()
-			#)
+		subscriber_ids = session.execute(
+			sqlalchemy.select(forum_subscribers.c.user_id).
+			where(forum_subscribers.c.forum_id == self.forum_id)
+		).scalars().all()
 
-		#for follower in self.user.followers:
-			#Notification.create(
-				#session,
-				#user=follower,
-				#type_=enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWED_USER,
-				#content=self.to_notification()
-			#)
+		for subscriber_id in subscriber_ids:
+			Notification.create(
+				session,
+				user_id=subscriber_id,
+				type_=enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM,
+				content=self.to_notification()
+			)
+
+		for follower_id in session.execute(
+			sqlalchemy.select(user_follows.c.follower_id).
+			where(user_follows.c.followee_id == self.user_id)
+		).scalars().all():
+			if follower_id in subscriber_ids:
+				continue
+
+			# TODO: Figure out a proper way to do this in the query ^
+
+			Notification.create(
+				session,
+				user_id=follower_id,
+				type_=enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWED_USER,
+				content=self.to_notification()
+			)
 
 		CDWMixin.write(self, session)

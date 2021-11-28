@@ -1153,7 +1153,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 					models.forum_subscribers.c.user_id == flask.g.user.id
 				)
 			)
-		).scalars().one()
+		).scalars().one_or_none()
 	) is not None:
 		raise exceptions.APIForumSubscriptionAlreadyExists(forum.id)
 
@@ -1199,7 +1199,7 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				models.forum_subscribers.c.user_id == flask.g.user.id
 			)
 		)
-	).scalars().one()
+	).scalars().one_or_none()
 
 	if existing_subscription is None:
 		raise exceptions.APIForumSubscriptionNotFound(forum.id)

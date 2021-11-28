@@ -289,7 +289,6 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 	post = models.Post.create(
 		flask.g.sa_session,
-		thread_id=thread.id,
 		user_id=flask.g.user.id,
 		**flask.g.json
 	)

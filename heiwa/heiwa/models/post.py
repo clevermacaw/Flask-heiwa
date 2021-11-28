@@ -15,6 +15,9 @@ from .helpers import (
 	ToNotificationMixin,
 	UUID
 )
+from .notification import Notification
+from .thread import thread_subscribers
+from .user import user_follows
 
 __all__ = [
 	"Post",
@@ -134,6 +137,17 @@ class Post(
 		scalar_subquery()
 	)
 
+	votes = sqlalchemy.orm.relationship(
+		PostVote,
+		backref=sqlalchemy.orm.backref(
+			"post",
+			uselist=False
+		),
+		order_by=sqlalchemy.desc(PostVote.creation_timestamp),
+		passive_deletes="all",
+		lazy=True
+	)
+
 	class_actions = {
 		"create": lambda cls, user: (
 			cls.get_instance_permission(user, "view") and
@@ -221,17 +235,14 @@ class Post(
 		"""
 
 		sqlalchemy.orm.object_session(self).execute(
-			sqlalchemy.delete(sqlalchemy.text("notifications")).
-			select_from(sqlalchemy.text("notifications")).
+			sqlalchemy.delete(Notification).
 			where(
 				sqlalchemy.and_(
 					(
-						sqlalchemy.text("notifications.type")
+						Notification.type_
 						== enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD
 					),
-					sqlalchemy.text("notifications.content") == {
-						"id": str(self.id)
-					}  # TODO?
+					Notification.content["id"].as_string() == str(self.id)
 				)
 			).
 			execution_options(synchronize_session="fetch")
@@ -245,26 +256,38 @@ class Post(
 	) -> None:
 		"""Creates a notification about this post for:
 			Users subscribed to the parent thread.
-			The author's followers.
+			The author's followers. (Who aren't subscribed to the thread)
 
 		Adds the current instance to the `session`.
 		"""
 
-		# TODO
-		#for subscriber in self.thread.subscribers:
-			#Notification.create(
-				#session,
-				#user=subscriber,
-				#type_=enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD,
-				#content=self.to_notification()
-			#)
+		subscriber_ids = session.execute(
+			sqlalchemy.select(thread_subscribers.user_id).
+			where(thread_subscribers.thread_id == self.thread_id)
+		).scalars().all()
 
-		#for follower in self.user.followers:
-			#Notification.create(
-				#session,
-				#user=follower,
-				#type_=enums.NotificationTypes.NEW_POST_FROM_FOLLOWED_USER,
-				#content=self.to_notification()
-			#)
+		for subscriber_id in subscriber_ids:
+			Notification.create(
+				session,
+				user_id=subscriber_id,
+				type_=enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD,
+				content=self.to_notification()
+			)
+
+		for follower_id in session.execute(
+			sqlalchemy.select(user_follows.c.follower_id).
+			where(user_follows.c.followee_id == self.user_id)
+		).scalars().all():
+			if follower_id in subscriber_ids:
+				continue
+
+			# TODO: Figure out a proper way to do this in the query ^
+
+			Notification.create(
+				session,
+				user_id=follower_id,
+				type_=enums.NotificationTypes.NEW_POST_FROM_FOLLOWED_USER,
+				content=self.to_notification()
+			)
 
 		CDWMixin.write(self, session)

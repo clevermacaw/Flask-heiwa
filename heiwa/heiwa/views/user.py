@@ -865,7 +865,7 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 					models.user_blocks.c.blockee_id == user.id
 				)
 			)
-		).scalars().one()
+		).scalars().one_or_none()
 	) is not None:
 		raise exceptions.APIUserBlockAlreadyExists(user.id)
 
@@ -920,7 +920,7 @@ def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				models.user_blocks.c.blockee_id == user.id
 			)
 		)
-	).scalars().one()
+	).scalars().one_or_none()
 
 	if existing_block is None:
 		raise exceptions.APIUserBlockNotFound(user.id)
@@ -1114,7 +1114,7 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 					models.user_follows.c.followee_id == user.id
 				)
 			)
-		).scalars().one()
+		).scalars().one_or_none()
 	) is not None:
 		raise exceptions.APIUserFollowAlreadyExists(user.id)
 
@@ -1159,7 +1159,7 @@ def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				models.user_follows.c.followee_id == user.id
 			)
 		)
-	).scalars().one()
+	).scalars().one_or_none()
 
 	if existing_follow is None:
 		raise exceptions.APIUserFollowNotFound(user.id)
@@ -1284,7 +1284,7 @@ def add_group(
 		).
 		exists().
 		select()
-	).scalars().one():
+	).scalars().one_or_none():
 		raise exceptions.APIUserGroupAlreadyAdded(group.id)
 
 	flask.g.sa_session.execute(
@@ -1348,7 +1348,7 @@ def delete_group(
 				models.user_groups.c.group_id == group.id
 			)
 		)
-	).scalars().one()
+	).scalars().one_or_none()
 
 	if existing_group_association is None:
 		raise exceptions.APIUserGroupNotAdded(group.id)

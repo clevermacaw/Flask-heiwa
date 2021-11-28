@@ -151,7 +151,6 @@ class Limiter:
 		# specific to this endpoint is `[]`, overrides the default,
 		# and that endpoint then has no rate limit.
 
-
 		if add_expires:
 			return (
 				passed_limit,
