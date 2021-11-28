@@ -414,13 +414,13 @@ class Thread(
 
 		for follower_id in session.execute(
 			sqlalchemy.select(user_follows.c.follower_id).
-			where(user_follows.c.followee_id == self.user_id)
+			where(
+				sqlalchemy.and_(
+					user_follows.c.followee_id == self.user_id,
+					~user_follows.c.followee_id.in_(subscriber_ids)
+				)
+			)
 		).scalars().all():
-			if follower_id in subscriber_ids:
-				continue
-
-			# TODO: Figure out a proper way to do this in the query ^
-
 			Notification.create(
 				session,
 				user_id=follower_id,

@@ -465,8 +465,6 @@ class ForumPermissionsGroup(
 			)
 		)
 
-		# TODO ^
-
 		CDWMixin.write(self, session)
 
 	def __repr__(self: ForumPermissionsGroup) -> str:
