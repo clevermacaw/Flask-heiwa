@@ -514,15 +514,10 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			where(
 				sqlalchemy.and_(
 					(
-						models.Notification.type_
+						models.Notification.type
 						== enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD
 					),
-					models.Notification.content["id"].as_string().in_(
-						{
-							str(id_)
-							for id_ in ids
-						}
-					)
+					models.Notification.identifier.in_(ids)
 				)
 			).
 			execution_options(synchronize_session="fetch")

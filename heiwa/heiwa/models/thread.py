@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing
+
 import sqlalchemy
 import sqlalchemy.orm
 
@@ -13,7 +15,6 @@ from .helpers import (
 	IdMixin,
 	PermissionControlMixin,
 	ReprMixin,
-	ToNotificationMixin,
 	UUID
 )
 from .notification import Notification
@@ -103,7 +104,6 @@ class Thread(
 	CDWMixin,
 	PermissionControlMixin,
 	ReprMixin,
-	ToNotificationMixin,
 	IdMixin,
 	CreationTimestampMixin,
 	EditInfoMixin,
@@ -365,28 +365,37 @@ class Thread(
 		"view_vote": lambda self, user: self.get_instance_permission(user, "view")
 	}
 
-	def delete(self: Thread) -> None:
+	def delete(
+		self: Thread,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> None:
 		"""Creates an instance with the provided arguments and adds it to the session.
 		Deletes all notifications associated with this thread.
 
 		Deletes this instance.
 		"""
 
-		sqlalchemy.orm.object_session(self).execute(
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
+		session.execute(
 			sqlalchemy.delete(Notification).
 			where(
 				sqlalchemy.and_(
 					(
-						Notification.type_
+						Notification.type
 						== enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM
 					),
-					Notification.content["id"].as_string() == str(self.id)
+					Notification.identifier == self.id
 				)
 			).
 			execution_options(synchronize_session="fetch")
 		)
 
-		CDWMixin.delete(self)
+		CDWMixin.delete(self, session)
 
 	def write(
 		self: Thread,
@@ -404,12 +413,16 @@ class Thread(
 			where(forum_subscribers.c.forum_id == self.forum_id)
 		).scalars().all()
 
+		# Premature session add and flush. We have to access the ID later.
+		CDWMixin.write(self, session)
+		session.flush()
+
 		for subscriber_id in subscriber_ids:
 			Notification.create(
 				session,
 				user_id=subscriber_id,
-				type_=enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM,
-				content=self.to_notification()
+				type=enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM,
+				identifier=self.id
 			)
 
 		for follower_id in session.execute(
@@ -424,8 +437,8 @@ class Thread(
 			Notification.create(
 				session,
 				user_id=follower_id,
-				type_=enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWED_USER,
-				content=self.to_notification()
+				type=enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWED_USER,
+				identifier=self.id
 			)
 
 		CDWMixin.write(self, session)

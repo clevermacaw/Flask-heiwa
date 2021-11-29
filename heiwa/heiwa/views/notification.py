@@ -44,10 +44,14 @@ ATTR_SCHEMAS = {
 	"is_read": {
 		"type": "boolean"
 	},
-	"type_": {
+	"type": {
 		"type": "string",
 		"minlength": 1,
 		"maxlength": 128
+	},
+	"identifier": {
+		"type": "uuid",
+		"coerce": "convert_to_uuid"
 	}
 }
 
@@ -65,7 +69,8 @@ EQ_SEARCH_SCHEMA = {
 	"creation_timestamp": ATTR_SCHEMAS["creation_timestamp"],
 	"user_id": ATTR_SCHEMAS["user_id"],
 	"is_read": ATTR_SCHEMAS["is_read"],
-	"type_": ATTR_SCHEMAS["type_"]
+	"type": ATTR_SCHEMAS["type"],
+	"identifier": ATTR_SCHEMAS["identifier"]
 }
 IN_SEARCH_SCHEMA = {
 	"id": {
@@ -86,9 +91,15 @@ IN_SEARCH_SCHEMA = {
 		"minlength": 1,
 		"maxlength": 32
 	},
-	"type_": {
+	"type": {
 		"type": "list",
-		"schema": ATTR_SCHEMAS["type_"],
+		"schema": ATTR_SCHEMAS["type"],
+		"minlength": 1,
+		"maxlength": 32
+	},
+	"identifier": {
+		"type": "list",
+		"schema": ATTR_SCHEMAS["identifier"],
 		"minlength": 1,
 		"maxlength": 32
 	}

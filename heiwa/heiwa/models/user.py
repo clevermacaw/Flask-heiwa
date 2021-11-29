@@ -22,6 +22,7 @@ from .helpers import (
 	ReprMixin,
 	UUID
 )
+from .notification import Notification
 
 __all__ = [
 	"User",
@@ -286,11 +287,22 @@ class User(
 
 	notification_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
-			sqlalchemy.func.count(sqlalchemy.text("notifications.id"))
+			sqlalchemy.func.count(Notification.id)
 		).
-		select_from(sqlalchemy.text("notifications")).
+		where(Notification.user_id == sqlalchemy.text("users.id")).
+		scalar_subquery(),
+		deferred=True
+	)
+
+	notification_unread_count = sqlalchemy.orm.column_property(
+		sqlalchemy.select(
+			sqlalchemy.func.count(Notification.id)
+		).
 		where(
-			sqlalchemy.text("notifications.user_id = users.id")
+			sqlalchemy.and_(
+				Notification.user_id == sqlalchemy.text("users.id"),
+				Notification.is_read.is_(False)
+			)
 		).
 		scalar_subquery(),
 		deferred=True
@@ -460,6 +472,7 @@ class User(
 		"follower_count": lambda self, user: True,
 		"forum_count": lambda self, user: True,
 		"notification_count": lambda self, user: self.id == user.id,
+		"notification_unread_count": lambda self, user: self.id == user.id,
 		"post_count": lambda self, user: True,
 		"thread_count": lambda self, user: True
 	}
@@ -478,7 +491,14 @@ class User(
 		Adds the current instance to the `session`.
 		"""
 
-		if session.execute(
+		if self.parsed_permissions is None:
+			self.parsed_permissions = {}
+
+		# Premature session add and flush. We have to access the ID later.
+		CDWMixin.write(self, session)
+		session.flush()
+
+		if not session.execute(
 			sqlalchemy.select(Group).
 			where(
 				Group.id.in_(
@@ -525,11 +545,8 @@ class User(
 					)
 				)
 
-		if self.parsed_permissions is None:
-			with session.no_autoflush:
-				self.reparse_permissions()
-
-		CDWMixin.write(self, session)
+		if self.parsed_permissions == {}:
+			self.reparse_permissions(session)
 
 	@sqlalchemy.ext.hybrid.hybrid_property
 	def has_content(self: User) -> bool:
@@ -560,6 +577,7 @@ class User(
 	def highest_group(self: User) -> Group:
 		"""Returns the group with the highest `level` this user has."""
 
+		# Can't add an `optional` session here, this is a property
 		return sqlalchemy.orm.object_session(self).execute(
 			sqlalchemy.select(Group).
 			where(
@@ -658,7 +676,11 @@ class User(
 	def create_ban(
 		self: User,
 		expiration_timestamp: datetime.datetime,
-		reason: str = None
+		reason: str = None,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
 	) -> None:
 		"""Bans this user with the provided `expiration_timestamp`,
 		and optionally a `reason`.
@@ -667,7 +689,7 @@ class User(
 		self.is_banned = True
 
 		UserBan.create(
-			sqlalchemy.orm.object_session(self),
+			session if session is not None else sqlalchemy.orm.object_session(self),
 			user_id=self.id,
 			expiration_timestamp=expiration_timestamp,
 			reason=reason
@@ -680,16 +702,27 @@ class User(
 
 		self.ban.delete()
 
-	def reparse_permissions(self: User) -> None:
+	def reparse_permissions(
+		self: User,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> None:
 		"""Sets the `self.parsed_permissions` attribute to the combination of:
 			- This user's group permissions, where the group with the highest level
 			is most important.
 			- This user's user permissions.
+		The `session` argument is only meant to be used during the initial creation
+		of this user, but it doesn't have to be.
 		"""
+
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
 
 		result = {}
 
-		group_permission_sets = sqlalchemy.orm.object_session(self).execute(
+		group_permission_sets = session.execute(
 			sqlalchemy.select(
 				GroupPermissions
 			).
@@ -724,7 +757,7 @@ class User(
 				elif len(group_permission_sets) - 1 == group_number:
 					result[permission_name] = False
 
-		own_permissions = sqlalchemy.orm.object_session(self).execute(
+		own_permissions = session.execute(
 			sqlalchemy.select(UserPermissions).
 			where(UserPermissions.user_id == self.id)
 		).scalars().one_or_none()

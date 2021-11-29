@@ -16,8 +16,7 @@ __all__ = [
 	"EditInfoMixin",
 	"IdMixin",
 	"PermissionControlMixin",
-	"ReprMixin",
-	"ToNotificationMixin"
+	"ReprMixin"
 ]
 
 
@@ -284,10 +283,19 @@ class CDWMixin:
 
 		return self
 
-	def delete(self: CDWMixin) -> None:
+	def delete(
+		self: CDWMixin,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> None:
 		"""Deletes the current instance of the mixed-in class."""
 
-		sqlalchemy.orm.object_session(self).delete(self)
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
+		session.delete(self)
 
 	def write(
 		self: CDWMixin,
@@ -488,15 +496,3 @@ class ReprMixin:
 			return f"<{self.__class__.__name__}({','.join(field_strings)})>"
 
 		return f"<{self.__class__.__name__} {id(self)}>"
-
-
-class ToNotificationMixin:
-	def to_notification(self: ToNotificationMixin) -> typing.Dict[str, str]:
-		"""Transforms this object into a JSON-compatible format for notifications.
-		Since the ID should never change, this value can later be used to find
-		notifications corresponding to this thread.
-		"""
-
-		return {
-			"id": str(self.id)
-		}

@@ -448,7 +448,8 @@ class ForumPermissionsGroup(
 		self: ForumPermissionsGroup,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Reparses the parent forum's `parsed_permissions`.
+		"""Deletes the parent forum's `parsed_permissions` for the members of
+		this instance's `group_id`.
 		Adds this instance to the `session`.
 		"""
 
@@ -511,7 +512,8 @@ class ForumPermissionsUser(
 		self: ForumPermissionsUser,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Deletes the parsed permissions for the associated user.
+		"""Deletes the parent forum's `parsed_permissions` for
+		the associated user.
 		Adds this instance to the `session`.
 		"""
 
@@ -839,9 +841,10 @@ class Forum(
 	def _parse_child_level(
 		self: Forum,
 		current_id: uuid.UUID,
-		child_level: int = 0
+		session: sqlalchemy.orm.Session,
+		child_level: int = 0,
 	) -> int:
-		parent_forum_id = sqlalchemy.orm.object_session(self).execute(
+		parent_forum_id = session.execute(
 			sqlalchemy.select(Forum.parent_forum_id).
 			where(Forum.id == current_id)
 		).scalars().one_or_none()
@@ -856,7 +859,13 @@ class Forum(
 
 		return child_level
 
-	def get_child_level(self: Forum) -> None:
+	def get_child_level(
+		self: Forum,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> None:
 		"""Returns how "deep" this forum is. For example, if there is a parent
 		forum which is itself the child of another forum, the level will be 2.
 		"""
@@ -864,15 +873,19 @@ class Forum(
 		if self.parent_forum_id is None:
 			return 0
 
-		return self._parse_child_level(self.id)
+		return self._parse_child_level(
+			self.id,
+			session if session is not None else sqlalchemy.orm.object_session(self)
+		)
 
 	def _get_permissions_group(
 		self: Forum,
-		group_id: uuid.UUID
+		group_id: uuid.UUID,
+		session: sqlalchemy.orm.Session
 	) -> typing.Dict[str, bool]:
 		parsed_group_permissions = {}
 
-		own_group_permissions = sqlalchemy.orm.object_session(self).execute(
+		own_group_permissions = session.execute(
 			sqlalchemy.select(ForumPermissionsGroup).
 			where(
 				sqlalchemy.and_(
@@ -887,7 +900,7 @@ class Forum(
 
 		if self.parent_forum_id is not None:
 			for permission_name, permission_value in (
-				self.parent_forum._get_permissions_group(group_id).items()
+				self.parent_forum._get_permissions_group(group_id, session).items()
 			):
 				if (
 					permission_value is None or
@@ -901,11 +914,12 @@ class Forum(
 
 	def _get_permissions_user(
 		self: Forum,
-		user_id: uuid.UUID
+		user_id: uuid.UUID,
+		session: sqlalchemy.orm.Session
 	) -> typing.Dict[str, bool]:
 		parsed_user_permissions = {}
 
-		own_user_permissions = sqlalchemy.orm.object_session(self).execute(
+		own_user_permissions = session.execute(
 			sqlalchemy.select(ForumPermissionsUser).
 			where(
 				sqlalchemy.and_(
@@ -920,7 +934,7 @@ class Forum(
 
 		if self.parent_forum_id is not None:
 			for permission_name, permission_value in (
-				self.parent_forum._get_permissions_user(user_id).items()
+				self.parent_forum._get_permissions_user(user_id, session).items()
 			):
 				if (
 					permission_value is None or
@@ -935,12 +949,21 @@ class Forum(
 	@functools.lru_cache()
 	def get_parsed_permissions(
 		self: Forum,
-		user_id: uuid.UUID
+		user_id: uuid.UUID,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
 	) -> typing.Union[
 		None,
 		ForumParsedPermissions
 	]:
-		return sqlalchemy.orm.object_session(self).execute(
+		"""Returns this forum's parsed permissions for user with the given ID."""
+
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
+		return session.execute(
 			sqlalchemy.select(ForumParsedPermissions).
 			where(
 				sqlalchemy.and_(
@@ -952,7 +975,11 @@ class Forum(
 
 	def reparse_permissions(
 		self: Forum,
-		user
+		user,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
 	) -> None:
 		"""Sets the given user's `ForumParsedPermissions` to:
 			- The given `user`'s `parsed_permissions`.
@@ -965,11 +992,14 @@ class Forum(
 		then filled with the calculated values.
 		"""
 
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
 		self.get_parsed_permissions.cache_clear()
 
 		parsed_permissions = {}
 
-		for group_id in sqlalchemy.orm.object_session(self).execute(
+		for group_id in session.execute(
 			sqlalchemy.select(user_groups.c.group_id).
 			where(user_groups.c.user_id == user.id).
 			order_by(
@@ -981,7 +1011,8 @@ class Forum(
 			)
 		).scalars().all():
 			for permission_name, permission_value in self._get_permissions_group(
-				group_id
+				group_id,
+				session
 			):
 				if (
 					permission_value is None or
@@ -991,7 +1022,10 @@ class Forum(
 
 				parsed_permissions[permission_name] = permission_value
 
-		for permission_name, permission_value in self._get_permissions_user(user.id):
+		for permission_name, permission_value in self._get_permissions_user(
+			user.id,
+			session
+		):
 			if permission_value is None:
 				continue
 
@@ -1009,7 +1043,7 @@ class Forum(
 
 		if existing_parsed_permissions is None:
 			ForumParsedPermissions.create(
-				sqlalchemy.orm.object_session(self),
+				session,
 				forum_id=self.id,
 				user_id=user.id,
 				**parsed_permissions

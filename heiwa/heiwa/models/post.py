@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing
+
 import sqlalchemy
 import sqlalchemy.orm
 
@@ -12,7 +14,6 @@ from .helpers import (
 	IdMixin,
 	PermissionControlMixin,
 	ReprMixin,
-	ToNotificationMixin,
 	UUID
 )
 from .notification import Notification
@@ -76,7 +77,6 @@ class Post(
 	CDWMixin,
 	PermissionControlMixin,
 	ReprMixin,
-	ToNotificationMixin,
 	IdMixin,
 	CreationTimestampMixin,
 	EditInfoMixin,
@@ -228,27 +228,36 @@ class Post(
 		)
 	}
 
-	def delete(self: Post) -> None:
+	def delete(
+		self: Post,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> None:
 		"""Deletes all notifications associated with this post.
 
 		Deletes this instance.
 		"""
 
-		sqlalchemy.orm.object_session(self).execute(
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
+		session.execute(
 			sqlalchemy.delete(Notification).
 			where(
 				sqlalchemy.and_(
 					(
-						Notification.type_
+						Notification.type
 						== enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD
 					),
-					Notification.content["id"].as_string() == str(self.id)
+					Notification.identifier == self.id
 				)
 			).
 			execution_options(synchronize_session="fetch")
 		)
 
-		CDWMixin.delete(self)
+		CDWMixin.delete(self, session)
 
 	def write(
 		self: Post,
@@ -266,12 +275,16 @@ class Post(
 			where(thread_subscribers.c.thread_id == self.thread_id)
 		).scalars().all()
 
+		# Premature session add and flush. We have to access the ID later.
+		CDWMixin.write(self, session)
+		session.flush()
+
 		for subscriber_id in subscriber_ids:
 			Notification.create(
 				session,
 				user_id=subscriber_id,
-				type_=enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD,
-				content=self.to_notification()
+				type=enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD,
+				identifier=self.id
 			)
 
 		for follower_id in session.execute(
@@ -286,8 +299,8 @@ class Post(
 			Notification.create(
 				session,
 				user_id=follower_id,
-				type_=enums.NotificationTypes.NEW_POST_FROM_FOLLOWED_USER,
-				content=self.to_notification()
+				type=enums.NotificationTypes.NEW_POST_FROM_FOLLOWED_USER,
+				identifier=self.id
 			)
 
 		CDWMixin.write(self, session)

@@ -8,8 +8,7 @@ from .mixins import (
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
-	ReprMixin,
-	ToNotificationMixin
+	ReprMixin
 )
 from .types import UUID
 
@@ -22,7 +21,6 @@ __all__ = [
 	"IdMixin",
 	"PermissionControlMixin",
 	"ReprMixin",
-	"ToNotificationMixin",
 	"UUID"
 ]
-__version__ = "1.10.3"
+__version__ = "1.11.0"

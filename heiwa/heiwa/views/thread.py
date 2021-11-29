@@ -543,15 +543,10 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			where(
 				sqlalchemy.and_(
 					(
-						models.Notification.type_
+						models.Notification.type
 						== enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM
 					),
-					models.Notification.content["id"].as_string().in_(
-						{
-							str(id_)
-							for id_ in ids
-						}
-					)
+					models.Notification.identifier.in_(ids)
 				)
 			).
 			execution_options(synchronize_session="fetch")
@@ -750,8 +745,8 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 	flask.g.sa_session.execute(
 		sqlalchemy.update(models.Notification).
-		where(models.Notification.content == old_thread.to_notification()).
-		values(content=new_thread.to_notification())
+		where(models.Notification.identifier == old_thread.id).
+		values(identifier=new_thread.id)
 	)
 
 	old_thread.delete()

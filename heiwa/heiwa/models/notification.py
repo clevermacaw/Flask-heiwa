@@ -45,13 +45,15 @@ class Notification(
 		default=False,
 		nullable=False
 	)
-	type_ = sqlalchemy.Column(
-		"type",
+	type = sqlalchemy.Column(
 		sqlalchemy.Enum(enums.NotificationTypes),
 		nullable=False
 	)
 
-	content = sqlalchemy.Column(
-		sqlalchemy.JSON,
+	# Don't include any foreign key here. It would be nice for cascading
+	# deletion, but could cause a number of issues in some cases.
+
+	identifier = sqlalchemy.Column(
+		UUID,
 		nullable=False
 	)
