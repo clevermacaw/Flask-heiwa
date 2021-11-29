@@ -262,8 +262,8 @@ class Post(
 		"""
 
 		subscriber_ids = session.execute(
-			sqlalchemy.select(thread_subscribers.user_id).
-			where(thread_subscribers.thread_id == self.thread_id)
+			sqlalchemy.select(thread_subscribers.c.user_id).
+			where(thread_subscribers.c.thread_id == self.thread_id)
 		).scalars().all()
 
 		for subscriber_id in subscriber_ids:
