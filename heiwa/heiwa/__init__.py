@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.31"
+__version__ = "0.13.32"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -57,7 +57,7 @@ class ConfiguredLockFlask(flask.Flask):
 		elif not configured:
 			open(location, "w").close()
 
-		ConfiguredLockFlask.configured.fget.cache_clear()
+		self.configured.fget.cache_clear()
 
 
 def create_app() -> ConfiguredLockFlask:
