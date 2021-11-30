@@ -437,7 +437,7 @@ class Thread(
 			Notification.create(
 				session,
 				user_id=follower_id,
-				type=enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWED_USER,
+				type=enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWEE,
 				identifier=self.id
 			)
 

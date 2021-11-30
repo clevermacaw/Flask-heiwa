@@ -299,7 +299,7 @@ class Post(
 			Notification.create(
 				session,
 				user_id=follower_id,
-				type=enums.NotificationTypes.NEW_POST_FROM_FOLLOWED_USER,
+				type=enums.NotificationTypes.NEW_POST_FROM_FOLLOWEE,
 				identifier=self.id
 			)
 
