@@ -209,23 +209,6 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(notifications), helpers.STATUS_OK
 
 
-@notification_blueprint.route("/confirm-read", methods=["PUT"])
-@authentication.authenticate_via_jwt
-def confirm_read_all() -> typing.Tuple[flask.Response, int]:
-	"""Confirms that all notifications have been read.
-
-	Idempotent.
-	"""
-
-	flask.g.sa_session.execute(
-		sqlalchemy.update(models.Notification).
-		where(models.Notification.user_id == flask.g.user.id).
-		values(is_read=True)
-	)
-
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
-
-
 @notification_blueprint.route("", methods=["DELETE"])
 @validators.validate_json(
 	LIST_SCHEMA,
@@ -267,6 +250,58 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			offset(flask.g.json["offset"])
 		)
 	)
+
+	flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
+@notification_blueprint.route("/confirm-read", methods=["PUT"])
+@validators.validate_json(
+	LIST_SCHEMA,
+	schema_registry=SEARCH_SCHEMA_REGISTRY
+)
+@authentication.authenticate_via_jwt
+def mass_confirm_read() -> typing.Tuple[flask.Response, int]:
+	"""Confirms that all unread notifications which match the given conditions
+	have been read.
+
+	Idempotent.
+	"""
+
+	conditions = sqlalchemy.and_(
+		models.Notification.user_id == flask.g.user.id,
+		models.Notification.is_read.is_(False)
+	)
+
+	if "filter" in flask.g.json:
+		conditions = sqlalchemy.and_(
+			conditions,
+			parse_search(
+				flask.g.json["filter"],
+				models.Notification
+			)
+		)
+
+	order_column = getattr(
+		models.Notification,
+		flask.g.json["order"]["by"]
+	)
+
+	notifications = flask.g.sa_session.execute(
+		sqlalchemy.select(models.Notification).
+		where(conditions).
+		order_by(
+			sqlalchemy.asc(order_column)
+			if flask.g.json["order"]["asc"]
+			else sqlalchemy.desc(order_column)
+		).
+		limit(flask.g.json["limit"]).
+		offset(flask.g.json["offset"])
+	).scalars().all()
+
+	for notification in notifications:
+		notification.is_read = True
 
 	flask.g.sa_session.commit()
 
