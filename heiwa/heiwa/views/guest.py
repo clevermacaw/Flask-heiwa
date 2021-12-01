@@ -19,12 +19,11 @@ guest_blueprint.json_encoder = encoders.JSONEncoder
 
 @guest_blueprint.route("/token", methods=["GET"])
 def token() -> typing.Tuple[flask.Response, int]:
-	"""Returns the access token for a temporary user account.
-	The token expires after `GUEST_SESSION_EXPIRES_AFTER`.
-	When another user uses this endpoint, all expired guest accounts will also be
-	deleted, provided that they have no public content. (threads, posts, forums)
-
-	Not idempotent.
+	"""Returns the access token for a temporary user account. The token expires
+	after the time value provided in seconds within the
+	`'GUEST_SESSION_EXPIRES_AFTER'` config key. When another user uses this
+	endpoint, all expired guest accounts will also be deleted,
+	provided that they have no public content. (threads, posts, forums)
 	"""
 
 	max_creation_timestamp = (

@@ -31,7 +31,7 @@ def get_config(client_name: str) -> typing.Dict[
 		]
 	]:
 	"""Returns the current app's config for the given OpenID service.
-	If the `scope` parameter is missing or lacks `'openid'`, it's added.
+	If the `'scope'` parameter is missing or lacks `'openid'`, it's added.
 	"""
 
 	config = flask.current_app.config["OPENID_SERVICES"][client_name].copy()
@@ -46,10 +46,7 @@ def get_config(client_name: str) -> typing.Dict[
 
 @openid_blueprint.route("", methods=["GET"])
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Returns all available OpenID services.
-
-	Idempotent.
-	"""
+	"""Returns all available OpenID services."""
 
 	return flask.jsonify(
 		list(flask.current_app.config["OPENID_SERVICES"])
@@ -75,12 +72,12 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	}
 })
 def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
-	"""Gets OpenID's `userinfo` by logging in through an OAuth session,
-	and creates a JWT for the associated user. If there is none, the user
-	is automatically created. The `registered_by` column will be
-	`openid.$the_name_of_the_current_service`.
-
-	Not idempotent.
+	"""Gets the `client_name` OpenID service's `userinfo` by logging in
+	through an OAuth session, and creates a token for the associated user.
+	The `'sub'` key has to be defined, `'preferred_username'` and `'picture'`
+	are optional but highly recommended. If there is no user associated,
+	the user is automatically created. The `registered_by` column will be
+	`'openid.$the_name_of_the_current_service'`.
 	"""
 
 	if client_name not in flask.current_app.config["OPENID_SERVICES"]:
@@ -205,9 +202,9 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 	}
 })
 def login(client_name: str) -> typing.Tuple[flask.Response, int]:
-	"""Creates a URL for a user with access to a browser to log in through.
-
-	Not idempotent.
+	"""Creates a URI for a user to log in through. The login attempt is recorded
+	using the `OpenIDAuthentication` database model, to secure against replay
+	and other similar attacks.
 	"""
 
 	if client_name not in flask.current_app.config["OPENID_SERVICES"]:

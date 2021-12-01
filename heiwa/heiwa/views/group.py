@@ -231,17 +231,16 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 })
 
 
-def check_if_last_default_group(group: models.Group) -> bool:
-	"""Returns whether or not the given `group` is the last group which is
-	default for `*`. This function assumes this group has that attribute,
-	and there is no need to check.
+def check_if_last_default_group(group_id: uuid.UUID) -> bool:
+	"""Returns whether or not the group with the given `group_id` is
+	the last group whose `default_for` column contains `'*'`.
 	"""
 
-	if flask.g.sa_session.execute(
+	return flask.g.sa_session.execute(
 		sqlalchemy.select(models.Group).
 		where(
 			sqlalchemy.and_(
-				models.Group.id != group.id,
+				models.Group.id != group_id,
 				models.Group.default_for.any(
 					"*",
 					operator=operator.eq
@@ -249,10 +248,7 @@ def check_if_last_default_group(group: models.Group) -> bool:
 			)
 		).
 		exists()
-	).scalars().one():
-		return False
-
-	return True
+	).scalars().one()
 
 
 @group_blueprint.route("", methods=["POST"])
@@ -260,9 +256,8 @@ def check_if_last_default_group(group: models.Group) -> bool:
 @authentication.authenticate_via_jwt
 @requires_permission("create", models.Group)
 def create() -> typing.Tuple[flask.Response, int]:
-	"""Creates a group with the given name, description and level.
-
-	Not idempotent.
+	"""Creates a group with the given `name`, `description`, `default_for` and
+	`level`.
 	"""
 
 	group = models.Group.create(
@@ -283,9 +278,8 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Group)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all available groups.
-
-	Idempotent.
+	"""Lists all groups that match the requested filter,
+	and this user has permission to view.
 	"""
 
 	conditions = True
@@ -327,9 +321,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Group)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all groups that match the given conditions.
-
-	Not idempotent.
+	"""Deletes all groups that match the requested filter,
+	and this user has permission to both view and delete.
 	"""
 
 	conditions = True
@@ -366,7 +359,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		for group in groups:
 			ids.append(group.id)
 
-			if "*" in group.default_for and check_if_last_default_group(group):
+			if "*" in group.default_for and check_if_last_default_group(group.id):
 				raise exceptions.APIGroupCannotDeleteLastDefault(group.id)
 
 		flask.g.sa_session.execute(
@@ -383,10 +376,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Group)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the group with the given ID.
-
-	Idempotent.
-	"""
+	"""Deletes the group with the requested `id_`."""
 
 	group = find_group_by_id(
 		id_,
@@ -399,7 +389,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		group
 	)
 
-	if "*" in group.default_for and check_if_last_default_group(group):
+	if "*" in group.default_for and check_if_last_default_group(group.id):
 		raise exceptions.APIGroupCannotDeleteLastDefault(group.id)
 
 	group.delete()
@@ -414,10 +404,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Group)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Updates the given group with the given values.
-
-	Idempotent.
-	"""
+	"""Updates the group with the requested `id_` with the requested values."""
 
 	group = find_group_by_id(
 		id_,
@@ -451,10 +438,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Group)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns the group with the given ID.
-
-	Idempotent.
-	"""
+	"""Returns the group with the requested `id_`."""
 
 	return flask.jsonify(
 		find_group_by_id(
@@ -471,10 +455,7 @@ def authorized_actions_group(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
 	"""Returns all actions that the current `flask.g.user` is authorized to
-	perform on the given group. This will only be done if they at least have
-	permission to view it.
-
-	Idempotent.
+	perform on the group with the requested `id_`.
 	"""
 
 	return flask.jsonify(
@@ -489,10 +470,7 @@ def authorized_actions_group(
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions", models.Group)
 def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the group with the given ID's permissions.
-
-	Idempotent.
-	"""
+	"""Deletes the group with the requested `id_`'s permissions."""
 
 	group = find_group_by_id(
 		id_,
@@ -505,7 +483,7 @@ def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		group
 	)
 
-	if "*" in group.default_for and check_if_last_default_group(group):
+	if "*" in group.default_for and check_if_last_default_group(group.id):
 		raise exceptions.APIGroupCannotDeletePermissionsForLastDefault(group.id)
 
 	if group.permissions is None:
@@ -523,10 +501,8 @@ def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions", models.Group)
 def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Updates the group with the given ID's permissions.
+	"""Updates the group with the requested `id_`'s permissions.
 	Automatically creates them if they don't exist.
-
-	Idempotent.
 	"""
 
 	group = find_group_by_id(
@@ -580,10 +556,7 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view_permissions", models.Group)
 def view_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns the group with the given ID's permissions.
-
-	Idempotent.
-	"""
+	"""Returns the group with the requested `id_`'s permissions."""
 
 	group = find_group_by_id(
 		id_,
@@ -603,9 +576,7 @@ def view_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""Returns all actions that the current `flask.g.user` is authorized to
-	perform without any knowledge on which group they'll be done on.
-
-	Idempotent.
+	perform on groups without any knowledge on which one they'll be done on.
 	"""
 
 	return flask.jsonify(

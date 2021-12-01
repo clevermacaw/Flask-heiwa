@@ -18,7 +18,7 @@ meta_blueprint.json_encoder = encoders.JSONEncoder
 @meta_blueprint.route("/config", methods=["GET"])
 def view_config() -> typing.Tuple[flask.Response, int]:
 	"""Returns basic information about this service's config. Keys which should be
-	returned are defined in the `PUBLIC_CONFIG_KEYS` variable.
+	shown are defined in the `'PUBLIC_CONFIG_KEYS'` key.
 	"""
 
 	return flask.jsonify({
@@ -41,15 +41,17 @@ def view_icon() -> typing.Tuple[flask.Response, int]:
 	)
 
 	if not os.path.exists(path):
-		return flask.jsonify(None), helpers.STATUS_OK
+		response = flask.jsonify(None)
+	else:
+		response = flask.send_file(
+			path,
+			mimetype=mimetype,
+			as_attachment=True,
+			download_name=os.path.basename(path),
+			last_modified=os.path.getmtime(path)
+		)
 
-	return flask.send_file(
-		path,
-		mimetype=mimetype,
-		as_attachment=True,
-		download_name=os.path.basename(path),
-		last_modified=os.path.getmtime(path)
-	), helpers.STATUS_OK
+	return response, helpers.STATUS_OK
 
 
 @meta_blueprint.route("/info", methods=["GET"])

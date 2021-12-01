@@ -57,6 +57,11 @@ forum_subscribers = sqlalchemy.Table(
 
 @sqlalchemy.orm.declarative_mixin
 class ForumPermissionMixin:
+	"""A `Forum` helper mixin with columns corresponding to all permissions
+	relevant in forums, as well as their default values and a `to_permissions`
+	method.
+	"""
+
 	forum_create = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
@@ -235,7 +240,7 @@ class ForumPermissionMixin:
 	]:
 		"""Transforms the values in this instance to the standard format for
 		permissions. (A dictionary, where string keys represent permissions,
-		and their value represents whether or not they're granted.
+		and their value represents whether or not they're granted.)
 		"""
 
 		return {
@@ -250,6 +255,10 @@ class ForumParsedPermissions(
 	ReprMixin,
 	Base
 ):
+	"""A `Forum` helper model to store cached parsed permissions for specific
+	users. Not meant to be exposed directly.
+	"""
+
 	__tablename__ = "forum_parsed_permissions"
 
 	forum_id = sqlalchemy.Column(
@@ -423,6 +432,8 @@ class ForumPermissionsGroup(
 	EditInfoMixin,
 	Base
 ):
+	"""A `Forum` helper mixin to store permissions for specific `Group`s."""
+
 	__tablename__ = "forum_permissions_group"
 
 	forum_id = sqlalchemy.Column(
@@ -487,6 +498,8 @@ class ForumPermissionsUser(
 	EditInfoMixin,
 	Base
 ):
+	"""A `Forum` helper mixin to store permissions for specific `User`s."""
+
 	__tablename__ = "forum_permissions_user"
 
 	forum_id = sqlalchemy.Column(
@@ -549,8 +562,18 @@ class Forum(
 	EditInfoMixin,
 	Base
 ):
-	"""Heiwa forum model.
-	Supports (effectively) infinite levels of child forums and subscriptions.
+	"""Forum model. Contains:
+		- A nullable `parent_forum_id` column that corresponds to this forum's
+		parent. This can later be used for nested permissions.
+		- A `user_id` column, corresponding to the forum's owner.
+		- `name` and `description` columns.
+		- An `order` column, used for default ordering.
+		- A dynamic `last_thread_timestamp` column, corresponding to the latest
+		thread in this forum's `creation_timestamp`.
+		- A dynamic `subscriber_count` column, corresponding to how many users
+		have subscribed to this forum.
+		- A dynamic `thread_count` column, corresponding to how many threads exist
+		with this forum's `id` defined as their `forum_id`.
 	"""
 
 	__tablename__ = "forums"
@@ -844,6 +867,8 @@ class Forum(
 		session: sqlalchemy.orm.Session,
 		child_level: int = 0,
 	) -> int:
+		"""Recursively obtains the current forum's child level."""
+
 		parent_forum_id = session.execute(
 			sqlalchemy.select(Forum.parent_forum_id).
 			where(Forum.id == current_id)
@@ -866,7 +891,7 @@ class Forum(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Returns how "deep" this forum is. For example, if there is a parent
+		"""Returns the child level of this forum. For example, if there is a parent
 		forum which is itself the child of another forum, the level will be 2.
 		"""
 
@@ -883,6 +908,11 @@ class Forum(
 		group_id: uuid.UUID,
 		session: sqlalchemy.orm.Session
 	) -> typing.Dict[str, bool]:
+		"""Gets this forum's permissions for the group with the given `group_id`,
+		as well as the parent forums'. This forum's permissions will take
+		precedence.
+		"""
+
 		parsed_group_permissions = {}
 
 		own_group_permissions = session.execute(
@@ -917,6 +947,11 @@ class Forum(
 		user_id: uuid.UUID,
 		session: sqlalchemy.orm.Session
 	) -> typing.Dict[str, bool]:
+		"""Gets this forum's permissions for the user with the given `user_id`,
+		as well as the parent forums'. This forum's permissions will take
+		precedence.
+		"""
+
 		parsed_user_permissions = {}
 
 		own_user_permissions = session.execute(
@@ -958,7 +993,9 @@ class Forum(
 		None,
 		ForumParsedPermissions
 	]:
-		"""Returns this forum's parsed permissions for user with the given ID."""
+		"""Returns this forum's parsed permissions for user with the given
+		`user_id`.
+		"""
 
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)
