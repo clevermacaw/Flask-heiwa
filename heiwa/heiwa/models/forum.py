@@ -256,7 +256,10 @@ class ForumParsedPermissions(
 	Base
 ):
 	"""A `Forum` helper model to store cached parsed permissions for specific
-	users. Not meant to be exposed directly.
+	users. Not meant to be exposed directly. Contains:
+		- A `forum_id` foreign key column, associating the instance with a `Forum`.
+		- A `user_id` foreign key column, associating the instance with a `User`.
+		- All columns from the `ForumPermissionMixin`, but non-nullable.
 	"""
 
 	__tablename__ = "forum_parsed_permissions"
@@ -432,7 +435,12 @@ class ForumPermissionsGroup(
 	EditInfoMixin,
 	Base
 ):
-	"""A `Forum` helper mixin to store permissions for specific `Group`s."""
+	"""A `Forum` helper mixin to store permissions for specific `Group`s.
+	Contains:
+		- A `forum_id` foreign key column, associating the instance with a `Forum`.
+		- A `group_id` foreign key column, associating the instance with a `Group`.
+		- All columns from the `ForumPemrissionMixin`.
+	"""
 
 	__tablename__ = "forum_permissions_group"
 
@@ -459,9 +467,8 @@ class ForumPermissionsGroup(
 		self: ForumPermissionsGroup,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Deletes the parent forum's `parsed_permissions` for the members of
-		this instance's `group_id`.
-		Adds this instance to the `session`.
+		"""Deletes the parent forum's `ForumParsedPermissions` for the members of
+		this instance's `group_id`. Adds this instance to the `session`.
 		"""
 
 		session.execute(
@@ -498,7 +505,12 @@ class ForumPermissionsUser(
 	EditInfoMixin,
 	Base
 ):
-	"""A `Forum` helper mixin to store permissions for specific `User`s."""
+	"""A `Forum` helper mixin to store permissions for specific `User`s.
+	Contains:
+		- A `forum_id` foreign key column, associating the instance with a `Forum`.
+		- A `user_id` foreign key column, associating the instance with a `User`.
+		- All columns from the `ForumPemrissionMixin`.
+	"""
 
 	__tablename__ = "forum_permissions_user"
 
@@ -525,9 +537,8 @@ class ForumPermissionsUser(
 		self: ForumPermissionsUser,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Deletes the parent forum's `parsed_permissions` for
-		the associated user.
-		Adds this instance to the `session`.
+		"""Deletes the parent forum's `ForumParsedPermissions` for
+		the associated user. Adds this instance to the `session`.
 		"""
 
 		session.execute(
@@ -563,17 +574,19 @@ class Forum(
 	Base
 ):
 	"""Forum model. Contains:
-		- A nullable `parent_forum_id` column that corresponds to this forum's
-		parent. This can later be used for nested permissions.
-		- A `user_id` column, corresponding to the forum's owner.
+		- A nullable `parent_forum_id` foreign key column that corresponds to
+		this forum's parent. This can later be used for nested permissions, as
+		well as subforums.
+		- A `user_id` foreign key column, associating this forum with its author,
+		a `User`.
 		- `name` and `description` columns.
 		- An `order` column, used for default ordering.
-		- A dynamic `last_thread_timestamp` column, corresponding to the latest
-		thread in this forum's `creation_timestamp`.
 		- A dynamic `subscriber_count` column, corresponding to how many users
 		have subscribed to this forum.
 		- A dynamic `thread_count` column, corresponding to how many threads exist
 		with this forum's `id` defined as their `forum_id`.
+		- A dynamic `last_thread_timestamp` column, corresponding to the latest
+		thread in this forum's `creation_timestamp`.
 	"""
 
 	__tablename__ = "forums"
@@ -614,19 +627,6 @@ class Forum(
 		nullable=False
 	)
 
-	last_thread_timestamp = sqlalchemy.orm.column_property(
-		sqlalchemy.select(sqlalchemy.text("threads.creation_timestamp")).
-		select_from(sqlalchemy.text("threads")).
-		where(
-			sqlalchemy.text("threads.forum_id = forums.id")
-		).
-		order_by(
-			sqlalchemy.desc(sqlalchemy.text("threads.creation_timestamp"))
-		).
-		limit(1).
-		scalar_subquery()
-	)
-
 	subscriber_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
 			sqlalchemy.func.count(forum_subscribers.c.forum_id)
@@ -643,6 +643,19 @@ class Forum(
 		where(
 			sqlalchemy.text("threads.forum_id = forums.id")
 		).
+		scalar_subquery()
+	)
+
+	last_thread_timestamp = sqlalchemy.orm.column_property(
+		sqlalchemy.select(sqlalchemy.text("threads.creation_timestamp")).
+		select_from(sqlalchemy.text("threads")).
+		where(
+			sqlalchemy.text("threads.forum_id = forums.id")
+		).
+		order_by(
+			sqlalchemy.desc(sqlalchemy.text("threads.creation_timestamp"))
+		).
+		limit(1).
 		scalar_subquery()
 	)
 

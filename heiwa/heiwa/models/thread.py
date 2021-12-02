@@ -34,7 +34,11 @@ class ThreadVote(
 	EditInfoMixin,
 	Base
 ):
-	"""Heiwa thread vote model. Allows for both downvoting and upvoting."""
+	"""A `Thread` helper model for storing votes. Contains:
+		- A `thread_id` column, associating the instance with a `Thread`.
+		- A `user_id` column, associating the instance with a `User`.
+		- An `upvote` column, signifying whether this is a downvote or an upvote.
+	"""
 
 	__tablename__ = "thread_votes"
 
@@ -109,7 +113,26 @@ class Thread(
 	EditInfoMixin,
 	Base
 ):
-	"""Heiwa thread model. Supports voting, subscribing and storing views."""
+	"""Thread model. Contains:
+		- A `forum_id` foreign key column, associating this thread with a `Forum`.
+		- A `user_id` foreign key column, associating this thread with its author,
+		a `User`.
+		- An `is_locked` column, signifying whether or not this thread is locked.
+		- An `is_pinned` column, signifying whether or not this thread is pinned.
+		On frontend applications, this should make pinned threads float to the top
+		of their respective lists.
+		- A `tags` column, signifying this thread's tags
+		(e.g. `'Support'`, `'Important'`).
+		- `name` and `content` columns.
+		- A dynamic `vote_value` column, corresponding to the total count of this
+		thread's upvotes, with the downvotes' count subtracted.
+		- A dynamic `post_count` column, corresponding to how many posts exist
+		with this thread's `id` defined as their `thread_id`.
+		- A dynamic `subscriber_count` column, corresponding to how many users
+		have subscribed to this thread.
+		- A dynamic `last_post_timestamp` column, corresponding to the latest
+		post in this thread's `creation_timestamp`.
+	"""
 
 	__tablename__ = "threads"
 
