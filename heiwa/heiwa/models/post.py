@@ -34,6 +34,8 @@ class PostVote(
 	Base
 ):
 	"""A `Post` helper model for storing votes. Contains:
+		- A `creation_timestamp` column from the `CreationTimestampMixin`.
+		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
 		- A `post_id` column, associating the instance with a `Post`.
 		- A `user_id` column, associating the instance with a `User`.
 		- An `upvote` column, signifying whether this is a downvote or an upvote.
@@ -87,6 +89,9 @@ class Post(
 	Base
 ):
 	"""Post model. Contains:
+		- An `id` column from the `IdMixin`.
+		- A `creation_timestamp` column from the `CreationTimestampMixin`.
+		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
 		- A `thread_id` foreign key column, associating this post with its
 		`Thread`.
 		- A `user_id` foreign key column, associating this post with its author,
@@ -121,7 +126,7 @@ class Post(
 
 	content = sqlalchemy.Column(
 		sqlalchemy.String(262144),
-		nullable=True
+		nullable=False
 	)
 
 	vote_value = sqlalchemy.orm.column_property(
@@ -247,9 +252,9 @@ class Post(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Deletes all notifications associated with this post.
-
-		Deletes this instance.
+		"""Deletes all notifications associated with this post, as well as the
+		post itself. If the `session` argument is `None`, it's set to this
+		object's session.
 		"""
 
 		if session is None:

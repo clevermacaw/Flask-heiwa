@@ -22,9 +22,10 @@ __all__ = [
 
 @sqlalchemy.orm.declarative_mixin
 class BasePermissionMixin:
-	"""Adds columns with all possible permissions,
-	as well as the `to_permissions` method to convert them to a dict,
-	and a static dictionary with the default values.
+	"""A helper mixin with columns corresponding to all permissions recognized
+	by default, as well as the `to_permissions` method to convert them to a
+	dictionary, and a static `DEFAULT_PERMISSIONS` dictionary with their default
+	values.
 	"""
 
 	forum_create = sqlalchemy.Column(
@@ -261,7 +262,7 @@ class BasePermissionMixin:
 
 @sqlalchemy.orm.declarative_mixin
 class CDWMixin:
-	"""A mixin that adds the create(), delete() and write() methods."""
+	"""A helper mixin with `create`, `write` and `delete` methods."""
 
 	@classmethod
 	def create(
@@ -270,8 +271,8 @@ class CDWMixin:
 		*args,
 		**kwargs
 	):
-		"""Creates an instance of the mixed-in class and runs
-		the `write()` method.
+		"""Creates an instance of the mixed-in class and runs its the `write`
+		method.
 		"""
 
 		self = cls(
@@ -290,7 +291,10 @@ class CDWMixin:
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Deletes the current instance of the mixed-in class."""
+		"""Deletes the current instance of the mixed-in class from the provided
+		`session`. If the `session` argument is `None`, it's set to this
+		object's session.
+		"""
 
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)
@@ -301,14 +305,16 @@ class CDWMixin:
 		self: CDWMixin,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Adds the current instance to the provided session."""
+		"""Adds the current instance of the mixed-in class to the provided
+		`session`.
+		"""
 
 		session.add(self)
 
 
 @sqlalchemy.orm.declarative_mixin
 class CreationTimestampMixin:
-	"""A mixin that adds a timezone-aware timestamp column named
+	"""A helper mixin that adds a timezone-aware timestamp column named
 	`creation_timestamp`, whose default value is the time of row insertion.
 	"""
 
@@ -321,18 +327,19 @@ class CreationTimestampMixin:
 
 @sqlalchemy.orm.declarative_mixin
 class EditInfoMixin:
-	"""Adds a timezone-aware timestamp column named `edit_timestamp`,
-	which will be set to the current time whenever `edited()` is called.
-	The `onupdate` property will unfortunately not work here, since counters
-	such as `thread_count` being updated will also have an effect.
-
-	Adds an `Integer` column named `edit_count`, which signals how many
-	times this thread has been edited, and increments by 1 every time `edited()`
-	is called. The default value is `0`. This is primarily for detecting
-	database collisions, but is also useful for other things.
-
-	When a row is first inserted, this column will remain NULL
-	unless specified otherwise.
+	"""A helper mixin which contains information about the mixed-in object's
+	edits. Contains:
+		- A timezone-aware timestamp column named `edit_timestamp`, which will
+		be set to the current time whenever the `edited` method is called.
+		The `onupdate` property will unfortunately not work here, since some
+		columns aren't changed explicitly by users, and updates on those columns
+		shouldn't be counted as "real".
+		- A nullable `edit_count` column, which signals how many times the
+		mixed-in object has been edited, and increments by 1 every time the
+		`edited` method is called. The default value is `0`. This is primarily
+		for detecting database collisions, but is also useful for other things.
+		When a row is first inserted, this column will remain NULL unless
+		specified otherwise.
 	"""
 
 	edit_timestamp = sqlalchemy.Column(
@@ -356,7 +363,7 @@ class EditInfoMixin:
 
 @sqlalchemy.orm.declarative_mixin
 class IdMixin:
-	"""A mixin that adds a UUID column named `id`, whose default value is
+	"""A helper mixin that adds a UUID column named `id`, whose default value is
 	an automatically generated UUID4. On the off chance that the generated
 	UUID collides with another one in the same column, it will try again.
 	"""
@@ -369,8 +376,8 @@ class IdMixin:
 
 
 class PermissionControlMixin:
-	"""A mixin to handle permissions for users performing different actions
-	with the given model, as well as viewing different attributes.
+	"""A helper mixin to handle permissions for users performing different
+	actions on the mixed-in class, as well as viewing different columns.
 	"""
 
 	class_actions = {}
@@ -464,7 +471,7 @@ class PermissionControlMixin:
 
 
 class ReprMixin:
-	"""A mixin which adds a default, pretty `__repr__` method."""
+	"""A helper mixin which adds a default, pretty `__repr__` method."""
 
 	def __repr__(self: ReprMixin) -> str:
 		"""Returns the `self._repr` method with a mapped `id` column,

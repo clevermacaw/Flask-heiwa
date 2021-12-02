@@ -1,5 +1,5 @@
-"""Validators for requests sent to the Heiwa API.
-Uses Cerberus. Currently only supports JSON.
+"""Validators for requests sent to the API. Uses Cerberus, and currently only
+supports JSON.
 """
 
 from __future__ import annotations
@@ -18,13 +18,12 @@ import validators
 from .. import exceptions
 
 __all__ = ["APIValidator", "validate_json"]
-__version__ = "1.8.3"
+__version__ = "1.8.4"
 
 
 class APIValidator(cerberus.Validator):
-	"""Cerberus validator for the Heiwa API.
-	Adds functions related to UUIDs, ISO-formatted datetime, URLs, regex and
-	the `makes_required` rule.
+	"""Cerberus validator for the API. Adds methods related to UUIDs,
+	ISO-formatted datetime, URLs, regex and the `makes_required` rule.
 	"""
 
 	def _check_with_is_valid_regex(
@@ -97,11 +96,10 @@ class APIValidator(cerberus.Validator):
 		value: typing.Any
 	) -> None:
 		"""For every key in `makes_required`:
-			If the key's value is an iterable, and the corresponding field's
+			- If the key's value is an iterable, and the corresponding field's
 			value equals one of them, the field is treated as if it was required.
-			If the key's value is not an iterable, and the corresponding field
+			- If the key's value is not an iterable, and the corresponding field
 			equals it, it's treated as if it was required.
-
 		The rule's arguments are validated against this schema:
 		{
 			'type': 'dict',
@@ -148,15 +146,12 @@ def validate_json(
 		typing.Any
 	]
 ]:
-	"""Checks JSON data sent in the request against a Cerberus schema.
-
-	If there is no data at all, `APIJSONMissing` will be raised.
-	If there is data, but it's not a `dict` as `cerberus.Validator` requires,
-	`APIJSONInvalid` will be raised will no additional details.
-	If the data is invalid as per the schema, `APIJSONInvalid` will be raised
-	with the validation errors given in its details.
-
-	This function must be used as a wrapper.
+	"""Checks JSON data sent in the `flask.request` against a Cerberus schema.
+	If there is no data at all, `exceptions.APIJSONMissing` will be raised.
+	If there is data, but it's not a dictionary as `cerberus.Validator` requires,
+	`exceptions.APIJSONInvalid` will be raised will no additional details.
+	If the data is invalid as per the schema, `exceptions.APIJSONInvalid` will
+	be raised with the validation errors given in its details.
 	"""
 
 	def wrapper(

@@ -18,7 +18,13 @@ class OpenIDAuthentication(
 	CreationTimestampMixin,
 	Base
 ):
-	"""CSRF / replay attack protection for OpenID authentication."""
+	"""CSRF / replay attack protection model for OpenID authentication.
+	Contains:
+		- A `creation_timestamp` column from the `CreationTimestampMixin`.
+		- An `identifier` column, a unique identifier for the user requesting
+		to authenticate. This will generally be an IP address.
+		- `none` and `state` columns, used as per the OpenID protocol.
+	"""
 
 	__tablename__ = "openid_authentication"
 

@@ -1,4 +1,4 @@
-"""Authentication for the Heiwa API."""
+"""Authentication for the API."""
 
 import collections.abc
 import datetime
@@ -11,7 +11,7 @@ import flask
 from .. import exceptions, models
 
 __all__ = ["authenticate_via_jwt"]
-__version__ = "3.2.1"
+__version__ = "3.2.2"
 
 
 def authenticate_via_jwt(
@@ -24,8 +24,9 @@ def authenticate_via_jwt(
 	typing.Any
 ]:
 	"""If the "Authorization" header is present, derives the current user
-	from it (if possible) using JWT.
-	Otherwise, `APIAuthorizationHeaderMissing` is raised.
+	from it (if possible) using JWT and assigns them to `flask.g.user`.
+	If the user is banned, it's checked if their ban has expired. If not,
+	access is denied.
 	"""
 
 	@functools.wraps(function)

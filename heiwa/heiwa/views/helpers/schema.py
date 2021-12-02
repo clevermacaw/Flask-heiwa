@@ -116,8 +116,8 @@ def generate_search_schema_registry(
 	],
 	schema_name: str = "search"
 ) -> cerberus.schema.SchemaRegistry:
-	"""Generates a search schema registry with `$and`, `$or` and `$not` rules
-	combined with the given ones.
+	"""Generates a search schema registry with `'$and'`, `'$or'` and `'$not'`
+	rules combined with the given ones.
 	"""
 
 	inner_schema = {

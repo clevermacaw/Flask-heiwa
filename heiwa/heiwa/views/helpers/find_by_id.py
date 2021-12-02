@@ -18,8 +18,9 @@ def find_forum_by_id(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.models.User
 ) -> heiwa.models.Forum:
-	"""Returns the forum with the given ID.
-	Raises `APIForumNotFound` if it doesn't exist.
+	"""Returns the forum with the given `id_`. Raises
+	`heiwa.exceptions.APIForumNotFound` if it doesn't exist, or the given `user`
+	doesn't have permission to view it.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -80,8 +81,8 @@ def find_group_by_id(
 	id_: uuid.UUID,
 	session: sqlalchemy.orm.Session
 ) -> heiwa.models.Group:
-	"""Returns the group with the given ID.
-	Raises `APIGroupNotFound` if it doesn't exist.
+	"""Returns the group with the given `id_`. Raises
+	`heiwa.exceptions.APIGroupNotFound` if it doesn't exist.
 	"""
 
 	group = session.execute(
@@ -100,8 +101,9 @@ def find_thread_by_id(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.models.User
 ) -> heiwa.models.Thread:
-	"""Returns the thread with the given ID.
-	Raises `APIThreadNotFound` if it doesn't exist.
+	"""Returns the thread with the given `id_`. Raises
+	`heiwa.exceptions.APIThreadNotFound` if it doesn't exist, or the given `user`
+	doesn't have permission to view it.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -165,8 +167,8 @@ def find_user_by_id(
 	id_: uuid.UUID,
 	session: sqlalchemy.orm.Session
 ) -> heiwa.models.User:
-	"""Returns the user with the given ID.
-	Raises `APIUserNotFound` if they don't exist.
+	"""Returns the user with the given `id_`. Raises
+	`heiwa.exceptions.APIUserNotFound` if they don't exist.
 	"""
 
 	user = session.execute(

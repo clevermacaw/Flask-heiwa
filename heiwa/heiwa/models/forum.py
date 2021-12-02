@@ -437,6 +437,8 @@ class ForumPermissionsGroup(
 ):
 	"""A `Forum` helper mixin to store permissions for specific `Group`s.
 	Contains:
+		- A `creation_timestamp` column from the `CreationTimestampMixin`.
+		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
 		- A `forum_id` foreign key column, associating the instance with a `Forum`.
 		- A `group_id` foreign key column, associating the instance with a `Group`.
 		- All columns from the `ForumPemrissionMixin`.
@@ -507,6 +509,8 @@ class ForumPermissionsUser(
 ):
 	"""A `Forum` helper mixin to store permissions for specific `User`s.
 	Contains:
+		- A `creation_timestamp` column from the `CreationTimestampMixin`.
+		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
 		- A `forum_id` foreign key column, associating the instance with a `Forum`.
 		- A `user_id` foreign key column, associating the instance with a `User`.
 		- All columns from the `ForumPemrissionMixin`.
@@ -574,12 +578,15 @@ class Forum(
 	Base
 ):
 	"""Forum model. Contains:
+		- An `id` column from the `IdMixin`.
+		- A `creation_timestamp` column from the `CreationTimestampMixin`.
+		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
 		- A nullable `parent_forum_id` foreign key column that corresponds to
 		this forum's parent. This can later be used for nested permissions, as
 		well as subforums.
 		- A `user_id` foreign key column, associating this forum with its author,
 		a `User`.
-		- `name` and `description` columns.
+		- `name` and `description` columns. `description` is nullable.
 		- An `order` column, used for default ordering.
 		- A dynamic `subscriber_count` column, corresponding to how many users
 		have subscribed to this forum.

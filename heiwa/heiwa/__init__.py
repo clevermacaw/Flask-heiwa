@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.35"
+__version__ = "0.13.36"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -61,8 +61,11 @@ class ConfiguredLockFlask(flask.Flask):
 
 
 def create_app() -> ConfiguredLockFlask:
-	"""Creates a pre-configured `ConfiguredLockFlask` app,
-	and its models' tables.
+	"""Creates a pre-configured `ConfiguredLockFlask` Heiwa app.
+	If the file defining whether or not this app has been configured
+	before exists (meaning that isn't the case), the database models
+	and tables are also created. Once that's done, default groups are
+	also created.
 	"""
 
 	app = ConfiguredLockFlask(__name__)

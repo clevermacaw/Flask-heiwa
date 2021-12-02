@@ -35,6 +35,8 @@ class ThreadVote(
 	Base
 ):
 	"""A `Thread` helper model for storing votes. Contains:
+		- A `creation_timestamp` column from the `CreationTimestampMixin`.
+		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
 		- A `thread_id` column, associating the instance with a `Thread`.
 		- A `user_id` column, associating the instance with a `User`.
 		- An `upvote` column, signifying whether this is a downvote or an upvote.
@@ -114,6 +116,9 @@ class Thread(
 	Base
 ):
 	"""Thread model. Contains:
+		- An `id` column from the `IdMixin`.
+		- A `creation_timestamp` column from the `CreationTimestampMixin`.
+		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
 		- A `forum_id` foreign key column, associating this thread with a `Forum`.
 		- A `user_id` foreign key column, associating this thread with its author,
 		a `User`.
@@ -395,10 +400,9 @@ class Thread(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Creates an instance with the provided arguments and adds it to the session.
-		Deletes all notifications associated with this thread.
-
-		Deletes this instance.
+		"""Deletes all notifications associated with this thread, as well as the
+		thread itself. If the `session` argument is `None`, it's set to this
+		object's session.
 		"""
 
 		if session is None:

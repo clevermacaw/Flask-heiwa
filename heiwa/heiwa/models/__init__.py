@@ -1,4 +1,4 @@
-"""Heiwa SQLAlchemy ORM models and regular tables."""
+"""SQLAlchemy ORM models, tables and helpers."""
 
 import sqlalchemy.orm
 
@@ -50,4 +50,4 @@ __all__ = [
 	"user_follows",
 	"user_groups"
 ]
-__version__ = "0.30.5"
+__version__ = "0.30.6"

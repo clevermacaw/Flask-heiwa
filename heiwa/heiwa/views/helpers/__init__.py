@@ -1,4 +1,4 @@
-"""Helpers for the Heiwa API views."""
+"""Helpers for the API views."""
 
 from .find_by_id import (
 	find_forum_by_id,
@@ -26,4 +26,4 @@ __all__ = [
 	"requires_permission",
 	"validate_permission"
 ]
-__version__ = "1.26.0"
+__version__ = "1.26.1"

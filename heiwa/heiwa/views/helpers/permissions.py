@@ -35,9 +35,7 @@ def requires_permission(
 ]:
 	"""Checks whether or not `flask.g.user` has permission to perform `action`
 	(string, or callable that returns a string) on the given `resource`.
-	Raises `APINoPermission` if that's not the case.
-
-	This function must be used as a wrapper.
+	Raises `heiwa.exceptions.APINoPermission` if that's not the case.
 	"""
 
 	def wrapper(
@@ -71,7 +69,8 @@ def validate_permission(
 	]
 ) -> None:
 	"""Checks whether or not `user` has permission to perform `action` on
-	the given `resource`. Raises `APINoPermission` if that's not the case.
+	the given `resource`. Raises `heiwa.exceptions.APINoPermission` if that's
+	not the case.
 	"""
 
 	if isinstance(resource, sqlalchemy.orm.DeclarativeMeta):

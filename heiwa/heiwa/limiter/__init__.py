@@ -9,10 +9,12 @@ import limits.storage
 import limits.strategies
 
 __all__ = ["Limiter"]
-__version__ = "2.2.0"
+__version__ = "2.2.1"
 
 
 class Limiter:
+	"""Rate limiter, mainly compatible with Flask applications."""
+
 	def __init__(
 		self: Limiter,
 		default_limits: typing.Union[
@@ -40,7 +42,6 @@ class Limiter:
 		] = lambda: flask.request.endpoint
 	) -> None:
 		"""Sets this instance's attributes to the given values.
-
 		If `default_limits` is `None`, and this method is running within
 		a Flask app context, it's set to the current Flask app's
 		`'RATELIMIT_DEFAULT'` config key as long there is one.
