@@ -1,4 +1,4 @@
-"""Exceptions for the Heiwa API."""
+"""Exceptions."""
 
 from __future__ import annotations
 
@@ -68,14 +68,14 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.28.1"
+__version__ = "1.28.2"
 
 
 class APIException(Exception):
 	"""The base class for all API exceptions.
-	Has these default values:
-		(HTTP) code: 500
-		details: None
+	Default values:
+		- (HTTP) `code`: `500`
+		- `details`: `None`
 	"""
 
 	code = helpers.STATUS_INTERNAL_SERVER_ERROR
@@ -96,24 +96,24 @@ class APIException(Exception):
 			],
 		] = details
 	) -> None:
-		"""Sets the `details` class variable to the given value.
-		If this method isn't used, it remains `None`.
+		"""Sets the `details` class variable to the given value. If this method
+		isn't used, it remains `None`.
 		"""
 
 		self.details = details
 
 
 class APIAuthorizationHeaderInvalid(APIException):
-	"""Exception class for when the `"Authorization"; header is required and
-	present, but not valid.
-	(e.g. Basic instead of Bearer, when only Bearer is supported)
+	"""Exception class for when the `'Authorization'` header is required and
+	present, but not valid. (e.g. Basic instead of Bearer, when only Bearer
+	is supported)
 	"""
 
 	code = helpers.STATUS_BAD_REQUEST
 
 
 class APIAuthorizationHeaderMissing(APIException):
-	"""Exception class for when the `"Authorization"` header is required,
+	"""Exception class for when the `'Authorization'` header is required,
 	but not present.
 	"""
 
@@ -122,7 +122,7 @@ class APIAuthorizationHeaderMissing(APIException):
 
 class APIForumChildLevelLimitReached(APIException):
 	"""Exception class for when a user attempts to create a forum whose
-	child level is above the config's `FORUM_MAX_CHILD_LEVEL` value.
+	child level is above the config's ` 'FORUM_MAX_CHILD_LEVEL'` key.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -130,7 +130,7 @@ class APIForumChildLevelLimitReached(APIException):
 
 class APIForumNotFound(APIException):
 	"""Exception class for when a requested forum
-	(e.g. /forums/invalid-uuid) does not exist.
+	(e.g. `'/forums/inexistent-id'`) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -211,7 +211,7 @@ class APIGroupCannotDeleteLastDefault(APIException):
 
 class APIGroupCannotDeletePermissionsForLastDefault(APIException):
 	"""Exception class for when a user attempts to delete permissions
-	for the last group which is default for `*`.
+	for the last group whose `default_for` column contains `'*'`.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -219,7 +219,7 @@ class APIGroupCannotDeletePermissionsForLastDefault(APIException):
 
 class APIGroupCannotLeavePermissionNullForLastDefault(APIException):
 	"""Exception class for when a user attempts to set a permission whose
-	value is `None` for the last group which is default for `*`.
+	value is `None` for the last group whose `default_for` column is `'*'`.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -227,7 +227,7 @@ class APIGroupCannotLeavePermissionNullForLastDefault(APIException):
 
 class APIGroupNotFound(APIException):
 	"""Exception class for when a requested group
-	(e.g. /groups/invalid-uuid) does not exist.
+	(e.g. `'/groups/inexistent-id'`) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -258,15 +258,16 @@ class APIGroupUnchanged(APIException):
 
 
 class APIGuestSessionLimitReached(APIException):
-	"""Exception class for a user attempts to obtain a guest token,
-	but already has too many existing accounts which haven't yet expired.
+	"""Exception class for when a visitor attempts to obtain a guest token,
+	but already has too many existing accounts with the same IP address
+	(`external_id`) which haven't yet expired.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
 
 
 class APIJSONInvalid(APIException):
-	"""Exception class for when the JSON data sent to our API is invalid,
+	"""Exception class for when the JSON data sent to the API is invalid,
 	as per the predefined Cerberus schema.
 	"""
 
@@ -283,7 +284,7 @@ class APIJSONMissing(APIException):
 
 class APIJWTInvalid(APIException):
 	"""Exception class for when the provided JWT is not valid and
-	cannot be decoded. (e.g. missing a character)
+	cannot be decoded. (e.g. missing a character, corrupted)
 	"""
 
 	code = helpers.STATUS_BAD_REQUEST
@@ -291,15 +292,15 @@ class APIJWTInvalid(APIException):
 
 class APIJWTInvalidClaims(APIException):
 	"""Exception class for when the provided JWT is valid,
-	but its claims are not.
+	but its claims are not. (e.g. it is expired)
 	"""
 
 	code = helpers.STATUS_BAD_REQUEST
 
 
 class APIJWTUserNotFound(APIException):
-	"""Exception class for when the provided JWT is valid,
-	but its user has since been deleted.
+	"""Exception class for when the provided JWT and its claims are valid,
+	but its specified user has since been deleted.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -315,22 +316,22 @@ class APINoPermission(APIException):
 
 class APINotificationNotFound(APIException):
 	"""Exception class for when a requested notification
-	(e.g. /notifications/invalid-uuid) does not exist.
+	(e.g. `'/notifications/inexistent-id`') does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
 
 
 class APIOpenIDAuthenticationFailed(APIException):
-	"""Exception class for when there was an issue contacting
-	the OpenID server, etc.
+	"""Exception class for when there was an issue authenticating via OpenID.
+	(for example, requests sent to the authentication server failing)
 	"""
 
 	code = helpers.STATUS_UNAUTHORIZED
 
 
 class APIOpenIDNonceInvalid(APIException):
-	"""Exception class for when a user tries to authorize with OpenID and
+	"""Exception class for when a user tries to authorize via OpenID and
 	presents a correct state, but the retrieved nonce does not match.
 	"""
 
@@ -339,7 +340,7 @@ class APIOpenIDNonceInvalid(APIException):
 
 class APIOpenIDServiceNotFound(APIException):
 	"""Exception class for when a requested OpenID service
-	(e.g. /openid/login/invalid_service) does not exist.
+	(e.g. `'/openid/login/inexistent-service'`) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -355,7 +356,7 @@ class APIOpenIDStateInvalid(APIException):
 
 class APIPostNotFound(APIException):
 	"""Exception class for when a requested post
-	(e.g. /posts/invalid-uuid) does not exist.
+	(e.g. `'/posts/inexistent-id'`) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -370,8 +371,8 @@ class APIPostUnchanged(APIException):
 
 
 class APIPostVoteNotFound(APIException):
-	"""Exception class for when a requested post vote
-	(e.g. DELETE /posts/valid-uuid/vote) does not exist.
+	"""Exception class for when a user attempts to delete their vote on a post,
+	but there is none.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -386,7 +387,9 @@ class APIPostVoteUnchanged(APIException):
 
 
 class APIRateLimitExceeded(APIException):
-	"""Exception class for when a given user has exceeded the rate limit."""
+	"""Exception class for when a given user has exceeded the rate limit
+	for a specific endpoint.
+	"""
 
 	code = 429
 
@@ -399,7 +402,7 @@ class APIThreadLocked(APIException):
 
 class APIThreadNotFound(APIException):
 	"""Exception class for when a requested thread
-	(e.g. /threads/invalid-uuid) does not exist.
+	(e.g. `'/threads/inexistent-id'`) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -430,8 +433,8 @@ class APIThreadUnchanged(APIException):
 
 
 class APIThreadVoteNotFound(APIException):
-	"""Exception class for when a requested thread vote
-	(e.g. DELETE /threads/valid-uuid/vote) does not exist.
+	"""Exception class for when a user attempts to delete their vote on a thread,
+	but there is none.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -446,16 +449,16 @@ class APIThreadVoteUnchanged(APIException):
 
 
 class APIUserAvatarInvalid(APIException):
-	"""Exception class for when a user attempts to set another user's avatar,
-	but the base64 data contained within the request is somehow invalid.
+	"""Exception class for when a user attempts to set an avatar,
+	but the sent base64 data (or the image contained within) is invalid.
 	"""
 
 	code = helpers.STATUS_BAD_REQUEST
 
 
 class APIUserAvatarNotFound(APIException):
-	"""Exception class for when a user attempts to delete another user's avatar,
-	but they don't have one set.
+	"""Exception class for when a user attempts to delete an avatar,
+	but there is none.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -526,8 +529,8 @@ class APIUserBlockNotFound(APIException):
 
 
 class APIUserCannotRemoveLastDefaultGroup(APIException):
-	"""Exception class for when a user attempts to remove the last group which
-	is default for `*` from another user.
+	"""Exception class for when a user attempts to remove the last group whose
+	`default_for` column contains `'*'` from another user.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -567,7 +570,7 @@ class APIUserGroupNotAdded(APIException):
 
 class APIUserNotFound(APIException):
 	"""Exception class for when a requested user
-	(e.g. /users/invalid-uuid) does not exist.
+	(e.g. `'/users/inexistent-id'`) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND

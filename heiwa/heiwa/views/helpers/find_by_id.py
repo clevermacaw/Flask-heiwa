@@ -20,7 +20,8 @@ def find_forum_by_id(
 ) -> heiwa.models.Forum:
 	"""Returns the forum with the given `id_`. Raises
 	`heiwa.exceptions.APIForumNotFound` if it doesn't exist, or the given `user`
-	doesn't have permission to view it.
+	doesn't have permission to view it. If parsed permissions don't exist,
+	they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -103,7 +104,8 @@ def find_thread_by_id(
 ) -> heiwa.models.Thread:
 	"""Returns the thread with the given `id_`. Raises
 	`heiwa.exceptions.APIThreadNotFound` if it doesn't exist, or the given `user`
-	doesn't have permission to view it.
+	doesn't have permission to view it. If parsed permissions don't exist for
+	the respective forum, they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(

@@ -7,7 +7,7 @@ import sqlalchemy.orm
 
 from .. import enums
 from . import Base
-from .forum import forum_subscribers
+from .forum import Forum, forum_subscribers
 from .helpers import (
 	CDWMixin,
 	CreationTimestampMixin,
@@ -239,6 +239,13 @@ class Thread(
 		).
 		limit(1).
 		scalar_subquery()
+	)
+
+	forum = sqlalchemy.orm.relationship(
+		Forum,
+		uselist=False,
+		passive_deletes="all",
+		lazy=True
 	)
 
 	votes = sqlalchemy.orm.relationship(

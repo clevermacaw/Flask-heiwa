@@ -17,7 +17,7 @@ from .helpers import (
 	UUID
 )
 from .notification import Notification
-from .thread import thread_subscribers
+from .thread import Thread, thread_subscribers
 from .user import user_follows
 
 __all__ = [
@@ -154,6 +154,25 @@ class Post(
 		scalar_subquery()
 	)
 
+	# Shortcut
+	# This can probably be better
+	forum = sqlalchemy.orm.relationship(
+		"Forum",
+		uselist=False,
+		secondary=Thread.__table__,
+		passive_deletes="all",
+		overlaps="forum",
+		lazy=True
+	)
+
+	thread = sqlalchemy.orm.relationship(
+		Thread,
+		uselist=False,
+		passive_deletes="all",
+		overlaps="forum",
+		lazy=True
+	)
+
 	votes = sqlalchemy.orm.relationship(
 		PostVote,
 		backref=sqlalchemy.orm.backref(
@@ -201,31 +220,31 @@ class Post(
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.thread.forum.get_parsed_permissions(user.id).post_delete_own
+					self.forum.get_parsed_permissions(user.id).post_delete_own
 				) or
-				self.thread.forum.get_parsed_permissions(user.id).post_delete_any
+				self.forum.get_parsed_permissions(user.id).post_delete_any
 			)
 		),
 		"edit": lambda self, user: (
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.thread.forum.get_parsed_permissions(user.id).post_edit_own
+					self.forum.get_parsed_permissions(user.id).post_edit_own
 				) or
-				self.thread.forum.get_parsed_permissions(user.id).post_edit_any
+				self.forum.get_parsed_permissions(user.id).post_edit_any
 			)
 		),
 		"edit_vote": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.thread.forum.get_parsed_permissions(user.id).post_edit_vote
+			self.forum.get_parsed_permissions(user.id).post_edit_vote
 		),
 		"move": lambda self, user: (
 			self.get_instance_permission(user, "view") and (
 				(
 					self.thread.user_id == user.id and
-					self.thread.forum.get_parsed_permissions(user.id).post_move_own
+					self.forum.get_parsed_permissions(user.id).post_move_own
 				) or
-				self.thread.forum.get_parsed_permissions(user.id).post_move_any
+				self.forum.get_parsed_permissions(user.id).post_move_any
 			) and (
 				not hasattr(self, "future_thread") or
 				(
@@ -238,7 +257,7 @@ class Post(
 			)
 		),
 		"view": lambda self, user: (
-			self.thread.forum.get_parsed_permissions(user.id).post_view
+			self.forum.get_parsed_permissions(user.id).post_view
 		),
 		"view_vote": lambda self, user: (
 			self.get_instance_permission(user, "view")

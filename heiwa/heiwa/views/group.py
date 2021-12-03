@@ -256,7 +256,7 @@ def check_if_last_default_group(group_id: uuid.UUID) -> bool:
 @authentication.authenticate_via_jwt
 @requires_permission("create", models.Group)
 def create() -> typing.Tuple[flask.Response, int]:
-	"""Creates a group with the given `name`, `description`, `default_for` and
+	"""Creates a group with the requested `name`, `description`, `default_for` and
 	`level`.
 	"""
 
@@ -279,7 +279,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 @requires_permission("view", models.Group)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists all groups that match the requested filter,
-	and this user has permission to view.
+	and `flask.g.user` has permission to view.
 	"""
 
 	conditions = True
@@ -322,7 +322,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @requires_permission("delete", models.Group)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all groups that match the requested filter,
-	and this user has permission to both view and delete.
+	and `flask.g.user` has permission to both view and delete.
 	"""
 
 	conditions = True
@@ -454,8 +454,8 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def authorized_actions_group(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that the current `flask.g.user` is authorized to
-	perform on the group with the requested `id_`.
+	"""Returns all actions that `flask.g.user` is authorized to perform on the
+	group with the requested `id_`.
 	"""
 
 	return flask.jsonify(

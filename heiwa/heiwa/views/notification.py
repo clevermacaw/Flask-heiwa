@@ -146,8 +146,8 @@ def find_notification_by_id(
 	user_id: uuid.UUID
 ) -> models.Notification:
 	"""Finds the notification with the given `id_`. If it exists, but doesn't
-	belong to the user with the provided `user_id`, `APINotificationNotFound`
-	will be raised as if it didn't exist.
+	belong to the user with the provided `user_id`,
+	`exceptions.APINotificationNotFound` will be raised as if it didn't exist.
 	"""
 
 	notification = session.execute(
@@ -173,8 +173,8 @@ def find_notification_by_id(
 )
 @authentication.authenticate_via_jwt
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all notifications belonging to this user that match the requested
-	filter.
+	"""Lists all notifications belonging to `flask.g.user` that match the
+	requested filter.
 	"""
 
 	conditions = (models.Notification.user_id == flask.g.user.id)
@@ -215,8 +215,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all notifications belonging to this user that match the requested
-	filter.
+	"""Deletes all notifications belonging to `flask.g.user` that match the
+	requested filter.
 	"""
 
 	conditions = (models.Notification.user_id == flask.g.user.id)
@@ -261,7 +261,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 def mass_confirm_read() -> typing.Tuple[flask.Response, int]:
-	"""Confirms that all notifications belonging to this user that match
+	"""Confirms that all notifications belonging to `flask.g.user` that match
 	the requested filter have been read.
 	"""
 

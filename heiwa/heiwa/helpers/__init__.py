@@ -1,4 +1,4 @@
-"""Global helpers for Heiwa."""
+"""Global helpers. Contains static variables for HTTP status codes."""
 
 __all__ = [
 	"STATUS_BAD_REQUEST",
@@ -10,7 +10,7 @@ __all__ = [
 	"STATUS_OK",
 	"STATUS_UNAUTHORIZED"
 ]
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 STATUS_CREATED = 201
 STATUS_NO_CONTENT = 204
