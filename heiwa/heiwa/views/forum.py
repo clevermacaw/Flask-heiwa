@@ -281,11 +281,8 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 @authentication.authenticate_via_jwt
 @requires_permission("create", models.Forum)
 def create() -> typing.Tuple[flask.Response, int]:
-	"""Creates a forum with the provided name and description.
-	If given, assigns a parent forum with the ID of `parent_forum_id`.
-	The user attribute is automatically taken from `flask.g.user`.
-
-	Not idempotent.
+	"""Creates a forum with the requested `parent_forum_id`, `name`, `description`
+	and default order position (`order`).
 	"""
 
 	forum = models.Forum(
@@ -333,9 +330,9 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists the available forums.
-
-	Idempotent.
+	"""Lists all forums that match the requested filter, and `flask.g.user` has
+	permission to view. If parsed permissions don't exist for them, they're
+	automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -426,9 +423,9 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Forum)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all forums that match the given conditions.
-
-	Not idempotent.
+	"""Deletes all forums that match the requested filter, and `flask.g.user` has
+	permission to both view and delete. If parsed permissions don't exist for them,
+	they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -529,10 +526,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Forum)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the forum with the provided ID.
-
-	Idempotent.
-	"""
+	"""Deletes the forum with the requested `id_`."""
 
 	forum = find_forum_by_id(
 		id_,
@@ -558,11 +552,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Forum)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Updates the forum with the provided ID with the given name,
-	description and parent forum ID.
-
-	Idempotent.
-	"""
+	"""Updates the forum with the requested `id_` with the requested values."""
 
 	forum = find_forum_by_id(
 		id_,
@@ -630,10 +620,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns the forum with the provided ID.
-
-	Idempotent.
-	"""
+	"""Returns the forum with the requested `id_`."""
 
 	return flask.jsonify(
 		find_forum_by_id(
@@ -650,11 +637,8 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def authorized_actions_forum(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that the current `flask.g.user` is authorized to
-	perform on the given forum. This will only be done if they at least have
-	permission to view it.
-
-	Idempotent.
+	"""Returns all actions that `flask.g.user` is authorized to perform on the
+	forum with the requested `id_`.
 	"""
 
 	return flask.jsonify(
@@ -668,7 +652,7 @@ def authorized_actions_forum(
 
 @forum_blueprint.route("/<uuid:id_>/merge", methods=["PUT"])
 @validators.validate_json({
-	"new_id": {
+	"id": {
 		"type": "uuid",
 		"coerce": "convert_to_uuid",
 		"required": True
@@ -677,10 +661,8 @@ def authorized_actions_forum(
 @authentication.authenticate_via_jwt
 @requires_permission("merge", models.Forum)
 def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Moves all threads from the forum with the given `id` to
-	the one the provided `new_id` corresponds to, then deletes this forum.
-
-	Idempotent.
+	"""Moves all threads and posts from the forum with the given `id_` to the
+	one with the `id` provided in the request body, then deletes the old forum.
 	"""
 
 	old_forum = find_forum_by_id(
@@ -689,7 +671,7 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		flask.g.user
 	)
 	new_forum = find_forum_by_id(
-		flask.g.json["new_id"],
+		flask.g.json["id"],
 		flask.g.sa_session,
 		flask.g.user
 	)
@@ -739,9 +721,8 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def view_parsed_permissions(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns this forum's parsed permissions for `flask.g.user`.
-	If they haven't been parsed yet, it's done so automatically by the
-	`find_forum_by_id` function.
+	"""Returns the parsed permissions for `flask.g.user` for the forum with the
+	requested `id_`. If they haven't been parsed yet, it's done so atomatically.
 	"""
 
 	forum = find_forum_by_id(
@@ -750,9 +731,12 @@ def view_parsed_permissions(
 		flask.g.user
 	)
 
-	return flask.jsonify(
-		forum.get_parsed_permissions(flask.g.user.id)
-	), helpers.STATUS_OK
+	parsed_permissions = forum.get_parsed_permissions(flask.g.user.id)
+
+	if parsed_permissions is None:
+		parsed_permissions = forum.reparse_permissions(flask.g.user)
+
+	return flask.jsonify(parsed_permissions), helpers.STATUS_OK
 
 
 @forum_blueprint.route(
@@ -766,9 +750,8 @@ def delete_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the permission for a given group in the given forum.
-
-	Idempotent.
+	"""Deletes the permissions for the group with the requested `group_id` for the
+	forum with the given `forum_id`.
 	"""
 
 	forum = find_forum_by_id(
@@ -829,9 +812,8 @@ def edit_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Updates the permissions for the given group in the given forum.
-
-	Idempotent.
+	"""Updates the permissions for the group with the requested `group_id` for the
+	forum with the given `forum_id` with the requested values.
 	"""
 
 	forum = find_forum_by_id(
@@ -907,9 +889,8 @@ def view_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the permissions for the given group in the given forum.
-
-	Idempotent.
+	"""Returns `group_id`'s permissions for the forum with the requested
+	`forum_id`.
 	"""
 
 	forum = find_forum_by_id(
@@ -953,9 +934,8 @@ def delete_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the permission for a given user in the given forum.
-
-	Idempotent.
+	"""Deletes the permissions for the user with the requested `user_id` for the
+	forum with the given `forum_id`.
 	"""
 
 	forum = find_forum_by_id(
@@ -1014,9 +994,8 @@ def edit_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Updates the permissions for the given user in the given forum.
-
-	Idempotent.
+	"""Updates the permissions for the user with the requested `user_id` for the
+	forum with the given `forum_id` with the requested values.
 	"""
 
 	forum = find_forum_by_id(
@@ -1090,9 +1069,8 @@ def view_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the permissions for the given group in the given forum.
-
-	Idempotent.
+	"""Returns `user_id`'s permissions for the forum with the requested
+	`forum_id`.
 	"""
 
 	forum = find_forum_by_id(
@@ -1127,9 +1105,8 @@ def view_permissions_user(
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Forum)
 def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Subscribes to the forum with the provided ID.
-
-	Idempotent.
+	"""Creates a subscription for `flask.g.user` to the forum with the
+	requested `id_`.
 	"""
 
 	forum = find_forum_by_id(
@@ -1174,9 +1151,8 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Forum)
 def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Unsubscribes from the forum with the provided ID.
-
-	Idempotent.
+	"""Removes `flask.g.user`'s subscription to the forum with the requested
+	`id_`.
 	"""
 
 	forum = find_forum_by_id(
@@ -1215,10 +1191,8 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
 def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns whether or not the current user is subscribed to the forum with
-	the given ID.
-
-	Idempotent.
+	"""Returns whether or not `flask.g.user` is subscribed to the forum with the
+	requested `id_`.
 	"""
 
 	return flask.jsonify(
@@ -1243,10 +1217,8 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @forum_blueprint.route("/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that the current `flask.g.user` is authorized to
-	perform without any knowledge on which forum they'll be done on.
-
-	Idempotent.
+	"""Returns all actions that `flask.g.user` is authorized to perform on
+	forums without any knowledge on which one they'll be done on.
 	"""
 
 	return flask.jsonify(

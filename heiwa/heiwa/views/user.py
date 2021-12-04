@@ -275,7 +275,9 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 
 
 def generate_avatar_response(user: models.User) -> flask.Response:
-	"""Returns the given `user`'s avatar as a file."""
+	"""Returns the given `user`'s avatar as an attachment contained within
+	a `flask.Response`.
+	"""
 
 	return flask.send_file(
 		user.avatar_location,
@@ -290,8 +292,8 @@ def get_user_self_or_id(
 	id_: typing.Union[None, uuid.UUID],
 	session: sqlalchemy.orm.Session
 ) -> models.User:
-	"""If the provided `id` is `None`, the current `flask.g.user` will
-	be returned. Otherwise, the user with the given ID is returned.
+	"""If the provided `id_` is `None`, `flask.g.user` will be returned.
+	Otherwise, the user with the given `id_` is returned.
 	"""
 
 	if id_ is not None:
@@ -313,10 +315,7 @@ def get_user_self_or_id(
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all the available users.
-
-	Idempotent.
-	"""
+	"""Lists all users that match the requested filter."""
 
 	conditions = True
 
@@ -357,9 +356,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.User)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all users that match the given conditions.
-
-	Not idempotent.
+	"""Deletes all users that match the requested filter, and `flask.g.user` has
+	permission to delete.
 	"""
 
 	conditions = sqlalchemy.or_(
@@ -433,9 +431,8 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 def delete(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the user with the given ID.
-
-	Idempotent.
+	"""Deletes the user with the requested `id_`, or `flask.g.user` if it's
+	`None`.
 	"""
 
 	user = get_user_self_or_id(
@@ -479,9 +476,8 @@ def delete(
 def edit(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Updates the user with the given ID with the provided name and status.
-
-	Idempotent.
+	"""Updates the user with the requested `id_` (or `flask.g.user` if it's
+	`None`) with the requested values.
 	"""
 
 	user = get_user_self_or_id(
@@ -523,9 +519,8 @@ def edit(
 def view(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the user with the given ID.
-
-	Idempotent.
+	"""Returns the user with the requested `id_`, or `flask.g.user` if it's
+	`None`.
 	"""
 
 	user = get_user_self_or_id(
@@ -547,11 +542,8 @@ def view(
 def authorized_actions_user(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that the current `flask.g.user` is authorized to
-	perform on the given user. This will only be done if they at least have
-	permission to view it.
-
-	Idempotent.
+	"""Returns all actions that `flask.g.user` is authorized to perform on the
+	user with the requested `id_`, or themselves if it's `None`.
 	"""
 
 	return flask.jsonify(
@@ -573,9 +565,8 @@ def authorized_actions_user(
 def delete_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the given user's avatar.
-
-	Idempotent.
+	"""Returns the avatar of the user with the requested `id_`, or
+	`flask.g.user`'s if it's `None`.
 	"""
 
 	user = get_user_self_or_id(
@@ -616,9 +607,9 @@ def delete_avatar(
 def edit_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Updates the given user's avatar with the decoded base64 file.
-
-	Idempotent.
+	"""Sets the avatar of the user with the requested `id_` (or `flask.g.user`'s,
+	if it's `None`) to the decoded base64 value within the `b64_avatar` request
+	body key.
 	"""
 
 	user = get_user_self_or_id(
@@ -677,9 +668,8 @@ def edit_avatar(
 def view_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the given user's avatar. Not encoded in base64.
-
-	Idempotent.
+	"""Returns a non-base64 encoded version of the avatar of the user with the
+	requested `id_`, or `flask.g.user`'s if it's `None`.
 	"""
 
 	user = get_user_self_or_id(
@@ -699,10 +689,7 @@ def view_avatar(
 def delete_ban(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the user with the given ID's ban.
-
-	Idempotent.
-	"""
+	"""Deletes the user with the requested `id_`'s ban."""
 
 	user = find_user_by_id(
 		id_,
@@ -741,10 +728,8 @@ def delete_ban(
 @authentication.authenticate_via_jwt
 @requires_permission("edit_ban", models.User)
 def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Bans the user with the given ID. Requires an expiration timestamp,
-	the reason is optional.
-
-	Idempotent.
+	"""Bans the user with the requested `id_`. The `expiration_timestamp` is
+	required, a `reason`, while recommended, is not.
 	"""
 
 	user = find_user_by_id(
@@ -810,9 +795,8 @@ def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def view_ban(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the user with the given ID's ban.
-
-	Idempotent.
+	"""Returns the user with the requested `id_`'s ban. (or `flask.g.user`'s, if
+	it's `None`)
 	"""
 
 	user = get_user_self_or_id(
@@ -839,10 +823,8 @@ def view_ban(
 @authentication.authenticate_via_jwt
 @requires_permission("edit_block", models.User)
 def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Blocks the user with the given ID. If `flask.g.user` is a follower of
-	`user`, they're automatically removed.
-
-	Idempotent.
+	"""Creates a block from `flask.g.user` for the user with the requested `id_`.
+	If `flask.g.user` follows them, that follow is automatically removed.
 	"""
 
 	user = find_user_by_id(
@@ -896,10 +878,7 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_block", models.User)
 def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Unblocks the user with the given ID.
-
-	Idempotent.
-	"""
+	"""Removes `flask.g.user`'s block for the user with the requested `id_`."""
 
 	user = find_user_by_id(
 		id_,
@@ -935,10 +914,8 @@ def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
 def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns whether or not the current user has blocked the user with
-	the given ID.
-
-	Idempotent.
+	"""Returns whether or not `flask.g.user` has blocked the user with the
+	requested `id_`.
 	"""
 
 	return flask.jsonify(
@@ -974,9 +951,8 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def list_followers(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Lists all the available followers of the user with the given ID.
-
-	Idempotent.
+	"""Lists all followers of the user with the requested `id_` (or
+	`flask.g.user`'s, if it's `None`) that match the requested filter.
 	"""
 
 	user = get_user_self_or_id(
@@ -1037,9 +1013,8 @@ def list_followers(
 def list_followees(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Lists all the available users the user with the given ID follows.
-
-	Idempotent.
+	"""Lists all followees of the user with the requested `id_` (or
+	`flask.g.user`'s, if it's `None`) that match the requested filter.
 	"""
 
 	user = get_user_self_or_id(
@@ -1089,9 +1064,8 @@ def list_followees(
 @authentication.authenticate_via_jwt
 @requires_permission("edit_follow", models.User)
 def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Follows the user with the given ID.
-
-	Idempotent.
+	"""Creates a follow from `flask.g.user` for the user with the requested
+	`id_`.
 	"""
 
 	user = find_user_by_id(
@@ -1135,10 +1109,7 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_follow", models.User)
 def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Unollows the user with the given ID.
-
-	Idempotent.
-	"""
+	"""Removes `flask.g.user`'s follow for the user with the requested `id_`."""
 
 	user = find_user_by_id(
 		id_,
@@ -1175,10 +1146,8 @@ def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
 def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns whether or not the current user is a follower of the user
-	with the given ID.
-
-	Idempotent.
+	"""Returns whether or not `flask.g.user` has followed the user with the
+	requested `id_`.
 	"""
 
 	return flask.jsonify(
@@ -1210,9 +1179,8 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def list_groups(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the groups this user has.
-
-	Idempotent.
+	"""Returns the user with the requested `id_`'s (or `flask.g.user`'s, if
+	it's `None`) assigned group IDs.
 	"""
 
 	user = get_user_self_or_id(
@@ -1251,9 +1219,8 @@ def add_group(
 	user_id: typing.Union[None, uuid.UUID],
 	group_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Adds a group to this user.
-
-	Idempotent.
+	"""Adds the group with the requested `group_id` to the user with the
+	requested `user_id`. (or `flask.g.user`, if it's `None`)
 	"""
 
 	user = get_user_self_or_id(
@@ -1317,9 +1284,8 @@ def delete_group(
 	user_id: typing.Union[None, uuid.UUID],
 	group_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Removes a group from this user.
-
-	Idempotent.
+	"""Deletes the group with the requested `group_id` from the user with the
+	requested `user_id`'s groups. (or `flask.g.user`'s, if it's `None`)
 	"""
 
 	user = get_user_self_or_id(
@@ -1388,9 +1354,8 @@ def delete_group(
 def delete_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the user with the given ID's specific permissions.
-
-	Idempotent.
+	"""Deletes the user with the requested `id_`'s (or `flask.g.user`'s, if it's
+	`None`) permissions.
 	"""
 
 	user = get_user_self_or_id(
@@ -1467,10 +1432,8 @@ def delete_permissions(
 def edit_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Updates the user with the given ID's specific permissions.
-	Automatically creates them if they don't exist.
-
-	Idempotent.
+	"""Updates the user with the requested `id_`'s (or `flask.g.user`, if it's
+	`None`) permissions, or creates them if there are none.
 	"""
 
 	user = get_user_self_or_id(
@@ -1523,9 +1486,8 @@ def edit_permissions(
 def view_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the user with the given ID's specific permissions.
-
-	Idempotent.
+	"""Returns the user with the requested `id_`'s (or `flask.g.user`'s, if it's
+	`None`) permissions.
 	"""
 
 	user = get_user_self_or_id(
@@ -1545,10 +1507,8 @@ def view_permissions(
 @user_blueprint.route("/users/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that the current `flask.g.user` is authorized to
-	perform without any knowledge on which user they'll be done on.
-
-	Idempotent.
+	"""Returns all actions that `flask.g.user` is authorized to perform on
+	users without any knowledge on which one they'll be done on.
 	"""
 
 	return flask.jsonify(

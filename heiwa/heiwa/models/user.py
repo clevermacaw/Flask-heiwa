@@ -22,6 +22,7 @@ from .helpers import (
 	ReprMixin,
 	UUID
 )
+from .message import Message
 from .notification import Notification
 
 __all__ = [
@@ -226,6 +227,10 @@ class User(
 		permissions. This is a combination of this user's group's permissions
 		(where groups with the highest `level` take precedence), and this user's
 		specific permissions.
+		- An `encrypted_private_key` column, optionally used to store an encrypted
+		- A `public_key` column, containing this user's raw RSA public key.
+		version of this user's RSA private key. If desired, this can be left empty
+		with a public key still present.
 		- Nullable `name` and `status` columns.
 		- A dynamic, deferred `blockee_count` column, corresponding to how many
 		users this user has blocked.
@@ -237,6 +242,12 @@ class User(
 		users have followed this user.
 		- A dynamic, deferred `forum_count` column, corresponding to how many
 		forums with this user's `id` in their `user_id` column exist.
+		- A dynamic, deferred `message_received_count` coulumn corresponding to
+		how many messages this user has received.
+		- A dynamic, deferred `message_received_unread_count` column corresponding
+		to how many messages this user has received, and hasn't read yet.
+		- A dynamic, deferred `message_sent_count` coulumn corresponding to
+		how many messages this user has sent.
 		- A dynamic, deferred `notification_count` column corresponding to how
 		many notifications with this user's `id` in their `user_id` column exist.
 		- A dynamic, deferred `notification_unread_count` column corresponding to
@@ -277,6 +288,16 @@ class User(
 		sqlalchemy.JSON,
 		nullable=False
 	)
+
+	encrypted_private_key = sqlalchemy.Column(
+		sqlalchemy.LargeBinary,
+		nullable=True
+	)
+	public_key = sqlalchemy.Column(
+		sqlalchemy.LargeBinary,
+		nullable=True
+	)
+	# Don't set a specific length, so users can use different key sizes
 
 	name = sqlalchemy.Column(
 		sqlalchemy.String(128),
@@ -333,6 +354,34 @@ class User(
 		deferred=True
 	)
 
+	message_received_count = sqlalchemy.orm.column_property(
+		sqlalchemy.select(Message.id).
+		where(
+			Message.receiver_id == sqlalchemy.text("users.id")
+		).
+		scalar_subquery(),
+		deferred=True
+	)
+	message_received_unread_count = sqlalchemy.orm.column_property(
+		sqlalchemy.select(Message.id).
+		where(
+			sqlalchemy.and_(
+				Message.receiver_id == sqlalchemy.text("users.id"),
+				Message.is_read.is_(False)
+			)
+		).
+		scalar_subquery(),
+		deferred=True
+	)
+	message_sent_count = sqlalchemy.orm.column_property(
+		sqlalchemy.select(Message.id).
+		where(
+			Message.sender_id == sqlalchemy.text("users.id")
+		).
+		scalar_subquery(),
+		deferred=True
+	)
+
 	notification_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
 			sqlalchemy.func.count(Notification.id)
@@ -341,7 +390,6 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-
 	notification_unread_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
 			sqlalchemy.func.count(Notification.id)
@@ -512,12 +560,16 @@ class User(
 		"avatar_type": lambda self, user: True,
 		"is_banned": lambda self, user: True,
 		"parsed_permissions": lambda self, user: True,
+		"encrypted_private_key": lambda self, user: self.id == user.id,
+		"public_key": lambda self, user: True,
 		"name": lambda self, user: True,
 		"status": lambda self, user: True,
 		"blockee_count": lambda self, user: self.id == user.id,
 		"followee_count": lambda self, user: True,
 		"follower_count": lambda self, user: True,
 		"forum_count": lambda self, user: True,
+		"message_received_count": lambda self, user: self.id == user.id,
+		"message_sent_count": lambda self, user: self.id == user.id,
 		"notification_count": lambda self, user: self.id == user.id,
 		"notification_unread_count": lambda self, user: self.id == user.id,
 		"post_count": lambda self, user: True,

@@ -1037,7 +1037,7 @@ class Forum(
 			None,
 			sqlalchemy.orm.Session
 		] = None
-	) -> None:
+	) -> ForumParsedPermissions:
 		"""Sets the given user's `ForumParsedPermissions` to:
 			- The given `user`'s `parsed_permissions`.
 			- Any defined permissions for groups that this `user` is part of for
@@ -1112,3 +1112,5 @@ class Forum(
 					permission_name,
 					permission_value
 				)
+
+		return existing_parsed_permissions

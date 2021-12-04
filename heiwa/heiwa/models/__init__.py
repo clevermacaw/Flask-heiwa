@@ -13,6 +13,7 @@ from .forum import (
 	forum_subscribers
 )
 from .group import Group, GroupPermissions
+from .message import Message
 from .notification import Notification
 from .openid import OpenIDAuthentication
 from .post import Post, PostVote
@@ -34,6 +35,7 @@ __all__ = [
 	"ForumPermissionsUser",
 	"Group",
 	"GroupPermissions",
+	"Message",
 	"Notification",
 	"OpenIDAuthentication",
 	"Post",
@@ -50,4 +52,4 @@ __all__ = [
 	"user_follows",
 	"user_groups"
 ]
-__version__ = "0.30.7"
+__version__ = "0.31.0"

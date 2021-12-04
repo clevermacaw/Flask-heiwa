@@ -278,9 +278,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Group)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all groups that match the requested filter,
-	and `flask.g.user` has permission to view.
-	"""
+	"""Lists all groups that match the requested filter."""
 
 	conditions = True
 
