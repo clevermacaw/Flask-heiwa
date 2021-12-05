@@ -469,6 +469,18 @@ def delete(
 		**ATTR_SCHEMAS["status"],
 		"nullable": True,
 		"required": True
+	},
+	"encrypted_private_key": {
+		"type": "binary",
+		"coerce": "decode_base64",
+		"nullable": True,
+		"required": True
+	},
+	"public_key": {
+		"type": "binary",
+		"coerce": "decode_base64",
+		"nullable": True,
+		"required": True
 	}
 })
 @authentication.authenticate_via_jwt
@@ -597,8 +609,9 @@ def delete_avatar(
 	methods=["PUT"]
 )
 @validators.validate_json({
-	"b64_avatar": {
-		"type": "string",
+	"avatar": {
+		"type": "binary",
+		"coerce": "decode_base64",
 		"required": True
 	}
 })
@@ -608,8 +621,8 @@ def edit_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
 	"""Sets the avatar of the user with the requested `id_` (or `flask.g.user`'s,
-	if it's `None`) to the decoded base64 value within the `b64_avatar` request
-	body key.
+	if it's `None`) to the decoded base64 value within the `avatar` request body
+	key.
 	"""
 
 	user = get_user_self_or_id(
@@ -623,22 +636,15 @@ def edit_avatar(
 		user
 	)
 
-	if len(flask.g.json["b64_avatar"]) > (
-		4 * round(flask.current_app.config["USER_MAX_AVATAR_SIZE"] / 3)
+	if (
+		len(flask.g.json["avatar"])
+		> flask.current_app.config["USER_MAX_AVATAR_SIZE"]
 	):
 		raise exceptions.APIUserAvatarTooLarge(
 			flask.current_app.config["USER_MAX_AVATAR_SIZE"]
 		)
 
-	try:
-		avatar = base64.b64decode(
-			flask.g.json["b64_avatar"],
-			validate=True
-		)
-	except (ValueError, binascii.Error):
-		raise exceptions.APIUserAvatarInvalid
-
-	avatar_type = magic.Magic(mime=True).from_buffer(avatar)
+	avatar_type = magic.Magic(mime=True).from_buffer(flask.g.json["avatar"])
 
 	if avatar_type not in flask.current_app.config["USER_AVATAR_TYPES"]:
 		raise exceptions.APIUserAvatarNotAllowedType(avatar_type)
@@ -649,7 +655,7 @@ def edit_avatar(
 		status = helpers.STATUS_OK
 
 	user.avatar_type = avatar_type
-	user.avatar = avatar
+	user.avatar = flask.g.json["avatar"]
 	user.edited()
 
 	flask.g.sa_session.commit()

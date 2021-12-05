@@ -4,6 +4,7 @@ supports JSON.
 
 from __future__ import annotations
 
+import base64
 import collections
 import datetime
 import functools
@@ -18,7 +19,7 @@ import validators
 from .. import exceptions
 
 __all__ = ["APIValidator", "validate_json"]
-__version__ = "1.8.4"
+__version__ = "1.9.0"
 
 
 class APIValidator(cerberus.Validator):
@@ -82,6 +83,17 @@ class APIValidator(cerberus.Validator):
 			raise ValueError("must have a timezone")
 
 		return result
+
+	def _normalize_coerce_decode_base64(
+		self: APIValidator,
+		value: str
+	) -> bytes:
+		"""Converts a given base64 string to the bytes it represents."""
+
+		return base64.b64decode(
+			value,
+			validate=True
+		)
 
 	def _validate_makes_required(
 		self: APIValidator,

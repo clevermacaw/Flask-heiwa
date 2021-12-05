@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.38"
+__version__ = "0.13.39"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -98,8 +98,9 @@ def create_app() -> ConfiguredLockFlask:
 
 		@app.before_request
 		def before_request() -> None:
-			"""Sets the global user identifier to the remote IP address,
-			and creates a basic SQLAlchemy session.
+			"""Sets the global user identifier (`flask.g.identifier`) to the
+			remote IP address, and creates a basic SQLAlchemy session derived
+			from `flask.current_app.SASession` at `flask.g.sa_session`.
 			"""
 
 			flask.g.identifier = flask.request.remote_addr
@@ -115,7 +116,9 @@ def create_app() -> ConfiguredLockFlask:
 
 		@app.teardown_request
 		def teardown_request(response: flask.Response) -> flask.Response:
-			"""Closes and removes the `flask.current_app.SASession`."""
+			"""Closes and removes `flask.g.sa_session`, using
+			`flask.current_app.SASession`.
+			"""
 
 			if "sa_session" in flask.g:
 				flask.current_app.SASession.remove()

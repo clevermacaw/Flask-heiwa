@@ -34,9 +34,16 @@ class Message(
 		receiver, another `User`.
 		- An `is_read` column, signifying whether or not this message has been
 		read. `False` by default.
-		- A `content` column, containing the message content, which should be
-		encrypted with the receiver's public key. Its validity cannot be checked,
-		since we don't (and shouldn't) have access to the receiver's private key.
+		- An `encrypted_session_key` column, containing this message's randomly
+		generated key, which should be encrypted using the receiver's
+		`public_key`.
+		- A nullable `tag` column, containing bytes derived from the original
+		message used to check for any unauthorized changes to the decrypted
+		content, once its receiver attempts to read it.
+		- An `encrypted_content` column, containing the message content, which
+		should be encrypted with the receiver's `public_key`. Its validity cannot
+		be checked, since we don't (and shouldn't) have access to the receiver's
+		private key.
 	"""
 
 	__tablename__ = "messages"
@@ -67,7 +74,16 @@ class Message(
 		nullable=False
 	)
 
-	content = sqlalchemy.Column(
+	encrypted_session_key = sqlalchemy.Column(
+		sqlalchemy.LargeBinary,
+		nullable=False
+	)
+	tag = sqlalchemy.Column(
+		sqlalchemy.LargeBinary,
+		nullable=True
+	)
+
+	encrypted_content = sqlalchemy.Column(
 		sqlalchemy.LargeBinary,
 		nullable=False
 	)
