@@ -51,6 +51,7 @@ __all__ = [
 	"APIThreadUnchanged",
 	"APIThreadVoteNotFound",
 	"APIThreadVoteUnchanged",
+	"APIUserAvatarInvalid",
 	"APIUserAvatarNotAllowedType",
 	"APIUserAvatarTooLarge",
 	"APIUserBanAlreadyExpired",
@@ -67,7 +68,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.29.0"
+__version__ = "1.30.0"
 
 
 class APIException(Exception):
@@ -445,6 +446,14 @@ class APIThreadVoteUnchanged(APIException):
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
+
+
+class APIUserAvatarInvalid(APIException):
+	"""Exception class for when a user attempts to set an avatar,
+	but the data contained within it is invalid or corrupted.
+	"""
+
+	code = helpers.STATUS_BAD_REQUEST
 
 
 class APIUserAvatarNotFound(APIException):

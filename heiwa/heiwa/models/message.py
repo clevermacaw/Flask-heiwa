@@ -8,7 +8,6 @@ from .helpers import (
 	CDWMixin,
 	EditInfoMixin,
 	IdMixin,
-	PermissionControlMixin,
 	ReprMixin,
 	UUID
 )

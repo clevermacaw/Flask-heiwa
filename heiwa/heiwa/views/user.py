@@ -1,12 +1,11 @@
-import base64
-import binascii
 import datetime
+import io
 import os
 import typing
 import uuid
 
+import PIL.Image
 import flask
-import magic
 import sqlalchemy
 import sqlalchemy.orm
 
@@ -644,7 +643,13 @@ def edit_avatar(
 			flask.current_app.config["USER_MAX_AVATAR_SIZE"]
 		)
 
-	avatar_type = magic.Magic(mime=True).from_buffer(flask.g.json["avatar"])
+	try:
+		image = PIL.Image.open(io.BytesIO(flask.g.json["avatar"]))
+		image.verify()
+
+		avatar_type = PIL.Image.MIME[image.format]
+	except OSError:
+		raise exceptions.APIUserAvatarInvalid
 
 	if avatar_type not in flask.current_app.config["USER_AVATAR_TYPES"]:
 		raise exceptions.APIUserAvatarNotAllowedType(avatar_type)

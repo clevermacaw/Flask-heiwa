@@ -424,8 +424,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @requires_permission("delete", models.Forum)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all forums that match the requested filter, and `flask.g.user` has
-	permission to both view and delete. If parsed permissions don't exist for them,
-	they're automatically calculated.
+	permission to both view and delete. If parsed permissions don't exist for
+	them, they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
