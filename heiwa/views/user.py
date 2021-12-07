@@ -4,6 +4,7 @@ import os
 import typing
 import uuid
 
+import Crypto.PublicKey.RSA
 import PIL.Image
 import flask
 import sqlalchemy
@@ -35,6 +36,23 @@ user_blueprint = flask.Blueprint(
 	__name__
 )
 user_blueprint.json_encoder = encoders.JSONEncoder
+
+
+# Stored here instead of the validator, since we'll only ever use it once
+def check_rsa_public_key_valid(
+	field: str,
+	value: bytes,
+	error: typing.Callable[[str, str], None]
+):
+	"""Checks whether or not `value` is a valid RSA public key. If not, `error`
+	is called. This function should be used within a Cerberus validator schema.
+	"""
+
+	try:
+		Crypto.PublicKey.RSA.import_key(value)
+	except ValueError:
+		error(field, "must be a valid RSA public key")
+
 
 ATTR_SCHEMAS = {
 	"id": {
@@ -477,6 +495,7 @@ def delete(
 	},
 	"public_key": {
 		"type": "binary",
+		"check_with": check_rsa_public_key_valid,
 		"coerce": "decode_base64",
 		"nullable": True,
 		"required": True

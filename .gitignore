@@ -1,7 +1,7 @@
 __pycache__/
 .directory
-heiwa/config.py
-heiwa/test.py
-heiwa/avatars/*.jpg
-heiwa/avatars/*.jpeg
-heiwa/avatars/*.png
+config.py
+test.py
+avatars/*.jpg
+avatars/*.jpeg
+avatars/*.png
