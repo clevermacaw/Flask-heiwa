@@ -50,7 +50,7 @@ ATTR_SCHEMAS = {
 		"type": "integer",
 		"min": 0,
 		"max": 2147483647
-	}
+	},
 	"parent_forum_id": {
 		"type": "uuid",
 		"coerce": "convert_to_uuid"
