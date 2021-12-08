@@ -1,0 +1,96 @@
+openapi: 3.0.1
+info:
+  description: A forum API.
+  title: Heiwa
+  version: 0.13.41
+paths:
+  /forums:
+    get:
+      description: "Returns a list of forums that the current user has access to,
+      and matches the filter if there is one requested."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                limit:
+                  $ref: "#/components/schemas/Offset"
+                offset:
+                  $ref: "#/components/schemas/Limit"
+      responses:
+        200:
+          description: The list of forums.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Forum"
+
+components:
+  schemas:
+    Forum:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The forum\'s ID.
+        creation_timestamp:
+          type: string
+          format: date-time
+          description: The time this forum was created.
+        edit_timestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: The last time forum was edited.
+        edit_count:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+          description: How many times this forum was edited.
+        parent_forum_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: The ID of this forum\'s parent.
+        user_id:
+          type: string
+          format: uuid
+          description: The ID of this forum\'s author.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: This forum\'s name.
+        description:
+          type: string
+          minLength: 1
+          maxLength: 65536
+          nullable: true
+          description: This forum\'s description.
+        subscriber_count:
+          type: integer
+          description: How many users have subscribed to this forum.
+        thread_count:
+          type: integer
+          description: How many threads are in this forum (excluding child forums).
+        last_thread_timestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the last thread in this forum was created.
+    Offset:
+      type: integer
+      minimum: 0
+      maximum: 0
+      nullable: true
+      description: How many results to skip. Useful for pagination.
+    Limit:
+      type: integer
+      minimum: 1
+      maximum: 512
+      description: How many results to look for.

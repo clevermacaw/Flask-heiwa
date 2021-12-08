@@ -354,11 +354,14 @@ class EditInfoMixin:
 
 	def edited(self: EditInfoMixin) -> None:
 		"""Sets the `edit_timestamp` attribute to the current date and time.
-		Increments the `edit_count` value by 1.
+		Increments the `edit_count` value by 1, as long as it's under 2147483647,
+		the maximum 4-byte integer value.
 		"""
 
 		self.edit_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
-		self.edit_count += 1
+
+		if self.edit_count < 2147483647:
+			self.edit_count += 1
 
 
 @sqlalchemy.orm.declarative_mixin

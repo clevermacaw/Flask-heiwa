@@ -67,6 +67,11 @@ ATTR_SCHEMAS = {
 		"type": "datetime",
 		"coerce": "convert_to_datetime"
 	},
+	"edit_count": {
+		"type": "integer",
+		"min": 0,
+		"max": 2147483647
+	},
 	"is_banned": {
 		"type": "boolean"
 	},
@@ -116,6 +121,7 @@ LIST_SCHEMA = generate_list_schema(
 	(
 		"creation_timestamp",
 		"edit_timestamp",
+		"edit_count",
 		"follower_count",
 		"followee_count",
 		"forum_count",
@@ -129,6 +135,7 @@ LIST_SCHEMA = generate_list_schema(
 LT_GT_SEARCH_SCHEMA = {
 	"creation_timestamp": ATTR_SCHEMAS["creation_timestamp"],
 	"edit_timestamp": ATTR_SCHEMAS["edit_timestamp"],
+	"edit_count": ATTR_SCHEMAS["edit_count"],
 	"followee_count": ATTR_SCHEMAS["followee_count"],
 	"follower_count": ATTR_SCHEMAS["follower_count"],
 	"forum_count": ATTR_SCHEMAS["forum_count"],
@@ -145,6 +152,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				**ATTR_SCHEMAS["edit_timestamp"],
 				"nullable": True
 			},
+			"edit_count": ATTR_SCHEMAS["edit_count"],
 			"is_banned": ATTR_SCHEMAS["is_banned"],
 			"avatar_type": {
 				**ATTR_SCHEMAS["avatar_type"],
@@ -207,6 +215,12 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["edit_timestamp"],
 					"nullable": True
 				},
+				"minlength": 1,
+				"maxlength": 32
+			},
+			"edit_count": {
+				"type": "list",
+				"schema": ATTR_SCHEMAS["edit_count"],
 				"minlength": 1,
 				"maxlength": 32
 			},

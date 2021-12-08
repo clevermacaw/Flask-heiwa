@@ -46,6 +46,11 @@ ATTR_SCHEMAS = {
 		"type": "datetime",
 		"coerce": "convert_to_datetime"
 	},
+	"edit_count": {
+		"type": "integer",
+		"min": 0,
+		"max": 2147483647
+	}
 	"parent_forum_id": {
 		"type": "uuid",
 		"coerce": "convert_to_uuid"
@@ -110,6 +115,7 @@ LIST_SCHEMA = generate_list_schema(
 		"order",
 		"creation_timestamp",
 		"edit_timestamp",
+		"edit_count",
 		"subscriber_count",
 		"thread_count"
 	),
@@ -120,6 +126,7 @@ LIST_SCHEMA = generate_list_schema(
 LT_GT_SEARCH_SCHEMA = {
 	"creation_timestamp": ATTR_SCHEMAS["creation_timestamp"],
 	"edit_timestamp": ATTR_SCHEMAS["edit_timestamp"],
+	"edit_count": ATTR_SCHEMAS["edit_count"],
 	"order": ATTR_SCHEMAS["order"],
 	"last_thread_timestamp": ATTR_SCHEMAS["last_thread_timestamp"],
 	"subscriber_count": ATTR_SCHEMAS["subscriber_count"],
@@ -135,6 +142,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				**ATTR_SCHEMAS["edit_timestamp"],
 				"nullable": True
 			},
+			"edit_count": ATTR_SCHEMAS["edit_count"],
 			"parent_forum_id": {
 				**ATTR_SCHEMAS["parent_forum_id"],
 				"nullable": True
@@ -196,6 +204,12 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["edit_timestamp"],
 					"nullable": True
 				},
+				"minlength": 1,
+				"maxlength": 32
+			},
+			"edit_count": {
+				"type": "list",
+				"schema": ATTR_SCHEMAS["edit_count"],
 				"minlength": 1,
 				"maxlength": 32
 			},

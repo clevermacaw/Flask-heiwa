@@ -14,7 +14,7 @@ def generate_list_schema(
 	default_order_by: str = None,
 	default_order_asc: bool = None,
 	limit_max: int = 512,
-	offset_max: int = 512
+	offset_max: int = 2147483647
 ) -> typing.Dict[
 		str,
 		typing.Dict[
@@ -63,9 +63,9 @@ def generate_list_schema(
 		"offset": {
 			"type": "integer",
 			"min": 0,
-			"max": offset_max,
+			"max": limit_max,
 			"default": 0,
-			"required": False
+			"required": True
 		}
 	}
 
