@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   description: A forum API.
   title: Heiwa
-  version: 0.13.41
+  version: 0.13.42
 paths:
   /forums:
     get:
@@ -16,9 +16,9 @@ paths:
               type: object
               properties:
                 limit:
-                  $ref: "#/components/schemas/Offset"
-                offset:
                   $ref: "#/components/schemas/Limit"
+                offset:
+                  $ref: "#/components/schemas/Offset"
       responses:
         200:
           description: The list of forums.
@@ -31,35 +31,146 @@ paths:
 
 components:
   schemas:
+    User:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: This user\'s ID.
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this user registered.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time this user was edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times this user was edited.
+        registered_by:
+          type: string
+          minLength: 1
+          maxLength: 128
+          nullable: true
+          description: "The service this user was registered by.
+          Only visible to them."
+        external_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          nullable: true
+          description: "This user's ID on the service they were registered by.
+          Only visible to them."
+        avatar_type:
+          type: string
+          minLength: 3
+          maxLength: 256
+          nullable: true
+          description: The MIME type of this user\'s avatar.
+        is_banned:
+          type: boolean
+          description: Whether or not this user is banned.
+        parsed_permissions:
+          type: object
+          # TODO: properties
+          description: This user\'s parsed permissions.
+        encrypted_private_key:
+          type: string
+          format: base64
+          nullable: true
+          description: "This user's encrypted private key.
+          Only visible to them."
+        public_key:
+          type: string
+          format: base64
+          description: This user\'s public key.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          nullable: true
+          description: This user\'s name.
+        status:
+          type: string
+          minLength: 1
+          maxLength: 65535
+          nullable: true
+          description: This user\'s status.
+        followee_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: How many users this user has followed.
+        follower_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: How many users have followed this user.
+        forum_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: How many forums this user has created.
+        message_received_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: "How many messages this user has received in total.
+          Only visible to them."
+        message_received_unread_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: "How many messages this user has received and not yet read.
+          Only visible to them."
+        message_sent_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: "How many messages this user has sent.
+          Only visible to them."
+        notification_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: "How many notifications this user has.
+          Only visible to them."
+        notification_unread_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: "How many unread notifications this user has.
+          Only visible to them."
+        post_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: How many posts this user has created.
+        thread_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: How many threads tihs user has created.
     Forum:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          allOf:
+            - $ref: "#/components/schemas/Id"
           description: The forum\'s ID.
         creation_timestamp:
-          type: string
-          format: date-time
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
           description: The time this forum was created.
         edit_timestamp:
-          type: string
-          format: date-time
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
           description: The last time forum was edited.
         edit_count:
-          type: integer
-          minimum: 0
-          maximum: 2147483647
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
           description: How many times this forum was edited.
         parent_forum_id:
-          type: string
-          format: uuid
+          allOf:
+            - $ref: "#/components/schemas/Id"
           nullable: true
           description: The ID of this forum\'s parent.
         user_id:
-          type: string
-          format: uuid
+          allOf:
+            - $ref: "#/components/schemas/Id"
           description: The ID of this forum\'s author.
         name:
           type: string
@@ -73,16 +184,152 @@ components:
           nullable: true
           description: This forum\'s description.
         subscriber_count:
-          type: integer
+          allOf:
+            - $ref: "#/components/schemas/Count"
           description: How many users have subscribed to this forum.
         thread_count:
-          type: integer
+          allOf:
+            - $ref: "#/components/schemas/Count"
           description: How many threads are in this forum (excluding child forums).
         last_thread_timestamp:
-          type: string
-          format: date-time
+          allOf:
+            - $ref: "#/components/schemas/Timestamp"
           nullable: true
           description: When the last thread in this forum was created.
+    Thread:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The thread\'s ID.
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this thread was created.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time thread was edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times this thread was edited.
+        forum_id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The ID of the forum this thread is in.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The ID of this thread\'s author.
+        is_locked:
+          type: boolean
+          description: Whether or not this thread is locked.
+        is_pinned:
+          type: boolean
+          description: Whether or not this thread is pinned.
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+          description: This thread\'s tags.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: This thread\'s name.
+        content:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: This thread\'s content.
+        vote_value:
+          allOf:
+            - $ref: "#/components/schemas/VoteValue"
+          description: The computed value of this thread\'s votes.
+        post_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: How many posts are in this thread.
+        subscriber_count:
+          allOf:
+            - $ref: "#/components/schemas/Count"
+          description: How many users have subscribed to this thread.
+        last_post_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/Timestamp"
+          nullable: true
+          description: When the last post in this thread was created.
+    Post:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The post\'s ID.
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this post was created.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time post was edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times this post was edited.
+        thread_id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The ID of the thread this post is in.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The ID of this post\'s author.
+        content:
+          type: string
+          minLength: 1
+          maxLength: 262144
+          description: This post\'s content.
+        vote_value:
+          allOf:
+            - $ref: "#/components/schemas/VoteValue"
+          description: The computed value of this post\'s votes.
+    Id:
+      type: string
+      format: uuid
+      description: An object\'s ID, in the form of an UUID4.
+    Timestamp:
+      type: string
+      format: date-time
+      description: A timestamp.
+    CreationTimestamp:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+      description: The time an object was created.
+    EditTimestamp:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+      nullable: true
+      description: The time an object was last edited.
+    Count:
+      type: integer
+      minimum: 0
+      maximum: 2147483647
+      description: A counter.
+    EditCount:
+      allOf:
+        - $ref: "#/components/schemas/Count"
+      description: The amount of times an object was edited.
+    VoteValue:
+      type: integer
+      minimum: -2147483647
+      maximum: 2147483647
+      description: The computed value of an object\'s votes.
     Offset:
       type: integer
       minimum: 0

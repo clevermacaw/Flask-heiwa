@@ -232,10 +232,6 @@ class User(
 		version of this user's RSA private key. If desired, this can be left empty
 		with a public key still present.
 		- Nullable `name` and `status` columns.
-		- A dynamic, deferred `blockee_count` column, corresponding to how many
-		users this user has blocked.
-		- A dynamic, deferred `blocker_count` column, corresponding to how many
-		users have blocked this user.
 		- A dynamic, deferred `followee_count` column, corresponding to how many
 		users this user has followed.
 		- A dynamic, deferred `follower_count` column, corresponding to how many
@@ -306,24 +302,6 @@ class User(
 	status = sqlalchemy.Column(
 		sqlalchemy.String(65536),
 		nullable=True
-	)
-
-	blockee_count = sqlalchemy.orm.column_property(
-		sqlalchemy.select(
-			sqlalchemy.func.count(user_blocks.c.blocker_id)
-		).
-		where(user_blocks.c.blocker_id == sqlalchemy.text("users.id")).
-		scalar_subquery(),
-		deferred=True
-	)
-
-	blocker_count = sqlalchemy.orm.column_property(
-		sqlalchemy.select(
-			sqlalchemy.func.count(user_blocks.c.blockee_id)
-		).
-		where(user_blocks.c.blockee_id == sqlalchemy.text("users.id")).
-		scalar_subquery(),
-		deferred=True
 	)
 
 	followee_count = sqlalchemy.orm.column_property(
@@ -564,7 +542,6 @@ class User(
 		"public_key": lambda self, user: True,
 		"name": lambda self, user: True,
 		"status": lambda self, user: True,
-		"blockee_count": lambda self, user: self.id == user.id,
 		"followee_count": lambda self, user: True,
 		"follower_count": lambda self, user: True,
 		"forum_count": lambda self, user: True,
