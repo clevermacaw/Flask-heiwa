@@ -618,10 +618,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 		forum.parent_forum = future_parent
 
-		forum.recount_level()
-
-		for child_forum in forum.child_forums:
-			child_forum.recount_level()
+		forum.delete_all_parsed_permissions(flask.g.sa_session)
 
 	forum.edited()
 
@@ -714,15 +711,11 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		values(parent_forum_id=new_forum.id)
 	)
 
+
+	new_forum.delete_all_parsed_permissions(flask.g.sa_session)
+
 	old_forum.delete()
 	new_forum.edited()
-
-	flask.g.sa_session.commit()
-
-	new_forum.recount_level()
-
-	for child_forum in new_forum.child_forums:
-		child_forum.recount_level()
 
 	flask.g.sa_session.commit()
 

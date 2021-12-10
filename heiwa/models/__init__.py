@@ -52,4 +52,4 @@ __all__ = [
 	"user_follows",
 	"user_groups"
 ]
-__version__ = "0.31.2"
+__version__ = "0.32.0"

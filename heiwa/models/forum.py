@@ -881,13 +881,68 @@ class Forum(
 		)
 	}
 
+	def _get_child_forum_and_own_ids(
+		self: Forum,
+		session: sqlalchemy.orm.Session,
+		current_id: typing.Union[
+			None,
+			uuid.UUID
+		] = None
+	) -> typing.List[uuid.UUID]:
+		"""Returns this forum's `id`, combined with its child forums'."""
+
+		if current_id is None:
+			current_id = self.id
+
+		ids = [current_id]
+
+		for child_forum_id in session.execute(
+			sqlalchemy.select(Forum.id).
+			where(Forum.parent_forum_id == current_id)
+		).scalars().all():
+			ids += self._get_child_forum_ids(
+				session,
+				child_forum_id
+			)
+
+		return ids
+
+	def delete_all_parsed_permissions(
+		self: Forum,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> None:
+		"""Deletes all cached parsed permissions this forum has,
+		as well as the child forums', in a recursive manner.
+		"""
+
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
+		session.execute(
+			sqlalchemy.delete(ForumParsedPermissions).
+			where(
+				ForumParsedPermissions.forum_id.in_(
+					self._get_child_forum_and_own_ids(session)
+				)
+			)
+		)
+
 	def _parse_child_level(
 		self: Forum,
-		current_id: uuid.UUID,
 		session: sqlalchemy.orm.Session,
 		child_level: int = 0,
+		current_id: typing.Union[
+			None,
+			uuid.UUID
+		] = None
 	) -> int:
 		"""Recursively obtains the current forum's child level."""
+
+		if current_id is None:
+			current_id = self.id
 
 		parent_forum_id = session.execute(
 			sqlalchemy.select(Forum.parent_forum_id).
@@ -898,8 +953,9 @@ class Forum(
 			child_level += 1
 
 			return self._parse_child_level(
-				parent_forum_id,
-				child_level
+				session,
+				child_level,
+				parent_forum_id
 			)
 
 		return child_level
@@ -919,87 +975,10 @@ class Forum(
 			return 0
 
 		return self._parse_child_level(
-			self.id,
-			session if session is not None else sqlalchemy.orm.object_session(self)
+			session if session is not None else sqlalchemy.orm.object_session(self),
+			1,
+			self.parent_forum_id
 		)
-
-	def _get_permissions_group(
-		self: Forum,
-		group_id: uuid.UUID,
-		session: sqlalchemy.orm.Session
-	) -> typing.Dict[str, bool]:
-		"""Gets this forum's permissions for the group with the given `group_id`,
-		as well as the parent forums'. This forum's permissions will take
-		precedence.
-		"""
-
-		parsed_group_permissions = {}
-
-		own_group_permissions = session.execute(
-			sqlalchemy.select(ForumPermissionsGroup).
-			where(
-				sqlalchemy.and_(
-					ForumPermissionsGroup.group_id == group_id,
-					ForumPermissionsGroup.forum_id == self.id
-				)
-			)
-		).scalars().one_or_none()
-
-		if own_group_permissions is not None:
-			parsed_group_permissions = own_group_permissions.to_permissions()
-
-		if self.parent_forum_id is not None:
-			for permission_name, permission_value in (
-				self.parent_forum._get_permissions_group(group_id, session).items()
-			):
-				if (
-					permission_value is None or
-					parsed_group_permissions.get(permission_name) is not None
-				):
-					continue
-
-				parsed_group_permissions[permission_name] = permission_value
-
-		return parsed_group_permissions
-
-	def _get_permissions_user(
-		self: Forum,
-		user_id: uuid.UUID,
-		session: sqlalchemy.orm.Session
-	) -> typing.Dict[str, bool]:
-		"""Gets this forum's permissions for the user with the given `user_id`,
-		as well as the parent forums'. This forum's permissions will take
-		precedence.
-		"""
-
-		parsed_user_permissions = {}
-
-		own_user_permissions = session.execute(
-			sqlalchemy.select(ForumPermissionsUser).
-			where(
-				sqlalchemy.and_(
-					ForumPermissionsUser.user_id == user_id,
-					ForumPermissionsUser.forum_id == self.id
-				)
-			)
-		).scalars().one_or_none()
-
-		if own_user_permissions is not None:
-			parsed_user_permissions = own_user_permissions.to_permissions()
-
-		if self.parent_forum_id is not None:
-			for permission_name, permission_value in (
-				self.parent_forum._get_permissions_user(user_id, session).items()
-			):
-				if (
-					permission_value is None or
-					parsed_user_permissions.get(permission_name) is not None
-				):
-					continue
-
-				parsed_user_permissions[permission_name] = permission_value
-
-		return parsed_user_permissions
 
 	@functools.lru_cache()
 	def get_parsed_permissions(
@@ -1029,6 +1008,114 @@ class Forum(
 				)
 			)
 		).scalars().one_or_none()
+
+	def _get_permissions_group(
+		self: Forum,
+		group_id: uuid.UUID,
+		session: sqlalchemy.orm.Session,
+		forum_id: typing.Union[
+			None,
+			uuid.UUID
+		] = None
+	) -> typing.Dict[str, bool]:
+		"""Gets this forum's permissions for the group with the given `group_id`,
+		as well as the parent forums'. This forum's permissions will take
+		precedence.
+		"""
+
+		if forum_id is None:
+			forum_id = self.id
+			parent_forum_id = self.parent_forum_id
+		else:
+			parent_forum_id = session.execute(
+				sqlalchemy.select(Forum.parent_forum_id).
+				where(Forum.id == forum_id)
+			).scalars().one_or_none()
+
+		parsed_group_permissions = {}
+
+		own_group_permissions = session.execute(
+			sqlalchemy.select(ForumPermissionsGroup).
+			where(
+				sqlalchemy.and_(
+					ForumPermissionsGroup.group_id == group_id,
+					ForumPermissionsGroup.forum_id == forum_id
+				)
+			)
+		).scalars().one_or_none()
+
+		if own_group_permissions is not None:
+			parsed_group_permissions = own_group_permissions.to_permissions()
+
+		if parent_forum_id is not None:
+			for permission_name, permission_value in self._get_permissions_group(
+				group_id,
+				session,
+				parent_forum_id
+			).items():
+				if (
+					permission_value is None or
+					parsed_group_permissions.get(permission_name) is not None
+				):
+					continue
+
+				parsed_group_permissions[permission_name] = permission_value
+
+		return parsed_group_permissions
+
+	def _get_permissions_user(
+		self: Forum,
+		user_id: uuid.UUID,
+		session: sqlalchemy.orm.Session,
+		forum_id: typing.Union[
+			None,
+			uuid.UUID
+		] = None
+	) -> typing.Dict[str, bool]:
+		"""Gets this forum's permissions for the user with the given `user_id`,
+		as well as the parent forums'. This forum's permissions will take
+		precedence.
+		"""
+
+		if forum_id is None:
+			forum_id = self.id
+			parent_forum_id = self.parent_forum_id
+		else:
+			parent_forum_id = session.execute(
+				sqlalchemy.select(Forum.parent_forum_id).
+				where(Forum.id == forum_id)
+			).scalars().one_or_none()
+
+		parsed_user_permissions = {}
+
+		own_user_permissions = session.execute(
+			sqlalchemy.select(ForumPermissionsUser).
+			where(
+				sqlalchemy.and_(
+					ForumPermissionsUser.user_id == user_id,
+					ForumPermissionsUser.forum_id == forum_id
+				)
+			)
+		).scalars().one_or_none()
+
+		if own_user_permissions is not None:
+			parsed_user_permissions = own_user_permissions.to_permissions()
+
+		if parent_forum_id is not None:
+			for permission_name, permission_value in self._get_permissions_user(
+				user_id,
+				session,
+				parent_forum_id
+			).items():
+				if (
+					permission_value is None or
+					parsed_user_permissions.get(permission_name) is not None
+				):
+					continue
+
+				parsed_user_permissions[permission_name] = permission_value
+
+		return parsed_user_permissions
 
 	def reparse_permissions(
 		self: Forum,
