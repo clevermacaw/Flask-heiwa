@@ -7,7 +7,6 @@ import sqlalchemy.orm
 
 from .. import enums
 from . import Base
-from .forum import Forum, forum_subscribers
 from .helpers import (
 	CDWMixin,
 	CreationTimestampMixin,
@@ -18,6 +17,7 @@ from .helpers import (
 	UUID
 )
 from .notification import Notification
+from .post import Post
 from .user import user_follows
 
 __all__ = [
@@ -242,7 +242,7 @@ class Thread(
 	)
 
 	forum = sqlalchemy.orm.relationship(
-		Forum,
+		"Forum",
 		uselist=False,
 		passive_deletes="all",
 		lazy=True
@@ -400,6 +400,11 @@ class Thread(
 		"view_vote": lambda self, user: self.get_instance_permission(user, "view")
 	}
 
+	NOTIFICATION_TYPES = (
+		enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWEE,
+		enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM
+	)
+
 	def delete(
 		self: Thread,
 		session: typing.Union[
@@ -418,12 +423,18 @@ class Thread(
 		session.execute(
 			sqlalchemy.delete(Notification).
 			where(
-				sqlalchemy.and_(
-					(
-						Notification.type
-						== enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM
+				sqlalchemy.or_(
+					sqlalchemy.and_(
+						Notification.type.in_(self.NOTIFICATION_TYPES),
+						Notification.identifier == self.id
 					),
-					Notification.identifier == self.id
+					sqlalchemy.and_(
+						Notification.type.in_(Post.NOTIFICATION_TYPES),
+						Notification.identifier.in_(
+							sqlalchemy.select(Post.id).
+							where(Post.thread_id == self.id)
+						)
+					)
 				)
 			).
 			execution_options(synchronize_session="fetch")
@@ -443,8 +454,9 @@ class Thread(
 		"""
 
 		subscriber_ids = session.execute(
-			sqlalchemy.select(forum_subscribers.c.user_id).
-			where(forum_subscribers.c.forum_id == self.forum_id)
+			sqlalchemy.select(sqlalchemy.text("forum_subscribers.user_id")).
+			select_from(sqlalchemy.text("forum_subscribers")).
+			where(sqlalchemy.text("forum_subscribers.forum_id = threads.forum_id"))
 		).scalars().all()
 
 		# Premature session add and flush. We have to access the ID later.

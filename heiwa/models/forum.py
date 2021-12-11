@@ -7,6 +7,7 @@ import uuid
 import sqlalchemy
 import sqlalchemy.orm
 
+from .. import enums
 from . import Base
 from .group import Group
 from .helpers import (
@@ -18,6 +19,9 @@ from .helpers import (
 	ReprMixin,
 	UUID
 )
+from .notification import Notification
+from .post import Post
+from .thread import Thread
 from .user import user_groups
 
 __all__ = [
@@ -880,6 +884,54 @@ class Forum(
 			self.get_instance_permission(user, "view")
 		)
 	}
+
+	NOTIFICATION_TYPES = (enums.NotificationTypes.FORUM_CHANGED_OWNERSHIP,)
+
+	def delete(
+		self: Forum,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> None:
+		"""Deletes all notifications associated with this forum, as well as the
+		forum itself. If the `session` argument is `None`, it's set to this
+		object's session.
+		"""
+
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
+		thread_ids = session.execute(
+			sqlalchemy.select(Thread.id).
+			where(Thread.forum_id == self.id)
+		).scalars().all()
+
+		session.execute(
+			sqlalchemy.delete(Notification).
+			where(
+				sqlalchemy.or_(
+					sqlalchemy.and_(
+						Notification.type.in_(Thread.NOTIFICATION_TYPES),
+						Notification.identifier.in_(thread_ids)
+					),
+					sqlalchemy.and_(
+						Notification.type.in_(Post.NOTIFICATION_TYPES),
+						Notification.identifier.in_(
+							sqlalchemy.select(Post.id).
+							where(Post.thread_id.in_(thread_ids))
+						)
+					),
+					sqlalchemy.and_(
+						Notification.type.in_(self.NOTIFICATION_TYPES),
+						Notification.identifier == self.id
+					)
+				)
+			).
+			execution_options(synchronize_session="fetch")
+		)
+
+		CDWMixin.delete(self, session)
 
 	def _get_child_forum_and_own_ids(
 		self: Forum,

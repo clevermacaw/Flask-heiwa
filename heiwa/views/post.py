@@ -8,7 +8,6 @@ import sqlalchemy.orm
 from .. import (
 	authentication,
 	encoders,
-	enums,
 	exceptions,
 	helpers,
 	models,
@@ -518,22 +517,19 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 	if len(ids) != 0:
 		flask.g.sa_session.execute(
-			sqlalchemy.delete(models.Post).
-			where(models.Post.id.in_(ids))
-		)
-
-		flask.g.sa_session.execute(
 			sqlalchemy.delete(models.Notification).
 			where(
 				sqlalchemy.and_(
-					(
-						models.Notification.type
-						== enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD
-					),
+					models.Notification.type.in_(models.Post.NOTIFICATION_TYPES),
 					models.Notification.identifier.in_(ids)
 				)
 			).
 			execution_options(synchronize_session="fetch")
+		)
+
+		flask.g.sa_session.execute(
+			sqlalchemy.delete(models.Post).
+			where(models.Post.id.in_(ids))
 		)
 
 		flask.g.sa_session.commit()

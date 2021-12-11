@@ -7,6 +7,7 @@ import sqlalchemy
 from .. import (
 	authentication,
 	encoders,
+	enums,
 	exceptions,
 	helpers,
 	models,
@@ -526,6 +527,35 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			flask.g.sa_session.commit()
 
 	if len(ids) != 0:
+		thread_ids = flask.g.sa_session.execute(
+			sqlalchemy.select(models.Thread.id).
+			where(models.Thread.forum_id.in_(ids))
+		).scalars().all()
+
+		flask.g.sa_session.execute(
+			sqlalchemy.delete(models.Notification).
+			where(
+				sqlalchemy.or_(
+					sqlalchemy.and_(
+						models.Notification.type.in_(models.Thread.NOTIFICATION_TYPES),
+						models.Notification.identifier.in_(thread_ids)
+					),
+					sqlalchemy.and_(
+						models.Notification.type.in_(models.Post.NOTIFICATION_TYPES),
+						models.Notification.identifier.in_(
+							sqlalchemy.select(models.Post.id).
+							where(models.Post.thread_id.in_(thread_ids))
+						)
+					),
+					sqlalchemy.and_(
+						models.Notification.type.in_(models.Forum.NOTIFICATION_TYPES),
+						models.Notification.identifier.in_(ids)
+					)
+				)
+			).
+			execution_options(synchronize_session="fetch")
+		)
+
 		flask.g.sa_session.execute(
 			sqlalchemy.delete(models.Forum).
 			where(models.Forum.id.in_(ids))
@@ -562,7 +592,10 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 
 @forum_blueprint.route("/<uuid:id_>", methods=["PUT"])
-@validators.validate_json(CREATE_EDIT_SCHEMA)
+@validators.validate_json({
+	"user_id": ATTR_SCHEMAS["user_id"],  # Change forum ownership
+	**ATTR_SCHEMAS
+})
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Forum)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
@@ -619,6 +652,13 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		forum.parent_forum = future_parent
 
 		forum.delete_all_parsed_permissions(flask.g.sa_session)
+
+	if flask.g.json["user_id"] != forum.user_id:
+		models.Notification.create(
+			user_id=flask.g.json["user_id"],
+			type=enums.NotificationTypes.FORUM_CHANGED_OWNERSHIP,
+			identifier=forum.id
+		)
 
 	forum.edited()
 
@@ -710,7 +750,18 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		where(models.forum_subscribers.forum_id == old_forum.id).
 		values(parent_forum_id=new_forum.id)
 	)
-
+	flask.g.sa_session.execute(
+		sqlalchemy.update(models.Notification).
+		where(
+			sqlalchemy.and_(
+				models.Notification.type.in_(models.Forum.NOTIFICATION_TYPES),
+				models.Notification.identifier == old_forum.id
+			)
+		).
+		values(
+			identifier=new_forum.id
+		)
+	)
 
 	new_forum.delete_all_parsed_permissions(flask.g.sa_session)
 

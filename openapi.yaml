@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   description: A forum API.
   title: Heiwa
-  version: 0.13.43
+  version: 0.13.44
 paths:
   /forums:
     get:
@@ -14,11 +14,27 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - limit
               properties:
                 limit:
-                  $ref: "#/components/schemas/Limit"
+                  allOf:
+                    - $ref: "#/components/schemas/Limit"
                 offset:
-                  $ref: "#/components/schemas/Offset"
+                  allOf:
+                    - $ref: "#/components/schemas/Offset"
+                filter:
+                  allOf:
+                    - $ref: "#/components/schemas/Filter"
+                  properties:
+                    "$eq":
+                      type: object
+                      minProperties: 1
+                      maxProperties: 1
+                      properties:
+                        id:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/id"
       responses:
         200:
           description: The list of forums.
@@ -55,6 +71,7 @@ components:
           minLength: 1
           maxLength: 128
           nullable: true
+          readOnly: true
           description: "The service this user was registered by.
           Only visible to them."
         external_id:
@@ -62,6 +79,7 @@ components:
           minLength: 1
           maxLength: 64
           nullable: true
+          readOnly: true
           description: "This user's ID on the service they were registered by.
           Only visible to them."
         avatar_type:
@@ -69,6 +87,7 @@ components:
           minLength: 3
           maxLength: 256
           nullable: true
+          readOnly: true
           description: The MIME type of this user\'s avatar.
         is_banned:
           type: boolean
@@ -144,6 +163,46 @@ components:
           allOf:
             - $ref: "#/components/schemas/Count"
           description: How many threads tihs user has created.
+      description: A user.
+    Group:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: This group\'s ID.
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this group was created.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time this group was edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times this group was edited.
+        default_for:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+            description: A registration service, or \'*\'.
+          description: "The registration services that users who are
+          automatically assigned this group should have."
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: This group\'s name.
+        description:
+          type: string
+          minLength: 1
+          maxLength: 65536
+          description: This group\'s description.
+      description: A group.
     Forum:
       type: object
       properties:
@@ -196,6 +255,7 @@ components:
             - $ref: "#/components/schemas/Timestamp"
           nullable: true
           description: When the last thread in this forum was created.
+      description: A forum.
     Thread:
       type: object
       properties:
@@ -263,6 +323,7 @@ components:
             - $ref: "#/components/schemas/Timestamp"
           nullable: true
           description: When the last post in this thread was created.
+      description: A thread.
     Post:
       type: object
       properties:
@@ -299,6 +360,102 @@ components:
           allOf:
             - $ref: "#/components/schemas/VoteValue"
           description: The computed value of this post\'s votes.
+      description: A post.
+    Message:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The message\'s ID.
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this message was created.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time message was edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times this message was edited.
+        sender_id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The ID of this message\'s sender.
+        receiver_id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The ID of this receiver\'s sender.
+        is_read:
+          type: boolean
+          description: Whether or not this message has been read.
+        encrypted_session_key:
+          type: string
+          format: base64
+          description: "This message's session key, encrypted with the
+          receiver's public RSA key."
+        tag:
+          type: string
+          format: base64
+          nullable: true
+          description: "This message's tag, derived from the decrypted
+          content to detect modifications."
+        encrypted_content:
+          type: string
+          format: base64
+          description: This message\'s encrypted content.
+      description: A message.
+    Notification:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The notification\'s ID.
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this notification was created.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/Id"
+          description: The ID of this notification\'s owner.
+        is_read:
+          type: boolean
+          description: Whether or not this notification has been read.
+        type:
+          type: string
+          enum:
+            - NewPostFromFollowee
+            - NewPostInSubscribedThread
+            - NewThreadFromFollowee
+            - NewThreadInSubscribedForum
+            - ForumChangedOwnership
+          readOnly: true
+          description: The type of this notification.
+        identifier:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "The identifier of this notification's subject.
+          (For example, with a new thread notification, the thread's ID)"
+      description: A notification.
+    Filter:
+      type: object
+      properties:
+        "$and":
+          type: array
+          items:
+            $ref: "#/components/schemas/Filter"
+        "$or":
+          type: array
+          items:
+            $ref: "#/components/schemas/Filter"
+        "$not":
+          allOf:
+            - $ref: "#/components/schemas/Filter"
     Permissions:
       type: object
       properties:
@@ -434,6 +591,7 @@ components:
     Id:
       type: string
       format: uuid
+      readOnly: true
       description: An object\'s ID, in the form of an UUID4.
     Timestamp:
       type: string
@@ -442,31 +600,36 @@ components:
     CreationTimestamp:
       allOf:
         - $ref: "#/components/schemas/Timestamp"
+      readOnly: true
       description: The time an object was created.
     EditTimestamp:
       allOf:
         - $ref: "#/components/schemas/Timestamp"
       nullable: true
+      readOnly: true
       description: The time an object was last edited.
     Count:
       type: integer
       minimum: 0
       maximum: 2147483647
+      readOnly: true
       description: A counter.
     EditCount:
       allOf:
         - $ref: "#/components/schemas/Count"
+      readOnly: true
       description: The amount of times an object was edited.
     VoteValue:
       type: integer
       minimum: -2147483647
       maximum: 2147483647
+      readOnly: true
       description: The computed value of an object\'s votes.
     Offset:
       type: integer
       minimum: 0
       maximum: 0
-      nullable: true
+      default: 0
       description: How many results to skip. Useful for pagination.
     Limit:
       type: integer

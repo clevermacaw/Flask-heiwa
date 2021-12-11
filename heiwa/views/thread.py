@@ -8,7 +8,6 @@ import sqlalchemy.orm
 from .. import (
 	authentication,
 	encoders,
-	enums,
 	exceptions,
 	helpers,
 	models,
@@ -546,22 +545,28 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 	if len(ids) != 0:
 		flask.g.sa_session.execute(
-			sqlalchemy.delete(models.Thread).
-			where(models.Thread.id.in_(ids))
-		)
-
-		flask.g.sa_session.execute(
 			sqlalchemy.delete(models.Notification).
 			where(
-				sqlalchemy.and_(
-					(
-						models.Notification.type
-						== enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM
+				sqlalchemy.or_(
+					sqlalchemy.and_(
+						models.Notification.type.in_(models.Thread.NOTIFICATION_TYPES),
+						models.Notification.identifier.in_(ids)
 					),
-					models.Notification.identifier.in_(ids)
+					sqlalchemy.and_(
+						models.Notification.type.in_(models.Post.NOTIFICATION_TYPES),
+						models.Notification.identifier.in_(
+							sqlalchemy.select(models.Post.id).
+							where(models.Post.thread_id.in_(ids))
+						)
+					)
 				)
 			).
 			execution_options(synchronize_session="fetch")
+		)
+
+		flask.g.sa_session.execute(
+			sqlalchemy.delete(models.Thread).
+			where(models.Thread.id.in_(ids))
 		)
 
 		flask.g.sa_session.commit()
@@ -741,8 +746,15 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 	flask.g.sa_session.execute(
 		sqlalchemy.update(models.Notification).
-		where(models.Notification.identifier == old_thread.id).
-		values(identifier=new_thread.id)
+		where(
+			sqlalchemy.and_(
+				models.Notification.type.in_(models.Thread.NOTIFICATION_TYPES),
+				models.Notification.identifier == old_thread.id
+			)
+		).
+		values(
+			identifier=new_thread.id
+		)
 	)
 
 	old_thread.delete()

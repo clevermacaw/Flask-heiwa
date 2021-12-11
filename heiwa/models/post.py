@@ -17,7 +17,6 @@ from .helpers import (
 	UUID
 )
 from .notification import Notification
-from .thread import Thread, thread_subscribers
 from .user import user_follows
 
 __all__ = [
@@ -159,14 +158,14 @@ class Post(
 	forum = sqlalchemy.orm.relationship(
 		"Forum",
 		uselist=False,
-		secondary=Thread.__table__,
+		secondary="threads",
 		passive_deletes="all",
 		overlaps="forum",
 		lazy=True
 	)
 
 	thread = sqlalchemy.orm.relationship(
-		Thread,
+		"Thread",
 		uselist=False,
 		passive_deletes="all",
 		overlaps="forum",
@@ -264,6 +263,11 @@ class Post(
 		)
 	}
 
+	NOTIFICATION_TYPES = (
+		enums.NotificationTypes.NEW_POST_FROM_FOLLOWEE,
+		enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD
+	)
+
 	def delete(
 		self: Post,
 		session: typing.Union[
@@ -283,10 +287,7 @@ class Post(
 			sqlalchemy.delete(Notification).
 			where(
 				sqlalchemy.and_(
-					(
-						Notification.type
-						== enums.NotificationTypes.NEW_POST_IN_SUBSCRIBED_THREAD
-					),
+					Notification.type.in_(self.NOTIFICATION_TYPES),
 					Notification.identifier == self.id
 				)
 			).
@@ -307,8 +308,9 @@ class Post(
 		"""
 
 		subscriber_ids = session.execute(
-			sqlalchemy.select(thread_subscribers.c.user_id).
-			where(thread_subscribers.c.thread_id == self.thread_id)
+			sqlalchemy.select(sqlalchemy.text("thread_subscribers.user_id")).
+			select_from(sqlalchemy.text("thread_subscribers")).
+			where(sqlalchemy.text("thread_subscribers.thread_id = posts.thread_id"))
 		).scalars().all()
 
 		# Premature session add and flush. We have to access the ID later.
