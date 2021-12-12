@@ -224,7 +224,7 @@ class Thread(
 		sqlalchemy.select(
 			sqlalchemy.func.count(thread_subscribers.c.thread_id)
 		).
-		where(thread_subscribers.c.thread_id == sqlalchemy.text("threads.id")).
+		where(sqlalchemy.text("thread_subscribers.thread_id = threads.id")).
 		scalar_subquery()
 	)
 
@@ -447,21 +447,16 @@ class Thread(
 		session: sqlalchemy.orm.Session
 	) -> None:
 		"""Creates a notification about this thread for:
-			Users subscribed to the parent forum.
-			The author's followers. (Who aren't subscribed to the forum)
-
+			- Users subscribed to the parent forum.
+			- The author's followers. (Who aren't subscribed to the forum)
 		Adds the current instance to the `session`.
 		"""
-
-		subscriber_ids = session.execute(
-			sqlalchemy.select(sqlalchemy.text("forum_subscribers.user_id")).
-			select_from(sqlalchemy.text("forum_subscribers")).
-			where(sqlalchemy.text("forum_subscribers.forum_id = threads.forum_id"))
-		).scalars().all()
 
 		# Premature session add and flush. We have to access the ID later.
 		CDWMixin.write(self, session)
 		session.flush()
+
+		subscriber_ids = self.forum.get_subscriber_ids(session)
 
 		for subscriber_id in subscriber_ids:
 			Notification.create(
@@ -488,3 +483,21 @@ class Thread(
 			)
 
 		CDWMixin.write(self, session)
+
+	def get_subscriber_ids(
+		self: Thread,
+		user_id: uuid.UUID,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> typing.List[uuid.UUID]:
+		"""Returns this forum's subscribers' IDs."""
+
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
+		return session.execute(
+			sqlalchemy.select(thread_subscribers.c.user_id).
+			where(thread_subscribers.c.thread_id == self.id)
+		).scalars().all()

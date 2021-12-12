@@ -1061,6 +1061,24 @@ class Forum(
 			)
 		).scalars().one_or_none()
 
+	def get_subscriber_ids(
+		self: Forum,
+		user_id: uuid.UUID,
+		session: typing.Union[
+			None,
+			sqlalchemy.orm.Session
+		] = None
+	) -> typing.List[uuid.UUID]:
+		"""Returns this forum's subscribers' IDs."""
+
+		if session is None:
+			session = sqlalchemy.orm.object_session(self)
+
+		return session.execute(
+			sqlalchemy.select(forum_subscribers.c.user_id).
+			where(forum_subscribers.c.forum_id == self.id)
+		).scalars().all()
+
 	def _get_permissions_group(
 		self: Forum,
 		group_id: uuid.UUID,

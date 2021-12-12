@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   description: A forum API.
   title: Heiwa
-  version: 0.13.44
+  version: 0.13.45
 paths:
   /forums:
     get:

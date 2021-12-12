@@ -308,7 +308,7 @@ class User(
 		sqlalchemy.select(
 			sqlalchemy.func.count(user_follows.c.follower_id)
 		).
-		where(user_follows.c.follower_id == sqlalchemy.text("users.id")).
+		where(sqlalchemy.text("user_follows.follower_id = users.id")).
 		scalar_subquery(),
 		deferred=True
 	)
@@ -317,7 +317,7 @@ class User(
 		sqlalchemy.select(
 			sqlalchemy.func.count(user_follows.c.followee_id)
 		).
-		where(user_follows.c.followee_id == sqlalchemy.text("users.id")).
+		where(sqlalchemy.text("user_follows.followee_id = users.id")).
 		scalar_subquery(),
 		deferred=True
 	)
@@ -344,7 +344,7 @@ class User(
 		sqlalchemy.select(Message.id).
 		where(
 			sqlalchemy.and_(
-				Message.receiver_id == sqlalchemy.text("users.id"),
+				sqlalchemy.text("messages.receiver_id = users.id"),
 				Message.is_read.is_(False)
 			)
 		).
@@ -354,7 +354,7 @@ class User(
 	message_sent_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(Message.id).
 		where(
-			Message.sender_id == sqlalchemy.text("users.id")
+			sqlalchemy.text("messages.sender_id = users.id")
 		).
 		scalar_subquery(),
 		deferred=True
@@ -364,7 +364,7 @@ class User(
 		sqlalchemy.select(
 			sqlalchemy.func.count(Notification.id)
 		).
-		where(Notification.user_id == sqlalchemy.text("users.id")).
+		where(sqlalchemy.text("notifications.user_id = users.id")).
 		scalar_subquery(),
 		deferred=True
 	)
@@ -374,7 +374,7 @@ class User(
 		).
 		where(
 			sqlalchemy.and_(
-				Notification.user_id == sqlalchemy.text("users.id"),
+				sqlalchemy.text("notifications.user_id = users.id"),
 				Notification.is_read.is_(False)
 			)
 		).

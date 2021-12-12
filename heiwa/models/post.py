@@ -301,21 +301,16 @@ class Post(
 		session: sqlalchemy.orm.Session
 	) -> None:
 		"""Creates a notification about this post for:
-			Users subscribed to the parent thread.
-			The author's followers. (Who aren't subscribed to the thread)
-
+			- Users subscribed to the parent thread.
+			- The author's followers. (Who aren't subscribed to the thread)
 		Adds the current instance to the `session`.
 		"""
-
-		subscriber_ids = session.execute(
-			sqlalchemy.select(sqlalchemy.text("thread_subscribers.user_id")).
-			select_from(sqlalchemy.text("thread_subscribers")).
-			where(sqlalchemy.text("thread_subscribers.thread_id = posts.thread_id"))
-		).scalars().all()
 
 		# Premature session add and flush. We have to access the ID later.
 		CDWMixin.write(self, session)
 		session.flush()
+
+		subscriber_ids = self.thread.get_subscriber_ids(session)
 
 		for subscriber_id in subscriber_ids:
 			Notification.create(
