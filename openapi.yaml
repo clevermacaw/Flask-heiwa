@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   description: A forum API.
   title: Heiwa
-  version: 0.13.45
+  version: 0.13.46
 paths:
   /forums:
     get:
@@ -23,6 +23,20 @@ paths:
                 offset:
                   allOf:
                     - $ref: "#/components/schemas/Offset"
+                order:
+                  allOf:
+                    - $ref: "#/components/schemas/Order"
+                  properties:
+                    by:
+                      enum:
+                        - order
+                        - creation_timestamp
+                        - edit_timestamp
+                        - edit_count
+                        - subscriber_count
+                        - thread_count
+                      default: order
+                  description: How the forums should be ordered.
                 filter:
                   allOf:
                     - $ref: "#/components/schemas/Filter"
@@ -35,6 +49,39 @@ paths:
                         id:
                           allOf:
                             - $ref: "#/components/schemas/Forum/properties/id"
+                        creation_timestamp:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/creation_timestamp"
+                        edit_timestamp:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/edit_timestamp"
+                        edit_count:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/edit_count"
+                        parent_forum_id:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
+                        user_id:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/user_id"
+                        name:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/name"
+                        description:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/description"
+                        order:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/order"
+                        last_thread_timestamp:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/last_thread_timestamp"
+                        subscriber_count:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/subscriber_count"
+                        thread_count:
+                          allOf:
+                            - $ref: "#/components/schemas/Forum/properties/thread_count"
       responses:
         200:
           description: The list of forums.
@@ -72,6 +119,7 @@ components:
           maxLength: 128
           nullable: true
           readOnly: true
+          example: openid.keycloak
           description: "The service this user was registered by.
           Only visible to them."
         external_id:
@@ -80,6 +128,7 @@ components:
           maxLength: 64
           nullable: true
           readOnly: true
+          example: f351253c-5a64-46e1-834f-80ea19167bb0
           description: "This user's ID on the service they were registered by.
           Only visible to them."
         avatar_type:
@@ -88,6 +137,7 @@ components:
           maxLength: 256
           nullable: true
           readOnly: true
+          example: image/png
           description: The MIME type of this user\'s avatar.
         is_banned:
           type: boolean
@@ -100,23 +150,68 @@ components:
           type: string
           format: base64
           nullable: true
+          example: "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
+          bKBJ7rdqnd"
           description: "This user's encrypted private key.
           Only visible to them."
         public_key:
           type: string
           format: base64
+          nullable: true
+          example: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1FD2OMRQUH
+          7Ige00W2xeM48r9JwykMTf+WkQ9a53fJrq6dgDFaUOZ5d2AH62WUKD1TMwlYuiOZ
+          Froxm6pKW4ya1DNZ8Oo7xBmdbz+ZAar0odLcJPhi9vHOyrhOyq71Ckqmlriv2KRm
+          zdtP0A4YXAeto6xFCiyBLW8ygjlypASu3iLJuD4VcpNnj6ZtGuzoO1wo7a+BeSaJ
+          o5VhEL3AhmxAXUOdWbBk+cqjlRF49PjwtAFotWeqpK7zbvA2AULbaPfk8HhceKjJ
+          EZ9+3i9DjU0JVAQsYhJzULllh/9A6YwSkwLR6A7YFoMfzCjbLS9XZYy/PmhhkXre
+          sgOSM3uKm1PwIDAQAB"
           description: This user\'s public key.
         name:
           type: string
           minLength: 1
           maxLength: 128
           nullable: true
+          example: Duckman553
           description: This user\'s name.
         status:
           type: string
           minLength: 1
           maxLength: 65535
           nullable: true
+          example: Busy with things of low importance.
           description: This user\'s status.
         followee_count:
           allOf:
@@ -164,6 +259,58 @@ components:
             - $ref: "#/components/schemas/Count"
           description: How many threads tihs user has created.
       description: A user.
+    UserBan:
+      type: object
+      properties:
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this ban was issued.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time this ban was edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times this ban was edited.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/User/properties/id"
+          description: The ID of the user this ban was issued to.
+        expiration_timestamp:
+          type: string
+          format: date-time
+          description: When this ban expires.
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 65536
+          nullable: true
+          description: The reason for this ban.
+      description: A user\'s ban.
+    UserPermissions:
+      allOf:
+        - $ref: "#/components/schemas/Permissions"
+      type: object
+      properties:
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time these permissions were created.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time these permissions were edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times these permissions were edited.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/User/properties/id"
+          description: The ID of the user these permissions belong to.
+      description: A user\'s custom permissions.
     Group:
       type: object
       properties:
@@ -189,6 +336,7 @@ components:
             type: string
             minLength: 1
             maxLength: 128
+            example: "*"
             description: A registration service, or \'*\'.
           description: "The registration services that users who are
           automatically assigned this group should have."
@@ -196,13 +344,37 @@ components:
           type: string
           minLength: 1
           maxLength: 128
+          example: Default
           description: This group\'s name.
         description:
           type: string
           minLength: 1
           maxLength: 65536
+          example: The default group all users are assigned to.
           description: This group\'s description.
       description: A group.
+    GroupPermissions:
+      allOf:
+        - $ref: "#/components/schemas/Permissions"
+      type: object
+      properties:
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time these permissions were created.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time these permissions were edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times these permissions were edited.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/User/properties/id"
+          description: The ID of the group these permissions belong to.
+      description: A group\'s custom permissions.
     Forum:
       type: object
       properties:
@@ -224,24 +396,33 @@ components:
           description: How many times this forum was edited.
         parent_forum_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/Forum/properties/id"
           nullable: true
           description: The ID of this forum\'s parent.
         user_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/User/properties/id"
           description: The ID of this forum\'s author.
         name:
           type: string
           minLength: 1
           maxLength: 128
+          example: Random
           description: This forum\'s name.
         description:
           type: string
           minLength: 1
           maxLength: 65536
           nullable: true
+          example: General discussion about whichever topics you find interesting.
           description: This forum\'s description.
+        order:
+          type: integer
+          minimum: -2147483647
+          maximum: 2147483647
+          example: 1
+          description: "The pre-defined order this forum will appear in,
+          mainly on frontend applications."
         subscriber_count:
           allOf:
             - $ref: "#/components/schemas/Count"
@@ -277,11 +458,11 @@ components:
           description: How many times this thread was edited.
         forum_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/Forum/properties/id"
           description: The ID of the forum this thread is in.
         user_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/User/properties/id"
           description: The ID of this thread\'s author.
         is_locked:
           type: boolean
@@ -295,16 +476,20 @@ components:
             type: string
             minLength: 1
             maxLength: 128
+            example: questions
           description: This thread\'s tags.
         name:
           type: string
           minLength: 1
           maxLength: 128
+          example: Tomorrow\'s presentation
           description: This thread\'s name.
         content:
           type: string
           minLength: 1
           maxLength: 128
+          example: "Will any of you guys attend tomorrow's [talk](https://example.org)?
+          I think it will be really interesting."
           description: This thread\'s content.
         vote_value:
           allOf:
@@ -324,6 +509,33 @@ components:
           nullable: true
           description: When the last post in this thread was created.
       description: A thread.
+    ThreadVote:
+      type: object
+      properties:
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this vote was created.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time vote was edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times this vote was edited.
+        thread_id:
+          allOf:
+            - $ref: "#/components/schemas/Thread/properties/id"
+          description: The ID of the thread this vote belongs to.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/User/properties/id"
+          description: The ID of the user that created this vote.
+        upvote:
+          type: boolean
+          description: Whether or not this is an upvote.
+      description: A vote on a thread.
     Post:
       type: object
       properties:
@@ -345,22 +557,50 @@ components:
           description: How many times this post was edited.
         thread_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/Thread/properties/id"
           description: The ID of the thread this post is in.
         user_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/User/properties/id"
           description: The ID of this post\'s author.
         content:
           type: string
           minLength: 1
           maxLength: 262144
+          example: "I will! I didn't know you were interested in that stuff."
           description: This post\'s content.
         vote_value:
           allOf:
             - $ref: "#/components/schemas/VoteValue"
           description: The computed value of this post\'s votes.
       description: A post.
+    PostVote:
+      type: object
+      properties:
+        creation_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/CreationTimestamp"
+          description: The time this vote was created.
+        edit_timestamp:
+          allOf:
+            - $ref: "#/components/schemas/EditTimestamp"
+          description: The last time vote was edited.
+        edit_count:
+          allOf:
+            - $ref: "#/components/schemas/EditCount"
+          description: How many times this vote was edited.
+        post_id:
+          allOf:
+            - $ref: "#/components/schemas/Post/properties/id"
+          description: The ID of the post this vote belongs to.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/User/properties/id"
+          description: The ID of the user that created this vote.
+        upvote:
+          type: boolean
+          description: Whether or not this is an upvote.
+      description: A vote on a post.
     Message:
       type: object
       properties:
@@ -382,11 +622,11 @@ components:
           description: How many times this message was edited.
         sender_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/User/properties/id"
           description: The ID of this message\'s sender.
         receiver_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/User/properties/id"
           description: The ID of this receiver\'s sender.
         is_read:
           type: boolean
@@ -394,17 +634,24 @@ components:
         encrypted_session_key:
           type: string
           format: base64
+          example: "mC7NNYRUOpJzCeKzVco+l7qDVoAmRaES/DdvO+qSCS8JzHHL8B
+          zWDNV9z8CqO5P2He9Lqf/WCbgyMKAVtuLvMvTrPLqxW6H2/lMMGtl1EOLdyS
+          ol9miYu1Mb6y2283vIyahr8g=="
           description: "This message's session key, encrypted with the
           receiver's public RSA key."
         tag:
           type: string
           format: base64
           nullable: true
+          example: LTUwNDM1Nzk5MjUxOTQ3ODQ2MDQ=
           description: "This message's tag, derived from the decrypted
           content to detect modifications."
         encrypted_content:
           type: string
           format: base64
+          example: "WW91J3JlIGN1cmlvdXMsIGFuZCBJIGxpa2UgY3VyaW9zaXR5Li
+          BIZXJlLCB5b3UgY2FuIGhhdmUgdGhpczogaHR0cHM6Ly9ueWFhLnNpL3ZpZX
+          cvMTQzNTMwNQ=="
           description: This message\'s encrypted content.
       description: A message.
     Notification:
@@ -420,7 +667,7 @@ components:
           description: The time this notification was created.
         user_id:
           allOf:
-            - $ref: "#/components/schemas/Id"
+            - $ref: "#/components/schemas/User/properties/id"
           description: The ID of this notification\'s owner.
         is_read:
           type: boolean
@@ -588,6 +835,17 @@ components:
           type: boolean
           description: Whether or not a user can modify other users' permissions.
       description: Permissions.
+    Order:
+      type: object
+      properties:
+        by:
+          type: string
+          description: What attribute to order by.
+        asc:
+          type: boolean
+          default: false
+          description: Ascending, or descending.
+      description: The order for a list of objects.
     Id:
       type: string
       format: uuid
@@ -613,6 +871,7 @@ components:
       minimum: 0
       maximum: 2147483647
       readOnly: true
+      example: 3
       description: A counter.
     EditCount:
       allOf:
@@ -624,6 +883,7 @@ components:
       minimum: -2147483647
       maximum: 2147483647
       readOnly: true
+      example: 28
       description: The computed value of an object\'s votes.
     Offset:
       type: integer
@@ -635,4 +895,5 @@ components:
       type: integer
       minimum: 1
       maximum: 512
+      example: 50
       description: How many results to look for.

@@ -85,11 +85,9 @@ def token() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		{
-			"token": create_jwt(
-				user.id,
-				expires_after=flask.current_app.config["GUEST_SESSION_EXPIRES_AFTER"]
-			)
-		}
-	), helpers.STATUS_CREATED
+	return flask.jsonify({
+		"token": create_jwt(
+			user.id,
+			expires_after=flask.current_app.config["GUEST_SESSION_EXPIRES_AFTER"]
+		)
+	}), helpers.STATUS_CREATED

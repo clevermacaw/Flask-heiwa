@@ -72,7 +72,7 @@ ATTR_SCHEMAS = {
 	},
 	"order": {
 		"type": "integer",
-		"min": 0,
+		"min": -2147483647,
 		"max": 2147483647
 	},
 	"last_thread_timestamp": {

@@ -14,7 +14,7 @@ __all__ = [
 	"handle_api_exception",
 	"handle_http_exception"
 ]
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 
 def handle_api_exception(
@@ -24,14 +24,12 @@ def handle_api_exception(
 	a `flask.Response`-ified dictionary, and its status code.
 	"""
 
-	return flask.jsonify(
-		{
-			"exception": {
-				"type": exception.__class__.__name__,
-				"details": exception.details
-			}
+	return flask.jsonify({
+		"exception": {
+			"type": exception.__class__.__name__,
+			"details": exception.details
 		}
-	), exception.code
+	}), exception.code
 
 
 def handle_http_exception(
@@ -43,11 +41,9 @@ def handle_http_exception(
 	documents to do so - which would be inconsistent with the rest of our API.
 	"""
 
-	return flask.jsonify(
-		{
-			"exception": {
-				"type": exception.__class__.__name__,
-				"details": exception.description
-			}
+	return flask.jsonify({
+		"exception": {
+			"type": exception.__class__.__name__,
+			"details": exception.description
 		}
-	), exception.code
+	}), exception.code

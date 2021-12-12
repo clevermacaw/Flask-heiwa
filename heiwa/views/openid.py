@@ -185,11 +185,9 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 			token=token["access_token"]
 		)
 
-		return flask.jsonify(
-			{
-				"token": create_jwt(user.id)
-			}
-		), status
+		return flask.jsonify({
+			"token": create_jwt(user.id)
+		}), status
 
 
 @openid_blueprint.route("/<string:client_name>/login", methods=["GET"])
@@ -239,10 +237,8 @@ def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 
 		flask.g.sa_session.commit()
 
-		return flask.jsonify(
-			{
-				"uri": uri,
-				"state": state,
-				"nonce": nonce
-			}
-		), helpers.STATUS_OK
+		return flask.jsonify({
+			"uri": uri,
+			"state": state,
+			"nonce": nonce
+		}), helpers.STATUS_OK
