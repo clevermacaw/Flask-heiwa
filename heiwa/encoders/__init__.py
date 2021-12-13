@@ -14,7 +14,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 __all__ = ["JSONEncoder"]
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 
 # Flask does have a custom encoder already that would take care of UUID
@@ -22,12 +22,31 @@ __version__ = "1.3.0"
 # the ISO date(time) formatting over Flask's choice of RFC 822, and overriding
 # that feels somewhat hacky. So I'll just use json.JSONEncoder instead.
 class JSONEncoder(json.JSONEncoder):
-	"""A JSON encoder for the Heiwa API. Adds support for:
-		- SQLAlchemy ORM mapped objects. (Converted to dictionaries)
-		- Bytes. (Converted to base64)
-		- Date(time) objects. (Converted to ISO strings)
-		- Enum objects. (Converted to their associated value)
-		- UUID objects. (Converted to equivalent strings)
+	"""A JSON encoder based on the default ``JSONEncoder``, modified to add a few
+	necessary features.
+
+	Conversions:
+
+	.. _JSONEncoder conversion table:
+
+		+--------------------------------------------+------------------------------------------+
+		| From                                       | To                                       |
+		+============================================+==========================================+
+		| SQLAlchemy ORM models                      | Dictionaries with all (allowed) columns  |
+		+--------------------------------------------+------------------------------------------+
+		| ``bytes``                                  | Base64 encoded strings                   |
+		+--------------------------------------------+------------------------------------------+
+		| ``date``\ s, ``time``\ s, ``datetime``\ s  | ISO-8601 strings                         |
+		+--------------------------------------------+------------------------------------------+
+		| ``Enum``\ s                                | Their values                             |
+		+--------------------------------------------+------------------------------------------+
+		| ``UUID``\ s                                | Their string equivalents                 |
+		+--------------------------------------------+------------------------------------------+
+
+	.. [#]
+		Flask's default JSON encoder converts dates and times using the format defined
+		in `RFC 822 <https://tools.ietf.org/html/rfc822>`_. Since it's more common and
+		universal, ISO-8601 has been chosen instead.
 	"""
 
 	def default(
@@ -41,12 +60,8 @@ class JSONEncoder(json.JSONEncoder):
 			typing.Any
 		]
 	]:
-		"""Converts:
-			- SQLAlchemy ORM mapped object → dictionary, where only the attributes
-			`flask.g.user` has access to are included.
-			- Date(time) object → ISO formatted string
-			- UUID object → UUID string
-			- Enum object → Enum object value
+		"""Converts various objects to JSONable values, as described in the
+		`JSONEncoder conversion table`_.
 		"""
 
 		if isinstance(o.__class__, sqlalchemy.orm.DeclarativeMeta):
