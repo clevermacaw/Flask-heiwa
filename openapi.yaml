@@ -5,6 +5,56 @@ info:
   version: 0.13.46
 paths:
   /forums:
+    post:
+      description: Creates a new forum.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - order
+                - parent_forum_id
+              properties:
+                name:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/name"
+                description:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/description"
+                order:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/order"
+                parent_forum_id:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
+      responses:
+        "200":
+          description: The newly created forum.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Forum"
+        "403":
+          description: "The forum's child level is more than what the service's
+          configuration allows."
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Exception"
+                properties:
+                  exception:
+                    properties:
+                      type:
+                        enum:
+                          - APIForumChildLevelLimitReached
+                      details:
+                        type: integer
     get:
       description: "Returns a list of forums that the current user has access to,
       and matches the filter if there is one requested."
@@ -83,7 +133,7 @@ paths:
                           allOf:
                             - $ref: "#/components/schemas/Forum/properties/thread_count"
       responses:
-        200:
+        "200":
           description: The list of forums.
           content:
             application/json:
@@ -94,8 +144,101 @@ paths:
 
 components:
   schemas:
+    Exception:
+      type: object
+      properties:
+        exception:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - APIAuthorizationHeaderInvalid
+                - APIAuthorizationHeaderMissing
+                - APIForumChildLevelLimitReached
+                - APIForumNotFound
+                - APIForumParentIsChild
+                - APIForumPermissionsGroupNotFound
+                - APIForumPermissionsGroupUnchanged
+                - APIForumPermissionsUserNotFound
+                - APIForumPermissionsUserUnchanged
+                - APIForumSubscriptionAlreadyExists
+                - APIForumSubscriptionNotFound
+                - APIForumUnchanged
+                - APIGroupCannotDeleteLastDefault
+                - APIGroupCannotDeletePermissionsForLastDefault
+                - APIGroupCannotLeavePermissionNullForLastDefault
+                - APIGroupNotFound
+                - APIGroupPermissionsNotFound
+                - APIGroupPermissionsUnchanged
+                - APIGroupUnchanged
+                - APIGuestSessionLimitReached
+                - APIJSONInvalid
+                - APIJSONMissing
+                - APIJWTInvalid
+                - APIJWTInvalidClaims
+                - APIJWTUserNotFound
+                - APINoPermission
+                - APINotificationNotFound
+                - APIOpenIDAuthenticationFailed
+                - APIOpenIDNonceInvalid
+                - APIOpenIDServiceNotFound
+                - APIOpenIDStateInvalid
+                - APIPostNotFound
+                - APIPostUnchanged
+                - APIPostVoteNotFound
+                - APIPostVoteUnchanged
+                - APIRateLimitExceeded
+                - APIThreadLocked
+                - APIThreadNotFound
+                - APIThreadSubscriptionAlreadyExists
+                - APIThreadSubscriptionNotFound
+                - APIThreadUnchanged
+                - APIThreadVoteNotFound
+                - APIThreadVoteUnchanged
+                - APIUserAvatarInvalid
+                - APIUserAvatarNotAllowedType
+                - APIUserAvatarTooLarge
+                - APIUserBanAlreadyExpired
+                - APIUserBanNotFound
+                - APIUserBanUnchanged
+                - APIUserBanned
+                - APIUserBlockAlreadyExists
+                - APIUserBlockNotFound
+                - APIUserCannotRemoveLastDefaultGroup
+                - APIUserFollowAlreadyExists
+                - APIUserGroupAlreadyAdded
+                - APIUserGroupNotAdded
+                - APIUserNotFound
+                - APIUserPermissionsUnchanged
+                - APIUserUnchanged
+                - HTTPException
+              description: The exception\'s type.
+            details:
+              oneOf:
+                - type: string
+                - type: integer
+                - type: object
+              description: More details for the exception.
+      description: An exception.
     User:
       type: object
+      required:
+        - id
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - avatar_type
+        - is_banned
+        - parsed_permissions
+        - public_key
+        - name
+        - status
+        - followee_count
+        - follower_count
+        - forum_count
+        - post_count
+        - thread_count
       properties:
         id:
           allOf:
@@ -261,6 +404,13 @@ components:
       description: A user.
     UserBan:
       type: object
+      required:
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - user_id
+        - expiration_timestamp
+        - reason
       properties:
         creation_timestamp:
           allOf:
@@ -293,6 +443,11 @@ components:
       allOf:
         - $ref: "#/components/schemas/Permissions"
       type: object
+      required:
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - user_id  # TODO
       properties:
         creation_timestamp:
           allOf:
@@ -313,6 +468,14 @@ components:
       description: A user\'s custom permissions.
     Group:
       type: object
+      required:
+        - id
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - default_for
+        - name
+        - description
       properties:
         id:
           allOf:
@@ -357,6 +520,11 @@ components:
       allOf:
         - $ref: "#/components/schemas/Permissions"
       type: object
+      required:
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - group_id
       properties:
         creation_timestamp:
           allOf:
@@ -370,13 +538,26 @@ components:
           allOf:
             - $ref: "#/components/schemas/EditCount"
           description: How many times these permissions were edited.
-        user_id:
+        group_id:
           allOf:
-            - $ref: "#/components/schemas/User/properties/id"
+            - $ref: "#/components/schemas/Group/properties/id"
           description: The ID of the group these permissions belong to.
       description: A group\'s custom permissions.
     Forum:
       type: object
+      required:
+        - id
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - parent_forum_id
+        - user_id
+        - name
+        - description
+        - order
+        - subscriber_count
+        - thread_count
+        - last_thread_timestamp
       properties:
         id:
           allOf:
@@ -437,8 +618,55 @@ components:
           nullable: true
           description: When the last thread in this forum was created.
       description: A forum.
+    ForumPermissionsGroup:
+      allOf:
+        - $ref: "#/components/schemas/ForumPermissions"
+      required:
+        - forum_id
+        - group_id
+      properties:
+        forum_id:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/id"
+          description: The forum\'s ID.
+        group_id:
+          allOf:
+            - $ref: "#/components/schemas/Group/properties/id"
+          description: The group\'s ID.
+      description: Forum permissions for groups.
+    ForumPermissionsUser:
+      allOf:
+        - $ref: "#/components/schemas/ForumPermissions"
+      required:
+        - forum_id
+        - user_id
+      properties:
+        forum_id:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/id"
+          description: The forum\'s ID.
+        user_id:
+          allOf:
+            - $ref: "#/components/schemas/User/properties/id"
+          description: The user\'s ID.
+      description: Forum permissions for users.
     Thread:
       type: object
+      required:
+        - id
+        - creation_timestamp
+        - edit_timestamp
+        - forum_id
+        - user_id
+        - is_locked
+        - is_pinned
+        - tags
+        - name
+        - content
+        - vote_value
+        - post_count
+        - subscriber_count
+        - last_post_timestamp
       properties:
         id:
           allOf:
@@ -511,6 +739,13 @@ components:
       description: A thread.
     ThreadVote:
       type: object
+      required:
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - thread_id
+        - user_id
+        - upvote
       properties:
         creation_timestamp:
           allOf:
@@ -538,6 +773,15 @@ components:
       description: A vote on a thread.
     Post:
       type: object
+      required:
+         - id
+         - creation_timestamp
+         - edit_timestamp
+         - edit_count
+         - thread_id
+         - user_id
+         - content
+         - vote_value
       properties:
         id:
           allOf:
@@ -576,6 +820,13 @@ components:
       description: A post.
     PostVote:
       type: object
+      required:
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - post_id
+        - user_id
+        - upvote
       properties:
         creation_timestamp:
           allOf:
@@ -603,6 +854,17 @@ components:
       description: A vote on a post.
     Message:
       type: object
+      required:
+        - id
+        - creation_timestamp
+        - edit_timestamp
+        - edit_count
+        - sender_id
+        - receiver_id
+        - is_read
+        - encrypted_session_key
+        - tag
+        - encrypted_content
       properties:
         id:
           allOf:
@@ -656,6 +918,13 @@ components:
       description: A message.
     Notification:
       type: object
+      required:
+        - id
+        - creation_timestamp
+        - user_id
+        - is_read
+        - type
+        - identifier
       properties:
         id:
           allOf:
@@ -705,6 +974,49 @@ components:
             - $ref: "#/components/schemas/Filter"
     Permissions:
       type: object
+      required:
+        - forum_create
+        - forum_delete_own
+        - forum_delete_any
+        - forum_edit_own
+        - forum_edit_any
+        - forum_merge_own
+        - forum_merge_any
+        - forum_move_own
+        - forum_move_any
+        - forum_view
+        - group_create
+        - group_delete
+        - group_edit
+        - group_edit_permissions
+        - post_create
+        - post_delete_own
+        - post_delete_any
+        - post_edit_own
+        - post_edit_any
+        - post_edit_vote
+        - post_move_own
+        - post_move_any
+        - post_view
+        - thread_create
+        - thread_delete_own
+        - thread_delete_any
+        - thread_edit_own
+        - thread_edit_any
+        - thread_edit_lock_own
+        - thread_edit_lock_any
+        - thread_edit_pin
+        - thread_edit_vote
+        - thread_merge_own
+        - thread_merge_any
+        - thread_move_own
+        - thread_move_any
+        - thread_view
+        - user_delete
+        - user_edit
+        - user_edit_ban
+        - user_edit_groups
+        - user_edit_permissions
       properties:
         forum_create:
           type: boolean
@@ -835,12 +1147,152 @@ components:
           type: boolean
           description: Whether or not a user can modify other users' permissions.
       description: Permissions.
+    ForumPermissions:
+      type: object
+      required:
+        - forum_create
+        - forum_delete_own
+        - forum_delete_any
+        - forum_edit_own
+        - forum_edit_any
+        - forum_merge_own
+        - forum_merge_any
+        - forum_move_own
+        - forum_move_any
+        - forum_view
+        - post_create
+        - post_delete_own
+        - post_delete_any
+        - post_edit_own
+        - post_edit_any
+        - post_edit_vote
+        - post_move_own
+        - post_move_any
+        - post_view
+        - thread_create
+        - thread_delete_own
+        - thread_delete_any
+        - thread_edit_own
+        - thread_edit_any
+        - thread_edit_lock_own
+        - thread_edit_lock_any
+        - thread_edit_pin
+        - thread_edit_vote
+        - thread_merge_own
+        - thread_merge_any
+        - thread_move_own
+        - thread_move_any
+        - thread_view
+      properties:
+        forum_create:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_create"
+        forum_delete_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_delete_own"
+        forum_delete_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_delete_any"
+        forum_edit_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_edit_own"
+        forum_edit_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_edit_any"
+        forum_merge_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_merge_own"
+        forum_merge_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_merge_any"
+        forum_move_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_move_own"
+        forum_move_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_move_any"
+        forum_view:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_view"
+        post_create:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_create"
+        post_delete_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_delete_own"
+        post_delete_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_delete_any"
+        post_edit_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_edit_own"
+        post_edit_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_edit_any"
+        post_edit_vote:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_edit_vote"
+        post_move_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_move_own"
+        post_move_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_move_any"
+        post_view:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_view"
+        thread_create:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_create"
+        thread_delete_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_delete_own"
+        thread_delete_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_delete_any"
+        thread_edit_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_own"
+        thread_edit_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_any"
+        thread_edit_lock_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_lock_own"
+        thread_edit_lock_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_lock_any"
+        thread_edit_pin:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_pin"
+        thread_edit_vote:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_vote"
+        thread_merge_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_merge_own"
+        thread_merge_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_merge_any"
+        thread_move_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_move_own"
+        thread_move_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_move_any"
+        thread_view:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_view"
+      description: Permissions for forums.
     Order:
       type: object
+      required:
+        - by
+        - asc
       properties:
         by:
           type: string
-          description: What attribute to order by.
+          description: Which attribute to order by.
         asc:
           type: boolean
           default: false
