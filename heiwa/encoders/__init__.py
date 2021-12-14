@@ -44,9 +44,9 @@ class JSONEncoder(json.JSONEncoder):
 		+--------------------------------------------+------------------------------------------+
 
 	.. [#]
-		Flask's default JSON encoder converts dates and times using the format defined
-		in `RFC 822 <https://tools.ietf.org/html/rfc822>`_. Since it's more common and
-		universal, ISO-8601 has been chosen instead.
+		Flask's default JSON encoder converts dates and times using the format
+		defined in `RFC 822 <https://tools.ietf.org/html/rfc822>`_. Since it's
+		more common and universal, ISO-8601 has been chosen instead.
 	"""
 
 	def default(
