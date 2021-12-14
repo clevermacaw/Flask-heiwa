@@ -441,13 +441,13 @@ components:
       description: A user\'s ban.
     UserPermissions:
       allOf:
-        - $ref: "#/components/schemas/Permissions"
+        - $ref: "#/components/schemas/NullablePermissions"
       type: object
       required:
         - creation_timestamp
         - edit_timestamp
         - edit_count
-        - user_id  # TODO
+        - user_id
       properties:
         creation_timestamp:
           allOf:
@@ -518,7 +518,7 @@ components:
       description: A group.
     GroupPermissions:
       allOf:
-        - $ref: "#/components/schemas/Permissions"
+        - $ref: "#/components/schemas/NullablePermissions"
       type: object
       required:
         - creation_timestamp
@@ -1020,133 +1020,388 @@ components:
       properties:
         forum_create:
           type: boolean
+          default: false
           description: Whether or not a user can create forums.
         forum_delete_own:
           type: boolean
+          default: false
           description: Whether or not a user can delete their own forums.
         forum_delete_any:
           type: boolean
+          default: false
           description: Whether or not a user can delete any forum.
         forum_edit_own:
           type: boolean
+          default: false
           description: Whether or not a user can edit their own forums.
         forum_edit_any:
           type: boolean
+          default: false
           description: Whether or not a user can edit any forum.
         forum_merge_own:
           type: boolean
+          default: false
           description: "Whether or not a user can merge their own forums
           with other forums they've created."
         forum_merge_any:
           type: boolean
+          default: false
           description: Whether or not a user can merge any forum with any forum.
         forum_move_own:
           type: boolean
+          default: false
           description: "Whether or not a user can move their forums to other
           forums they've created."
         forum_move_any:
           type: boolean
+          default: false
           description: Whether or not a user can move any forum to any forum.
         forum_view:
           type: boolean
+          default: false
           description: Whether or not a user can view forums.
         group_create:
           type: boolean
+          default: false
           description: Whether or not a user can create groups.
         group_delete:
           type: boolean
+          default: false
           description: Whether or not a user can delete groups.
         group_edit:
           type: boolean
+          default: false
           description: Whether or not a user can edit groups.
         group_edit_permissions:
           type: boolean
+          default: false
           description: Whether or not a user can edit groups' permissions.
         post_create:
           type: boolean
+          default: false
           description: Whether or not a user can create posts.
         post_delete_own:
           type: boolean
+          default: false
           description: Whether or not a user can delete their own posts.
         post_delete_any:
           type: boolean
+          default: false
           description: Whether or not a user can delete any post.
         post_edit_own:
           type: boolean
+          default: false
           description: Whether or not a user can edit their own posts.
         post_edit_any:
           type: boolean
+          default: false
           description: Whether or not a user can edit any post.
         post_edit_vote:
           type: boolean
+          default: false
           description: Whether or not a user can vote on posts.
         post_move_own:
           type: boolean
+          default: false
           description: "Whether or not a user can move their own posts to their
           own threads."
         post_move_any:
           type: boolean
+          default: false
           description: Whether or not a user can move any post to any thread.
         post_view:
           type: boolean
+          default: false
           description: Whether or not a user can view posts.
         thread_create:
           type: boolean
+          default: false
           description: Whether or not a user can create threads.
         thread_delete_own:
           type: boolean
+          default: false
           description: Whether or not a user can delete their own threads.
         thread_delete_any:
           type: boolean
+          default: false
           description: Whether or not a user can delete any thread.
         thread_edit_own:
           type: boolean
+          default: false
           description: Whether or not a user can edit their own threads.
         thread_edit_any:
           type: boolean
+          default: false
           description: Whether or not a user can edit any thread.
         thread_edit_lock_own:
           type: boolean
+          default: false
           description: Whether or not a user can lock their own threads.
         thread_edit_lock_any:
           type: boolean
+          default: false
           description: Whether or not a user can lock any thread.
         thread_edit_pin:
           type: boolean
+          default: false
           description: Whether or not a user can pin threads.
         thread_edit_vote:
           type: boolean
+          default: false
           description: Whether or not a user can vote on threads.
         thread_merge_own:
           type: boolean
+          default: false
           description: "Whether or not a user can merge their own threads with
           other threads they've created."
         thread_merge_any:
           type: boolean
+          default: false
           description: Whether or not a user can merge any thread with any thread.
         thread_move_own:
           type: boolean
+          default: false
           description: "Whether or not a user can move their own threads to
           forums they've created."
         thread_move_any:
           type: boolean
+          default: false
           description: Whether or not a user can move any thread to any forum.
         thread_view:
           type: boolean
+          default: false
           description: Whether or not a user can view threads.
         user_delete:
           type: boolean
+          default: false
           description: Whether or not a user can delete other users.
         user_edit_ban:
           type: boolean
+          default: false
           description: Whether or not a user can ban other users.
         user_edit_groups:
           type: boolean
+          default: false
           description: Whether or not a user can modify other users' groups.
         user_edit_permissions:
           type: boolean
+          default: false
           description: Whether or not a user can modify other users' permissions.
       description: Permissions.
+    NullablePermissions:
+      allOf:
+        - $ref: "#/components/schemas/Permissions"
+      properties:
+        forum_create:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_create"
+          nullable: true
+          default: null
+        forum_delete_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_delete_own"
+          nullable: true
+          default: null
+        forum_delete_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_delete_any"
+          nullable: true
+          default: null
+        forum_edit_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_edit_own"
+          nullable: true
+          default: null
+        forum_edit_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_edit_any"
+          nullable: true
+          default: null
+        forum_merge_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_merge_own"
+          nullable: true
+          default: null
+        forum_merge_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_merge_any"
+          nullable: true
+          default: null
+        forum_move_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_move_own"
+          nullable: true
+          default: null
+        forum_move_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_move_any"
+          nullable: true
+          default: null
+        forum_view:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/forum_view"
+          nullable: true
+          default: null
+        group_create:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/group_create"
+          nullable: true
+          default: null
+        group_delete:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/group_delete"
+          nullable: true
+          default: null
+        group_edit:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/group_edit"
+          nullable: true
+          default: null
+        group_edit_permissions:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/group_edit_permissions"
+          nullable: true
+          default: null
+        post_create:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_create"
+          nullable: true
+          default: null
+        post_delete_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_delete_own"
+          nullable: true
+          default: null
+        post_delete_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_delete_any"
+          nullable: true
+          default: null
+        post_edit_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_edit_own"
+          nullable: true
+          default: null
+        post_edit_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_edit_any"
+          nullable: true
+          default: null
+        post_edit_vote:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_edit_vote"
+          nullable: true
+          default: null
+        post_move_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_move_own"
+          nullable: true
+          default: null
+        post_move_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_move_any"
+          nullable: true
+          default: null
+        post_view:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/post_view"
+          nullable: true
+          default: null
+        thread_create:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_create"
+          nullable: true
+          default: null
+        thread_delete_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_delete_own"
+          nullable: true
+          default: null
+        thread_delete_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_delete_any"
+          nullable: true
+          default: null
+        thread_edit_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_own"
+          nullable: true
+          default: null
+        thread_edit_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_any"
+          nullable: true
+          default: null
+        thread_edit_lock_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_lock_own"
+          nullable: true
+          default: null
+        thread_edit_lock_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_lock_any"
+          nullable: true
+          default: null
+        thread_edit_pin:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_pin"
+          nullable: true
+          default: null
+        thread_edit_vote:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_edit_vote"
+          nullable: true
+          default: null
+        thread_merge_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_merge_own"
+          nullable: true
+          default: null
+        thread_merge_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_merge_any"
+          nullable: true
+          default: null
+        thread_move_own:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_move_own"
+          nullable: true
+          default: null
+        thread_move_any:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_move_any"
+          nullable: true
+          default: null
+        thread_view:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/thread_view"
+          nullable: true
+          default: null
+        user_delete:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/user_delete"
+          nullable: true
+          default: null
+        user_edit:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/user_edit"
+          nullable: true
+          default: null
+        user_edit_ban:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/user_edit_ban"
+          nullable: true
+          default: null
+        user_edit_groups:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/user_edit_groups"
+          nullable: true
+          default: null
+        user_edit_permissions:
+          allOf:
+            - $ref: "#/components/schemas/Permissions/properties/user_edit_permissions"
+          nullable: true
+          default: null
     ForumPermissions:
       type: object
       required:
@@ -1186,103 +1441,103 @@ components:
       properties:
         forum_create:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_create"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_create"
         forum_delete_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_delete_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_delete_own"
         forum_delete_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_delete_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_delete_any"
         forum_edit_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_edit_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_edit_own"
         forum_edit_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_edit_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_edit_any"
         forum_merge_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_merge_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_merge_own"
         forum_merge_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_merge_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_merge_any"
         forum_move_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_move_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_move_own"
         forum_move_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_move_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_move_any"
         forum_view:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/forum_view"
+            - $ref: "#/components/schemas/NullablePermissions/properties/forum_view"
         post_create:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_create"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_create"
         post_delete_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_delete_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_delete_own"
         post_delete_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_delete_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_delete_any"
         post_edit_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_edit_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_edit_own"
         post_edit_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_edit_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_edit_any"
         post_edit_vote:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_edit_vote"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_edit_vote"
         post_move_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_move_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_move_own"
         post_move_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_move_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_move_any"
         post_view:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/post_view"
+            - $ref: "#/components/schemas/NullablePermissions/properties/post_view"
         thread_create:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_create"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_create"
         thread_delete_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_delete_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_delete_own"
         thread_delete_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_delete_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_delete_any"
         thread_edit_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_edit_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_edit_own"
         thread_edit_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_edit_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_edit_any"
         thread_edit_lock_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_edit_lock_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_edit_lock_own"
         thread_edit_lock_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_edit_lock_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_edit_lock_any"
         thread_edit_pin:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_edit_pin"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_edit_pin"
         thread_edit_vote:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_edit_vote"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_edit_vote"
         thread_merge_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_merge_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_merge_own"
         thread_merge_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_merge_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_merge_any"
         thread_move_own:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_move_own"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_move_own"
         thread_move_any:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_move_any"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_move_any"
         thread_view:
           allOf:
-            - $ref: "#/components/schemas/Permissions/properties/thread_view"
+            - $ref: "#/components/schemas/NullablePermissions/properties/thread_view"
       description: Permissions for forums.
     Order:
       type: object
