@@ -6,31 +6,14 @@ info:
 paths:
   /forums:
     post:
-      description: Creates a new forum.
+      summary: Creates a new forum.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-                - description
-                - order
-                - parent_forum_id
-              properties:
-                name:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/name"
-                description:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/description"
-                order:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/order"
-                parent_forum_id:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
+              allOf:
+                - $ref: "#/components/schemas/ForumCreateEdit"
       responses:
         "200":
           description: The newly created forum.
@@ -56,82 +39,15 @@ paths:
                       details:
                         type: integer
     get:
-      description: "Returns a list of forums that the current user has access to,
+      summary: "Returns a list of forums that the current user has access to,
       and matches the filter if there is one requested."
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - limit
-              properties:
-                limit:
-                  allOf:
-                    - $ref: "#/components/schemas/Limit"
-                offset:
-                  allOf:
-                    - $ref: "#/components/schemas/Offset"
-                order:
-                  allOf:
-                    - $ref: "#/components/schemas/Order"
-                  properties:
-                    by:
-                      enum:
-                        - order
-                        - creation_timestamp
-                        - edit_timestamp
-                        - edit_count
-                        - subscriber_count
-                        - thread_count
-                      default: order
-                  description: How the forums should be ordered.
-                filter:
-                  allOf:
-                    - $ref: "#/components/schemas/Filter"
-                  properties:
-                    "$eq":
-                      type: object
-                      minProperties: 1
-                      maxProperties: 1
-                      properties:
-                        id:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/id"
-                        creation_timestamp:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/creation_timestamp"
-                        edit_timestamp:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/edit_timestamp"
-                        edit_count:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/edit_count"
-                        parent_forum_id:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
-                        user_id:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/user_id"
-                        name:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/name"
-                        description:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/description"
-                        order:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/order"
-                        last_thread_timestamp:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/last_thread_timestamp"
-                        subscriber_count:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/subscriber_count"
-                        thread_count:
-                          allOf:
-                            - $ref: "#/components/schemas/Forum/properties/thread_count"
+              allOf:
+                - $ref: "#/components/schemas/ForumSearch"
       responses:
         "200":
           description: The list of forums.
@@ -141,7 +57,76 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Forum"
-
+    delete:
+      summary: "Deletes the forums that match the current user has access to,
+      and matches the filter if there is one requested."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ForumSearch"
+      responses:
+        "204":
+          description: Success, the forums have been deleted.
+  /forums/{id}:
+    delete:
+      summary: Deletes the requested forum.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+      responses:
+        "204":
+          description: Success. The forum has been deleted.
+    put:
+      summary: Updates the requested forum with new values.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ForumCreateEdit"
+      responses:
+        "200":
+          description: The updated forum.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Forum"
+    get:
+      summary: Returns the requested forum.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Forum"
+          description: The forum.
 components:
   schemas:
     Exception:
@@ -972,6 +957,96 @@ components:
         "$not":
           allOf:
             - $ref: "#/components/schemas/Filter"
+    ForumCreateEdit:
+      type: object
+      required:
+        - name
+        - description
+        - order
+        - parent_forum_id
+      properties:
+        name:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/name"
+        description:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/description"
+        order:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/order"
+        parent_forum_id:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
+    ForumSearch:
+      type: object
+      required:
+        - limit
+      properties:
+        limit:
+          allOf:
+            - $ref: "#/components/schemas/Limit"
+        offset:
+          allOf:
+            - $ref: "#/components/schemas/Offset"
+        order:
+          allOf:
+            - $ref: "#/components/schemas/Order"
+          properties:
+            by:
+              enum:
+                - order
+                - creation_timestamp
+                - edit_timestamp
+                - edit_count
+                - subscriber_count
+                - thread_count
+              default: order
+          description: How the forums should be ordered.
+        filter:
+          allOf:
+            - $ref: "#/components/schemas/Filter"
+          properties:
+            "$eq":
+              type: object
+              minProperties: 1
+              maxProperties: 1
+              properties:
+                id:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/id"
+                creation_timestamp:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/creation_timestamp"
+                edit_timestamp:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/edit_timestamp"
+                edit_count:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/edit_count"
+                parent_forum_id:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
+                user_id:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/user_id"
+                name:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/name"
+                description:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/description"
+                order:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/order"
+                last_thread_timestamp:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/last_thread_timestamp"
+                subscriber_count:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/subscriber_count"
+                thread_count:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/thread_count"
     Permissions:
       type: object
       required:
