@@ -129,6 +129,7 @@ paths:
           description: The forum.
 components:
   schemas:
+    # ----- Models used primarily in responses -----
     Exception:
       type: object
       properties:
@@ -603,6 +604,90 @@ components:
           nullable: true
           description: When the last thread in this forum was created.
       description: A forum.
+    ForumAuthorizedActions:
+      type: object
+      required:
+        - create
+        - create_subforum
+        - create_thread
+        - create_thread_locked
+        - create_thread_pinned
+        - delete
+        - edit
+        - edit_permissions_group
+        - edit_permissions_user
+        - edit_subscription
+        - merge
+        - move
+        - view
+        - view_permissions_group
+        - view_permissions_user
+      properties:
+        create:
+          type: boolean
+          default: false
+          description: Whether or not a user can create a forum.
+        create_subforum:
+          type: boolean
+          default: false
+          description: "Whether or not a user can create forums within a forums.
+          Also known as 'sub-forums'."
+        create_thread:
+          type: boolean
+          default: false
+          description: Whether or not a user can create threads in a forum.
+        create_thread_locked:
+          type: boolean
+          default: false
+          description: Whether or not a user can create locked threads in a forum.
+        create_thread_pinned:
+          type: boolean
+          default: false
+          description: Whether or not a user can create pinned threads in a forum.
+        delete:
+          type: boolean
+          default: false
+          description: Whether or not a user can delete a forum.
+        edit:
+          type: boolean
+          default: false
+          description: Whether or not a user can edit a forum.
+        edit_permissions_group:
+          type: boolean
+          default: false
+          description: Whether or not a user can edit a group\'s permissions for a forum.
+        edit_permissions_user:
+          type: boolean
+          default: false
+          description: Whether or not a user can edit a user\'s permissions for a forum.
+        edit_subscription:
+          type: boolean
+          default: false
+          description: Whether or not a user can subscribe to a forum.
+        merge:
+          type: boolean
+          default: false
+          description: Whether or not a user can merge a forum with another.
+        move:
+          type: boolean
+          default: false
+          description: Whether or not a user can move a forum to another.
+        view:
+          type: boolean
+          default: false
+          description: Whether or not a user can view a forum.
+        view_permissions_group:
+          type: boolean
+          default: false
+          description: Whether or not a user can view a group\'s permissions for a forum,
+        view_permissions_user:
+          type: boolean
+          default: false
+          description: Whether or not a user can view a user\'s permissions for a forum.
+      description: "The actions that a user is allowed to perform on a forum.
+      Although the names may match those of permissions sometimes, they aren't
+      the same, and may behave in unexpected ways when treated as such.
+      See the documentation for more details."
     ForumPermissionsGroup:
       allOf:
         - $ref: "#/components/schemas/ForumPermissions"
@@ -943,110 +1028,7 @@ components:
           description: "The identifier of this notification's subject.
           (For example, with a new thread notification, the thread's ID)"
       description: A notification.
-    Filter:
-      type: object
-      properties:
-        "$and":
-          type: array
-          items:
-            $ref: "#/components/schemas/Filter"
-        "$or":
-          type: array
-          items:
-            $ref: "#/components/schemas/Filter"
-        "$not":
-          allOf:
-            - $ref: "#/components/schemas/Filter"
-    ForumCreateEdit:
-      type: object
-      required:
-        - name
-        - description
-        - order
-        - parent_forum_id
-      properties:
-        name:
-          allOf:
-            - $ref: "#/components/schemas/Forum/properties/name"
-        description:
-          allOf:
-            - $ref: "#/components/schemas/Forum/properties/description"
-        order:
-          allOf:
-            - $ref: "#/components/schemas/Forum/properties/order"
-        parent_forum_id:
-          allOf:
-            - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
-    ForumSearch:
-      type: object
-      required:
-        - limit
-      properties:
-        limit:
-          allOf:
-            - $ref: "#/components/schemas/Limit"
-        offset:
-          allOf:
-            - $ref: "#/components/schemas/Offset"
-        order:
-          allOf:
-            - $ref: "#/components/schemas/Order"
-          properties:
-            by:
-              enum:
-                - order
-                - creation_timestamp
-                - edit_timestamp
-                - edit_count
-                - subscriber_count
-                - thread_count
-              default: order
-          description: How the forums should be ordered.
-        filter:
-          allOf:
-            - $ref: "#/components/schemas/Filter"
-          properties:
-            "$eq":
-              type: object
-              minProperties: 1
-              maxProperties: 1
-              properties:
-                id:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/id"
-                creation_timestamp:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/creation_timestamp"
-                edit_timestamp:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/edit_timestamp"
-                edit_count:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/edit_count"
-                parent_forum_id:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
-                user_id:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/user_id"
-                name:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/name"
-                description:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/description"
-                order:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/order"
-                last_thread_timestamp:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/last_thread_timestamp"
-                subscriber_count:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/subscriber_count"
-                thread_count:
-                  allOf:
-                    - $ref: "#/components/schemas/Forum/properties/thread_count"
+    # ----- Mixins & helpers -----
     Permissions:
       type: object
       required:
@@ -1150,7 +1132,7 @@ components:
         group_edit_permissions:
           type: boolean
           default: false
-          description: Whether or not a user can edit groups' permissions.
+          description: Whether or not a user can edit groups\' permissions.
         post_create:
           type: boolean
           default: false
@@ -1261,11 +1243,11 @@ components:
         user_edit_groups:
           type: boolean
           default: false
-          description: Whether or not a user can modify other users' groups.
+          description: Whether or not a user can modify other users\' groups.
         user_edit_permissions:
           type: boolean
           default: false
-          description: Whether or not a user can modify other users' permissions.
+          description: Whether or not a user can modify other users\' permissions.
       description: Permissions.
     NullablePermissions:
       allOf:
@@ -1617,21 +1599,7 @@ components:
         thread_view:
           allOf:
             - $ref: "#/components/schemas/NullablePermissions/properties/thread_view"
-      description: Permissions for forums.
-    Order:
-      type: object
-      required:
-        - by
-        - asc
-      properties:
-        by:
-          type: string
-          description: Which attribute to order by.
-        asc:
-          type: boolean
-          default: false
-          description: Ascending, or descending.
-      description: The order for a list of objects.
+      description: Permissions for forums
     Id:
       type: string
       format: uuid
@@ -1671,12 +1639,131 @@ components:
       readOnly: true
       example: 28
       description: The computed value of an object\'s votes.
+    # ----- Request-only objects -----
+    Filter:
+      type: object
+      properties:
+        "$and":
+          type: array
+          items:
+            $ref: "#/components/schemas/Filter"
+        "$or":
+          type: array
+          items:
+            $ref: "#/components/schemas/Filter"
+        "$not":
+          allOf:
+            - $ref: "#/components/schemas/Filter"
+    ForumCreateEdit:
+      type: object
+      required:
+        - name
+        - description
+        - order
+        - parent_forum_id
+      properties:
+        name:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/name"
+        description:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/description"
+        order:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/order"
+        parent_forum_id:
+          allOf:
+            - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
+    ForumSearch:
+      type: object
+      required:
+        - limit
+      properties:
+        limit:
+          allOf:
+            - $ref: "#/components/schemas/Limit"
+        offset:
+          allOf:
+            - $ref: "#/components/schemas/Offset"
+        order:
+          allOf:
+            - $ref: "#/components/schemas/Order"
+          properties:
+            by:
+              enum:
+                - order
+                - creation_timestamp
+                - edit_timestamp
+                - edit_count
+                - subscriber_count
+                - thread_count
+              default: order
+          description: How the forums should be ordered.
+        filter:
+          allOf:
+            - $ref: "#/components/schemas/Filter"
+          properties:
+            "$eq":
+              type: object
+              minProperties: 1
+              maxProperties: 1
+              properties:
+                id:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/id"
+                creation_timestamp:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/creation_timestamp"
+                edit_timestamp:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/edit_timestamp"
+                edit_count:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/edit_count"
+                parent_forum_id:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/parent_forum_id"
+                user_id:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/user_id"
+                name:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/name"
+                description:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/description"
+                order:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/order"
+                last_thread_timestamp:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/last_thread_timestamp"
+                subscriber_count:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/subscriber_count"
+                thread_count:
+                  allOf:
+                    - $ref: "#/components/schemas/Forum/properties/thread_count"
     Offset:
       type: integer
       minimum: 0
       maximum: 0
       default: 0
       description: How many results to skip. Useful for pagination.
+    Order:
+      type: object
+      required:
+        - by
+        - asc
+      properties:
+        by:
+          type: string
+          description: Which attribute to order by.
+        asc:
+          type: boolean
+          default: false
+          description: Ascending, or descending.
+      description: The order for a list of objects.
     Limit:
       type: integer
       minimum: 1
