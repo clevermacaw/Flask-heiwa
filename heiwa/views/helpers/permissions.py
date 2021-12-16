@@ -33,9 +33,9 @@ def requires_permission(
 		typing.Any
 	]
 ]:
-	"""Checks whether or not `flask.g.user` has permission to perform `action`
-	(string, or callable that returns a string) on the given `resource`.
-	Raises `heiwa.exceptions.APINoPermission` if that's not the case.
+	"""Checks whether or not ``flask.g.user`` has permission to perform ``action``
+	(string, or callable that returns a string) on the given ``resource``.
+	Raises ``heiwa.exceptions.APINoPermission`` if that's not the case.
 	"""
 
 	def wrapper(
@@ -68,8 +68,8 @@ def validate_permission(
 		heiwa.models.Base
 	]
 ) -> None:
-	"""Checks whether or not `user` has permission to perform `action` on
-	the given `resource`. Raises `heiwa.exceptions.APINoPermission` if that's
+	"""Checks whether or not ``user`` has permission to perform ``action`` on
+	the given ``resource``. Raises ``heiwa.exceptions.APINoPermission`` if that's
 	not the case.
 	"""
 

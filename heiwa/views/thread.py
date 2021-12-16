@@ -313,8 +313,8 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 @authentication.authenticate_via_jwt
 @requires_permission("create_thread", models.Forum)
 def create() -> typing.Tuple[flask.Response, int]:
-	"""Creates a thread with the requested `forum_id`, locked status
-	(`is_locked`), pinned status (`is_pinned`), `name` and `content`.
+	"""Creates a thread with the requested ``forum_id``, locked status
+	(``is_locked``), pinned status (``is_pinned``), ``name`` and ``content``.
 	"""
 
 	forum = find_forum_by_id(
@@ -362,7 +362,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Thread)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all threads that match the requested filter, and `flask.g.user` has
+	"""Lists all threads that match the requested filter, and ``flask.g.user`` has
 	permission to view. If parsed permissions don't exist for their respective
 	forums, they're automatically calculated.
 	"""
@@ -455,9 +455,9 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Thread)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all threads that match the requested filter, and `flask.g.user` has
-	permission to both view and delete. If parsed permissions don't exist for
-	their respective forums, they're automatically calculated.
+	"""Deletes all threads that match the requested filter, and ``flask.g.user``
+	has permission to both view and delete. If parsed permissions don't exist
+	for their respective forums, they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -578,7 +578,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Thread)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the thread with the requested `id_`."""
+	"""Deletes the thread with the requested ``id_``."""
 
 	thread = find_thread_by_id(
 		id_,
@@ -604,7 +604,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Thread)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Updates the thread with the requested `id_` with the requested values."""
+	"""Updates the thread with the requested ``id_`` with the requested values."""
 
 	thread = find_thread_by_id(
 		id_,
@@ -670,7 +670,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Thread)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns the thread with the requested `id_`."""
+	"""Returns the thread with the requested ``id_``."""
 
 	thread = find_thread_by_id(
 		id_,
@@ -687,8 +687,8 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def authorized_actions_thread(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that `flask.g.user` is authorized to perform on the
-	thread with the requested `id_`.
+	"""Returns all actions that ``flask.g.user`` is authorized to perform on the
+	thread with the requested ``id_``.
 	"""
 
 	return flask.jsonify(
@@ -711,8 +711,8 @@ def authorized_actions_thread(
 @authentication.authenticate_via_jwt
 @requires_permission("merge", models.Thread)
 def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Moves all posts from the thread with the given `id_` to the one with the
-	`id` provided in the request body, then deletes the old thread.
+	"""Moves all posts from the thread with the given ``id_`` to the one with the
+	``id`` provided in the request body, then deletes the old thread.
 	"""
 
 	old_thread = find_thread_by_id(
@@ -769,8 +769,8 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Thread)
 def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Creates a subscription for `flask.g.user` to the thread with the
-	requested `id_`.
+	"""Creates a subscription for ``flask.g.user`` to the thread with the
+	requested ``id_``.
 	"""
 
 	thread = find_thread_by_id(
@@ -815,8 +815,8 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Thread)
 def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Removes `flask.g.user`'s subscription to the thread with the requested
-	`id_`.
+	"""Removes ``flask.g.user``'s subscription to the thread with the requested
+	``id_``.
 	"""
 
 	thread = find_thread_by_id(
@@ -855,8 +855,8 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Thread)
 def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns whether or not `flask.g.user` is subscribed to the thread with the
-	requested `id_`.
+	"""Returns whether or not ``flask.g.user`` is subscribed to the thread with the
+	requested ``id_``.
 	"""
 
 	return flask.jsonify(
@@ -888,9 +888,9 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_vote", models.Thread)
 def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Creates a vote from `flask.g.user` for the thread with the requested `id_`,
-	or updates the existing one. It can either be a downvote or an upvote.
-	(`upvote` -> `True` or `False`)
+	"""Creates a vote from ``flask.g.user`` for the thread with the requested
+	``id_``, or updates the existing one. It can either be a downvote or an
+	upvote. (``upvote`` -> ``True`` or ``False``)
 	"""
 
 	thread = find_thread_by_id(
@@ -946,7 +946,7 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_vote", models.Thread)
 def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes `flask.g.user`'s vote on the thread with the requested `id_`,
+	"""Deletes ``flask.g.user``'s vote on the thread with the requested ``id_``,
 	if there is one.
 	"""
 
@@ -986,7 +986,9 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view_vote", models.Thread)
 def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns `flask.g.user`'s vote on the thread with the requested `id_`."""
+	"""Returns ``flask.g.user``'s vote on the thread with the requested
+	``id_``.
+	"""
 
 	thread = find_thread_by_id(
 		id_,
@@ -1014,7 +1016,7 @@ def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that `flask.g.user` is authorized to perform on
+	"""Returns all actions that ``flask.g.user`` is authorized to perform on
 	threads without any knowledge on which one they'll be done on.
 	"""
 

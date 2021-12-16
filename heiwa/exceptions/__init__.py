@@ -74,8 +74,8 @@ __version__ = "1.30.0"
 class APIException(Exception):
 	"""The base class for all API exceptions.
 	Default values:
-		- (HTTP) `code`: `500`
-		- `details`: `None`
+		- (HTTP) ``code``: ``500``
+		- ``details``: ``None``
 	"""
 
 	code = helpers.STATUS_INTERNAL_SERVER_ERROR
@@ -96,15 +96,15 @@ class APIException(Exception):
 			],
 		] = details
 	) -> None:
-		"""Sets the `details` class variable to the given value. If this method
-		isn't used, it remains `None`.
+		"""Sets the ``details`` class variable to the given value. If this method
+		isn't used, it remains ``None``.
 		"""
 
 		self.details = details
 
 
 class APIAuthorizationHeaderInvalid(APIException):
-	"""Exception class for when the `'Authorization'` header is required and
+	"""Exception class for when the ``'Authorization'`` header is required and
 	present, but not valid. (e.g. Basic instead of Bearer, when only Bearer
 	is supported)
 	"""
@@ -113,7 +113,7 @@ class APIAuthorizationHeaderInvalid(APIException):
 
 
 class APIAuthorizationHeaderMissing(APIException):
-	"""Exception class for when the `'Authorization'` header is required,
+	"""Exception class for when the ``'Authorization'`` header is required,
 	but not present.
 	"""
 
@@ -122,7 +122,7 @@ class APIAuthorizationHeaderMissing(APIException):
 
 class APIForumChildLevelLimitReached(APIException):
 	"""Exception class for when a user attempts to create a forum whose
-	child level is above the config's ` 'FORUM_MAX_CHILD_LEVEL'` key.
+	child level is above the config's `` 'FORUM_MAX_CHILD_LEVEL'`` key.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -130,7 +130,7 @@ class APIForumChildLevelLimitReached(APIException):
 
 class APIForumNotFound(APIException):
 	"""Exception class for when a requested forum
-	(e.g. `'/forums/inexistent-id'`) does not exist.
+	(e.g. ``'/forums/inexistent-id'``) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -203,7 +203,7 @@ class APIForumUnchanged(APIException):
 
 class APIGroupCannotDeleteLastDefault(APIException):
 	"""Exception class for when a user attempts to delete the last group
-	which is default for `*`.
+	which is default for ``*``.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -211,7 +211,7 @@ class APIGroupCannotDeleteLastDefault(APIException):
 
 class APIGroupCannotDeletePermissionsForLastDefault(APIException):
 	"""Exception class for when a user attempts to delete permissions
-	for the last group whose `default_for` column contains `'*'`.
+	for the last group whose ``default_for`` column contains ``'*'``.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -219,7 +219,7 @@ class APIGroupCannotDeletePermissionsForLastDefault(APIException):
 
 class APIGroupCannotLeavePermissionNullForLastDefault(APIException):
 	"""Exception class for when a user attempts to set a permission whose
-	value is `None` for the last group whose `default_for` column is `'*'`.
+	value is ``None`` for the last group whose ``default_for`` column is ``'*'``.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -227,7 +227,7 @@ class APIGroupCannotLeavePermissionNullForLastDefault(APIException):
 
 class APIGroupNotFound(APIException):
 	"""Exception class for when a requested group
-	(e.g. `'/groups/inexistent-id'`) does not exist.
+	(e.g. ``'/groups/inexistent-id'``) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -260,7 +260,7 @@ class APIGroupUnchanged(APIException):
 class APIGuestSessionLimitReached(APIException):
 	"""Exception class for when a visitor attempts to obtain a guest token,
 	but already has too many existing accounts with the same IP address
-	(`external_id`) which haven't yet expired.
+	(``external_id``) which haven't yet expired.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -316,7 +316,7 @@ class APINoPermission(APIException):
 
 class APINotificationNotFound(APIException):
 	"""Exception class for when a requested notification
-	(e.g. `'/notifications/inexistent-id`') does not exist.
+	(e.g. ``'/notifications/inexistent-id``') does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -340,7 +340,7 @@ class APIOpenIDNonceInvalid(APIException):
 
 class APIOpenIDServiceNotFound(APIException):
 	"""Exception class for when a requested OpenID service
-	(e.g. `'/openid/login/inexistent-service'`) does not exist.
+	(e.g. ``'/openid/login/inexistent-service'``) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -356,7 +356,7 @@ class APIOpenIDStateInvalid(APIException):
 
 class APIPostNotFound(APIException):
 	"""Exception class for when a requested post
-	(e.g. `'/posts/inexistent-id'`) does not exist.
+	(e.g. ``'/posts/inexistent-id'``) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -402,7 +402,7 @@ class APIThreadLocked(APIException):
 
 class APIThreadNotFound(APIException):
 	"""Exception class for when a requested thread
-	(e.g. `'/threads/inexistent-id'`) does not exist.
+	(e.g. ``'/threads/inexistent-id'``) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
@@ -530,7 +530,7 @@ class APIUserBlockNotFound(APIException):
 
 class APIUserCannotRemoveLastDefaultGroup(APIException):
 	"""Exception class for when a user attempts to remove the last group whose
-	`default_for` column contains `'*'` from another user.
+	``default_for`` column contains ``'*'`` from another user.
 	"""
 
 	code = helpers.STATUS_FORBIDDEN
@@ -570,7 +570,7 @@ class APIUserGroupNotAdded(APIException):
 
 class APIUserNotFound(APIException):
 	"""Exception class for when a requested user
-	(e.g. `'/users/inexistent-id'`) does not exist.
+	(e.g. ``'/users/inexistent-id'``) does not exist.
 	"""
 
 	code = helpers.STATUS_NOT_FOUND

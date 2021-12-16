@@ -42,11 +42,11 @@ class Limiter:
 		] = lambda: flask.request.endpoint
 	) -> None:
 		"""Sets this instance's attributes to the given values.
-		If `default_limits` is `None`, and this method is running within
+		If ``default_limits`` is ``None``, and this method is running within
 		a Flask app context, it's set to the current Flask app's
-		`'RATELIMIT_DEFAULT'` config key as long there is one.
-		The same applies to `endpoint_limits` as well, but with the
-		`'RATELIMIT_SPECIFIC'` config key.
+		``'RATELIMIT_DEFAULT'`` config key as long there is one.
+		The same applies to ``endpoint_limits`` as well, but with the
+		``'RATELIMIT_SPECIFIC'`` config key.
 		"""
 
 		self.default_limits = [
@@ -111,9 +111,9 @@ class Limiter:
 		]
 	]:
 		"""Returns whether or not the user with the given identifier
-		(the output of `self.key_func` by default) can access `endpoint`
-		(the output of `self.endpoint_func` by default) with its rate limit.
-		If `add_expires` is `True` and the user has passed the check,
+		(the output of ``self.key_func`` by default) can access ``endpoint``
+		(the output of ``self.endpoint_func`` by default) with its rate limit.
+		If ``add_expires`` is ``True`` and the user has passed the check,
 		the time when the lowest rate limit's entry in the storage expires
 		is also returned. Otherwise, if the user has not passed the check,
 		the storage expiration time of the rate limit it failed on is returned.
@@ -149,7 +149,7 @@ class Limiter:
 
 		# If there are no rate limits specified, we can assume
 		# this endpoint has none. For example, a rate limit
-		# specific to this endpoint is `[]`, overrides the default,
+		# specific to this endpoint is ``[]``, overrides the default,
 		# and that endpoint then has no rate limit.
 
 		if add_expires:

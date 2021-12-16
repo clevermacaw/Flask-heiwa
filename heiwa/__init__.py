@@ -12,13 +12,13 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.47"
+__version__ = "0.13.48"
 
 
 class ConfiguredLockFlask(flask.Flask):
 	"""A Flask subclass which supports detecting whether or not everything has
-	been set up for production use based on either `CONFIGURED_LOCK_LOCATION`,
-	or `$current_working_directory/configured.lock`.
+	been set up for production use based on either ``CONFIGURED_LOCK_LOCATION``,
+	or ``$current_working_directory/configured.lock``.
 	"""
 
 	@property
@@ -26,8 +26,8 @@ class ConfiguredLockFlask(flask.Flask):
 	def configured(self: ConfiguredLockFlask) -> bool:
 		"""Returns whether or not this instance has been configured.
 		This value depends on whether or not either the file located at
-		the `CONFIGURED_LOCK_LOCATION` environment variable exists, or the
-		`$current_working_directory/configured.lock` file exists.
+		the ``CONFIGURED_LOCK_LOCATION`` environment variable exists, or the
+		``$current_working_directory/configured.lock`` file exists.
 		(Exists → False, Doesn't exist → True)
 		"""
 
@@ -61,7 +61,7 @@ class ConfiguredLockFlask(flask.Flask):
 
 
 def create_app() -> ConfiguredLockFlask:
-	"""Creates a pre-configured `ConfiguredLockFlask` Heiwa app.
+	"""Creates a pre-configured ``ConfiguredLockFlask`` Heiwa app.
 	If the file defining whether or not this app has been configured
 	before exists (meaning that isn't the case), the database models
 	and tables are also created. Once that's done, default groups are
@@ -98,9 +98,9 @@ def create_app() -> ConfiguredLockFlask:
 
 		@app.before_request
 		def before_request() -> None:
-			"""Sets the global user identifier (`flask.g.identifier`) to the
+			"""Sets the global user identifier (``flask.g.identifier``) to the
 			remote IP address, and creates a basic SQLAlchemy session derived
-			from `flask.current_app.SASession` at `flask.g.sa_session`.
+			from ``flask.current_app.SASession`` at ``flask.g.sa_session``.
 			"""
 
 			flask.g.identifier = flask.request.remote_addr
@@ -116,8 +116,8 @@ def create_app() -> ConfiguredLockFlask:
 
 		@app.teardown_request
 		def teardown_request(response: flask.Response) -> flask.Response:
-			"""Closes and removes `flask.g.sa_session`, using
-			`flask.current_app.SASession`.
+			"""Closes and removes ``flask.g.sa_session``, using
+			``flask.current_app.SASession``.
 			"""
 
 			if "sa_session" in flask.g:

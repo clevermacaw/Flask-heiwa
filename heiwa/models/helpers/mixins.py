@@ -23,8 +23,8 @@ __all__ = [
 @sqlalchemy.orm.declarative_mixin
 class BasePermissionMixin:
 	"""A helper mixin with columns corresponding to all permissions recognized
-	by default, as well as the `to_permissions` method to convert them to a
-	dictionary, and a static `DEFAULT_PERMISSIONS` dictionary with their default
+	by default, as well as the ``to_permissions`` method to convert them to a
+	dictionary, and a static ``DEFAULT_PERMISSIONS`` dictionary with their default
 	values.
 	"""
 
@@ -262,7 +262,7 @@ class BasePermissionMixin:
 
 @sqlalchemy.orm.declarative_mixin
 class CDWMixin:
-	"""A helper mixin with `create`, `write` and `delete` methods."""
+	"""A helper mixin with ``create``, ``write`` and ``delete`` methods."""
 
 	@classmethod
 	def create(
@@ -271,7 +271,7 @@ class CDWMixin:
 		*args,
 		**kwargs
 	):
-		"""Creates an instance of the mixed-in class and runs its the `write`
+		"""Creates an instance of the mixed-in class and runs its the ``write``
 		method.
 		"""
 
@@ -292,7 +292,7 @@ class CDWMixin:
 		] = None
 	) -> None:
 		"""Deletes the current instance of the mixed-in class from the provided
-		`session`. If the `session` argument is `None`, it's set to this
+		``session``. If the ``session`` argument is ``None``, it's set to this
 		object's session.
 		"""
 
@@ -306,7 +306,7 @@ class CDWMixin:
 		session: sqlalchemy.orm.Session
 	) -> None:
 		"""Adds the current instance of the mixed-in class to the provided
-		`session`.
+		``session``.
 		"""
 
 		session.add(self)
@@ -315,7 +315,7 @@ class CDWMixin:
 @sqlalchemy.orm.declarative_mixin
 class CreationTimestampMixin:
 	"""A helper mixin that adds a timezone-aware timestamp column named
-	`creation_timestamp`, whose default value is the time of row insertion.
+	``creation_timestamp``, whose default value is the time of row insertion.
 	"""
 
 	creation_timestamp = sqlalchemy.Column(
@@ -329,14 +329,14 @@ class CreationTimestampMixin:
 class EditInfoMixin:
 	"""A helper mixin which contains information about the mixed-in object's
 	edits. Contains:
-		- A timezone-aware timestamp column named `edit_timestamp`, which will
-		be set to the current time whenever the `edited` method is called.
-		The `onupdate` property will unfortunately not work here, since some
+		- A timezone-aware timestamp column named ``edit_timestamp``, which will
+		be set to the current time whenever the ``edited`` method is called.
+		The ``onupdate`` property will unfortunately not work here, since some
 		columns aren't changed explicitly by users, and updates on those columns
 		shouldn't be counted as "real".
-		- A nullable `edit_count` column, which signals how many times the
+		- A nullable ``edit_count`` column, which signals how many times the
 		mixed-in object has been edited, and increments by 1 every time the
-		`edited` method is called. The default value is `0`. This is primarily
+		``edited`` method is called. The default value is ``0``. This is primarily
 		for detecting database collisions, but is also useful for other things.
 		When a row is first inserted, this column will remain NULL unless
 		specified otherwise.
@@ -353,8 +353,8 @@ class EditInfoMixin:
 	)
 
 	def edited(self: EditInfoMixin) -> None:
-		"""Sets the `edit_timestamp` attribute to the current date and time.
-		Increments the `edit_count` value by 1, as long as it's under 2147483647,
+		"""Sets the ``edit_timestamp`` attribute to the current date and time.
+		Increments the ``edit_count`` value by 1, as long as it's under 2147483647,
 		the maximum 4-byte integer value.
 		"""
 
@@ -366,7 +366,7 @@ class EditInfoMixin:
 
 @sqlalchemy.orm.declarative_mixin
 class IdMixin:
-	"""A helper mixin that adds a UUID column named `id`, whose default value is
+	"""A helper mixin that adds a UUID column named ``id``, whose default value is
 	an automatically generated UUID4. On the off chance that the generated
 	UUID collides with another one in the same column, it will try again.
 	"""
@@ -396,8 +396,8 @@ class PermissionControlMixin:
 		cls: PermissionControlMixin,
 		user
 	) -> typing.List[str]:
-		"""Returns all actions that `user` is allowed to perform as per this
-		class's `class_actions`.
+		"""Returns all actions that ``user`` is allowed to perform as per this
+		class's ``class_actions``.
 		"""
 
 		return [
@@ -410,8 +410,8 @@ class PermissionControlMixin:
 		self: PermissionControlMixin,
 		user
 	) -> typing.List[str]:
-		"""Returns all actions that `user` is allowed to perform as per this
-		instance's `instance_actions`.
+		"""Returns all actions that ``user`` is allowed to perform as per this
+		instance's ``instance_actions``.
 		"""
 
 		return [
@@ -424,8 +424,8 @@ class PermissionControlMixin:
 		self: PermissionControlMixin,
 		user
 	) -> typing.List[str]:
-		"""Returns all columns in this instance that `user` is allowed to view
-		as per `viewable_columns`. If the variable is an empty `set`,
+		"""Returns all columns in this instance that ``user`` is allowed to view
+		as per ``viewable_columns``. If the variable is an empty ``set``,
 		all columns are returned.
 		"""
 
@@ -447,9 +447,9 @@ class PermissionControlMixin:
 		user,
 		action: str
 	) -> bool:
-		"""Returns whether or not `user` is allowed to perform `action`,
-		as per this class's `class_actions`. If `action` isn't present
-		there, `True` is automatically returned.
+		"""Returns whether or not ``user`` is allowed to perform ``action``,
+		as per this class's ``class_actions``. If ``action`` isn't present
+		there, ``True`` is automatically returned.
 		"""
 
 		if action not in cls.class_actions:
@@ -462,9 +462,9 @@ class PermissionControlMixin:
 		user,
 		action: str
 	) -> bool:
-		"""Returns whether or not `user` is allowed to perform `action`,
-		as per this instance's `instance_actions`. If `action` isn't
-		present there, `True` is automatically returned.
+		"""Returns whether or not ``user`` is allowed to perform ``action``,
+		as per this instance's ``instance_actions``. If ``action`` isn't
+		present there, ``True`` is automatically returned.
 		"""
 
 		if action not in self.instance_actions:
@@ -474,10 +474,10 @@ class PermissionControlMixin:
 
 
 class ReprMixin:
-	"""A helper mixin which adds a default, pretty `__repr__` method."""
+	"""A helper mixin which adds a default, pretty ``__repr__`` method."""
 
 	def __repr__(self: ReprMixin) -> str:
-		"""Returns the `self._repr` method with a mapped `id` column,
+		"""Returns the ``self._repr`` method with a mapped ``id`` column,
 		assuming it exists.
 		"""
 
@@ -487,7 +487,7 @@ class ReprMixin:
 		self: ReprMixin,
 		**fields: typing.Dict[str, typing.Any]
 	) -> str:
-		"""Automatically generates a pretty `__repr__`,
+		"""Automatically generates a pretty ``__repr__``,
 		based on keyword arguments.
 		"""
 

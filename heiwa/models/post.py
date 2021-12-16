@@ -32,12 +32,12 @@ class PostVote(
 	EditInfoMixin,
 	Base
 ):
-	"""A `Post` helper model for storing votes. Contains:
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A `post_id` column, associating the instance with a `Post`.
-		- A `user_id` column, associating the instance with a `User`.
-		- An `upvote` column, signifying whether this is a downvote or an upvote.
+	"""A ``Post`` helper model for storing votes. Contains:
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A ``post_id`` column, associating the instance with a ``Post``.
+		- A ``user_id`` column, associating the instance with a ``User``.
+		- An ``upvote`` column, signifying whether this is a downvote or an upvote.
 	"""
 
 	__tablename__ = "post_votes"
@@ -88,15 +88,15 @@ class Post(
 	Base
 ):
 	"""Post model. Contains:
-		- An `id` column from the `IdMixin`.
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A `thread_id` foreign key column, associating this post with its
-		`Thread`.
-		- A `user_id` foreign key column, associating this post with its author,
-		a `User`.
-		- A `content` column.
-		- A dynamic `vote_value` column, corresponding to the total count of this
+		- An ``id`` column from the ``IdMixin``.
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A ``thread_id`` foreign key column, associating this post with its
+		``Thread``.
+		- A ``user_id`` foreign key column, associating this post with its author,
+		a ``User``.
+		- A ``content`` column.
+		- A dynamic ``vote_value`` column, corresponding to the total count of this
 		post's upvotes, with the downvotes' count subtracted.
 	"""
 
@@ -276,7 +276,7 @@ class Post(
 		] = None
 	) -> None:
 		"""Deletes all notifications associated with this post, as well as the
-		post itself. If the `session` argument is `None`, it's set to this
+		post itself. If the ``session`` argument is ``None``, it's set to this
 		object's session.
 		"""
 
@@ -303,7 +303,7 @@ class Post(
 		"""Creates a notification about this post for:
 			- Users subscribed to the parent thread.
 			- The author's followers. (Who aren't subscribed to the thread)
-		Adds the current instance to the `session`.
+		Adds the current instance to the ``session``.
 		"""
 
 		# Premature session add and flush. We have to access the ID later.

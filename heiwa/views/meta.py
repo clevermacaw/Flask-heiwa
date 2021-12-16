@@ -18,7 +18,7 @@ meta_blueprint.json_encoder = encoders.JSONEncoder
 @meta_blueprint.route("/config", methods=["GET"])
 def view_config() -> typing.Tuple[flask.Response, int]:
 	"""Returns basic information about this service's config. Keys which should be
-	shown are defined in the `'PUBLIC_CONFIG_KEYS'` key.
+	shown are defined in the ``'PUBLIC_CONFIG_KEYS'`` key.
 	"""
 
 	return flask.jsonify({
@@ -57,7 +57,7 @@ def view_icon() -> typing.Tuple[flask.Response, int]:
 @meta_blueprint.route("/info", methods=["GET"])
 def view_info() -> typing.Tuple[flask.Response, int]:
 	"""Returns all meta information about this service. Not hardcoded to accept
-	certain config keys, looks for all keys beginning with `'META_'`.
+	certain config keys, looks for all keys beginning with ``'META_'``.
 	"""
 
 	return flask.jsonify({

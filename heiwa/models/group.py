@@ -29,12 +29,12 @@ class GroupPermissions(
 	BasePermissionMixin,
 	Base
 ):
-	"""A `Group` permission helper model. Contains:
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- All columns from the `BasePermissionMixin`.
-		- A `group_id` foreign key column, associating this instance with its
-		`Group`.
+	"""A ``Group`` permission helper model. Contains:
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- All columns from the ``BasePermissionMixin``.
+		- A ``group_id`` foreign key column, associating this instance with its
+		``Group``.
 	"""
 
 	__tablename__ = "group_permissions"
@@ -50,8 +50,8 @@ class GroupPermissions(
 	)
 
 	def __repr__(self: GroupPermissions) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
-		which uses the `id` attribute this model lacks.
+		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
+		which uses the ``id`` attribute this model lacks.
 		"""
 
 		return self._repr(
@@ -69,14 +69,14 @@ class Group(
 	Base
 ):
 	"""Group model. Contains:
-		- An `id` column from the `IdMixin`.
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A `default_for` column. The users whose `registered_by` column starts
+		- An ``id`` column from the ``IdMixin``.
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A ``default_for`` column. The users whose ``registered_by`` column starts
 		with its value should be assigned this group.
-		- A `level` column. Groups with the highest value in this column will
+		- A ``level`` column. Groups with the highest value in this column will
 		take precedence when users' permissions are being calculated.
-		- `name` and `description` columns.
+		- ``name`` and ``description`` columns.
 	"""
 
 	__tablename__ = "groups"

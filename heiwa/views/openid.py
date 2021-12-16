@@ -31,8 +31,8 @@ def get_config(client_name: str) -> typing.Dict[
 		]
 	]:
 	"""Returns the current app's config for the OpenID service with the given
-	`client_name`. If the `'scope'` parameter is missing or lacks `'openid'`,
-	it's added at the start.
+	``client_name``. If the ``'scope'`` parameter is missing or lacks
+	``'openid'``, it's added at the start.
 	"""
 
 	config = flask.current_app.config["OPENID_SERVICES"][client_name].copy()
@@ -73,12 +73,12 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	}
 })
 def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
-	"""Gets the `client_name` OpenID service's `userinfo` by logging in through
-	an OAuth session, and creates a token for the associated user. The `'sub'`
-	key has to be defined, `'preferred_username'` and `'picture'` are optional
+	"""Gets the ``client_name`` OpenID service's ``userinfo`` by logging in through
+	an OAuth session, and creates a token for the associated user. The ``'sub'``
+	key has to be defined, ``'preferred_username'`` and ``'picture'`` are optional
 	but highly recommended. If there is no user associated, the user is
-	automatically created. The `registered_by` column will be
-	`'openid.$the_name_of_the_current_service'`.
+	automatically created. The ``registered_by`` column will be
+	``'openid.$the_name_of_the_current_service'``.
 	"""
 
 	if client_name not in flask.current_app.config["OPENID_SERVICES"]:
@@ -170,7 +170,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 				name=userinfo.get("preferred_username"),
 			)
 
-			# Be absolutely sure `avatar_type` is already set.
+			# Be absolutely sure ``avatar_type`` is already set.
 			# Is this necessary?
 			user.avatar = avatar
 
@@ -202,7 +202,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 })
 def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 	"""Creates a URI for a user to log in through. The login attempt is recorded
-	using `models.OpenIDAuthentication`, to secure against replay and other
+	using ``models.OpenIDAuthentication``, to secure against replay and other
 	similar attacks.
 	"""
 

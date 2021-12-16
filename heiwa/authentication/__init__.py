@@ -24,7 +24,7 @@ def authenticate_via_jwt(
 	typing.Any
 ]:
 	"""If the "Authorization" header is present, derives the current user
-	from it (if possible) using JWT and assigns them to `flask.g.user`.
+	from it (if possible) using JWT and assigns them to ``flask.g.user``.
 	If the user is banned, it's checked if their ban has expired. If not,
 	access is denied.
 	"""

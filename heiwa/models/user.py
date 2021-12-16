@@ -120,14 +120,14 @@ class UserBan(
 	EditInfoMixin,
 	Base
 ):
-	"""`User` ban helper model. Contains:
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A `user_id` foreign key column, associating this instance with its
-		`User`.
-		- An `expiration_timestamp` column, signifying the time of this ban's
+	"""``User`` ban helper model. Contains:
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A ``user_id`` foreign key column, associating this instance with its
+		``User``.
+		- An ``expiration_timestamp`` column, signifying the time of this ban's
 		expiry.
-		- A nullable `reason` column.
+		- A nullable ``reason`` column.
 	"""
 
 	__tablename__ = "user_bans"
@@ -153,8 +153,8 @@ class UserBan(
 	)
 
 	def __repr__(self: UserBan) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
-		which uses the `id` attribute this model lacks.
+		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
+		which uses the ``id`` attribute this model lacks.
 		"""
 
 		return self._repr(
@@ -170,12 +170,12 @@ class UserPermissions(
 	BasePermissionMixin,
 	Base
 ):
-	"""`User` permission helper model. Contains:
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- All columns from the `BasePermissionMixin`.
-		- A `user_id` foreign key column, associating this instance with its
-		`User`.
+	"""``User`` permission helper model. Contains:
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- All columns from the ``BasePermissionMixin``.
+		- A ``user_id`` foreign key column, associating this instance with its
+		``User``.
 	"""
 
 	__tablename__ = "user_permissions"
@@ -191,8 +191,8 @@ class UserPermissions(
 	)
 
 	def __repr__(self: UserPermissions) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
-		which uses the `id` attribute this model lacks.
+		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
+		which uses the ``id`` attribute this model lacks.
 		"""
 
 		return self._repr(
@@ -210,48 +210,48 @@ class User(
 	Base
 ):
 	"""User model. Contains:
-		- An `id` column from the `IdMixin`.
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A nullable `registered_by` column that contains the service this user
-		was registered by. Groups whose `default_for` is at the start of it will
+		- An ``id`` column from the ``IdMixin``.
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A nullable ``registered_by`` column that contains the service this user
+		was registered by. Groups whose ``default_for`` is at the start of it will
 		automatically be assigned to this user. By default, the only two services
-		that can register users are `'/openid'` and `'/guest'` APIs.
-		- A nullable `external_id` column, the service this user was registered
+		that can register users are ``'/openid'`` and ``'/guest'`` APIs.
+		- A nullable ``external_id`` column, the service this user was registered
 		by's identifier for them.
-		- An `avatar_type` column, containing the MIME type of this user's
+		- An ``avatar_type`` column, containing the MIME type of this user's
 		avatar, if there is one.
-		- An `is_banned` column, specifying whether or not this user has been
+		- An ``is_banned`` column, specifying whether or not this user has been
 		banned.
-		- A JSON `parsed_permissions` column, containing this user's parsed
+		- A JSON ``parsed_permissions`` column, containing this user's parsed
 		permissions. This is a combination of this user's group's permissions
-		(where groups with the highest `level` take precedence), and this user's
+		(where groups with the highest ``level`` take precedence), and this user's
 		specific permissions.
-		- An `encrypted_private_key` column, optionally used to store an encrypted
-		- A `public_key` column, containing this user's raw RSA public key.
+		- An ``encrypted_private_key`` column, optionally used to store an encrypted
+		- A ``public_key`` column, containing this user's raw RSA public key.
 		version of this user's RSA private key. If desired, this can be left empty
 		with a public key still present.
-		- Nullable `name` and `status` columns.
-		- A dynamic, deferred `followee_count` column, corresponding to how many
+		- Nullable ``name`` and ``status`` columns.
+		- A dynamic, deferred ``followee_count`` column, corresponding to how many
 		users this user has followed.
-		- A dynamic, deferred `follower_count` column, corresponding to how many
+		- A dynamic, deferred ``follower_count`` column, corresponding to how many
 		users have followed this user.
-		- A dynamic, deferred `forum_count` column, corresponding to how many
-		forums with this user's `id` in their `user_id` column exist.
-		- A dynamic, deferred `message_received_count` coulumn corresponding to
+		- A dynamic, deferred ``forum_count`` column, corresponding to how many
+		forums with this user's ``id`` in their ``user_id`` column exist.
+		- A dynamic, deferred ``message_received_count`` coulumn corresponding to
 		how many messages this user has received.
-		- A dynamic, deferred `message_received_unread_count` column corresponding
+		- A dynamic, deferred ``message_received_unread_count`` column corresponding
 		to how many messages this user has received, and hasn't read yet.
-		- A dynamic, deferred `message_sent_count` coulumn corresponding to
+		- A dynamic, deferred ``message_sent_count`` coulumn corresponding to
 		how many messages this user has sent.
-		- A dynamic, deferred `notification_count` column corresponding to how
-		many notifications with this user's `id` in their `user_id` column exist.
-		- A dynamic, deferred `notification_unread_count` column corresponding to
+		- A dynamic, deferred ``notification_count`` column corresponding to how
+		many notifications with this user's ``id`` in their ``user_id`` column exist.
+		- A dynamic, deferred ``notification_unread_count`` column corresponding to
 		how many unread notifications this user has.
-		- A dynamic, deferred `post_count` column, corresponding to how many
-		posts with this user's `id` in their `user_id` column exist.
-		- A dynamic, deferred `thread_count` column, corresponding to how many
-		thread with this user's `id` in their `user_id` column exist.
+		- A dynamic, deferred ``post_count`` column, corresponding to how many
+		posts with this user's ``id`` in their ``user_id`` column exist.
+		- A dynamic, deferred ``thread_count`` column, corresponding to how many
+		thread with this user's ``id`` in their ``user_id`` column exist.
 	"""
 
 	__tablename__ = "users"
@@ -266,7 +266,7 @@ class User(
 		index=True,
 		nullable=True
 	)
-	# ^ Can't make a unique constraint on `registered_by` and `external_id`
+	# ^ Can't make a unique constraint on ``registered_by`` and ``external_id``
 	# together, due to the possibility of multiple guest accounts being
 	# made from the same IP address.
 
@@ -558,13 +558,13 @@ class User(
 		session: sqlalchemy.orm.Session,
 		bypass_first_user_check: bool = False
 	) -> None:
-		"""If no groups are specified, sets `self.groups` to all `Group`s where
-		`default_for` contains the service this user was registered by, or `*`.
+		"""If no groups are specified, sets ``self.groups`` to all ``Group``s where
+		``default_for`` contains the service this user was registered by, or ``*``.
 		If the current app is not configured (presumably, no users exist), and
-		`bypass_first_user_check` is `False`, `Group`s specified in
-		`GROUPS_FIRST_USER` will be added as well.
-		If no `parsed_permissions` are specified, they are automatically parsed.
-		Adds the current instance to the `session`.
+		``bypass_first_user_check`` is ``False``, ``Group``s specified in
+		``GROUPS_FIRST_USER`` will be added as well.
+		If no ``parsed_permissions`` are specified, they are automatically parsed.
+		Adds the current instance to the ``session``.
 		"""
 
 		if self.parsed_permissions is None:
@@ -628,32 +628,31 @@ class User(
 	def has_content(self: User) -> bool:
 		"""Returns whether or not this user has any forums, posts or threads."""
 
-		if (
+		return (
 			self.forum_count != 0 or
 			self.post_count != 0 or
-			self.thread_count != 0
-		):
-			return True
-
-		return False
+			self.thread_count != 0 or
+			self.message_sent_count != 0
+		)
 
 	@has_content.expression
 	def has_content(cls: User) -> sqlalchemy.sql.elements.BooleanClauseList:
-		"""Returns a `BooleanClauseList` that represents whether or not
+		"""Returns a ``BooleanClauseList`` that represents whether or not
 		this user has any forums, posts or threads.
 		"""
 
 		return sqlalchemy.or_(
-			cls.forum_count > 0,
-			cls.post_count > 0,
-			cls.thread_count > 0
+			cls.forum_count != 0,
+			cls.post_count != 0,
+			cls.thread_count != 0,
+			cls.message_sent_count != 0
 		)
 
 	@sqlalchemy.ext.hybrid.hybrid_property
 	def highest_group(self: User) -> Group:
-		"""Returns the group with the highest `level` this user has."""
+		"""Returns the ``Group`` with the highest ``level`` this user has."""
 
-		# Can't add an `optional` session here, this is a property
+		# Can't add an optional ``session`` here, this is a property
 		return sqlalchemy.orm.object_session(self).execute(
 			sqlalchemy.select(Group).
 			where(
@@ -670,8 +669,8 @@ class User(
 
 	@highest_group.expression
 	def highest_group(cls: User) -> sqlalchemy.sql.Select:
-		"""Returns a selection query that represents the group with the highest
-		`level` this user has.
+		"""Returns a selection query that represents the ``Group`` with the highest
+		``level`` this user has.
 		"""
 
 		return (
@@ -733,7 +732,9 @@ class User(
 		self: User,
 		value: typing.Union[None, bytes]
 	) -> None:
-		"""Sets this user's avatar. If `value` is `None`, the avatar is removed."""
+		"""Sets this user's avatar. If ``value`` is ``None``,
+		the avatar is removed.
+		"""
 
 		if value is None:
 			if self.avatar_type is not None:
@@ -758,8 +759,8 @@ class User(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Bans this user with the provided `expiration_timestamp`,
-		and optionally a `reason`.
+		"""Bans this user with the provided ``expiration_timestamp``,
+		and optionally a ``reason``.
 		"""
 
 		self.is_banned = True
@@ -785,11 +786,11 @@ class User(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Sets this user's `parsed_permissions` column to the combination of:
+		"""Sets this user's ``parsed_permissions`` column to the combination of:
 			- This user's group permissions, where the group with the highest
-			`level` is most important.
+			``level`` is most important.
 			- This user's permissions.
-		The `session` argument is only meant to be used during the initial creation
+		The ``session`` argument is only meant to be used during the initial creation
 		of this user, but it doesn't have to be.
 		"""
 

@@ -21,7 +21,7 @@ guest_blueprint.json_encoder = encoders.JSONEncoder
 def token() -> typing.Tuple[flask.Response, int]:
 	"""Returns the access token for a temporary user account. The token expires
 	after the time value provided in seconds within the
-	`'GUEST_SESSION_EXPIRES_AFTER'` config key. When another user uses this
+	``'GUEST_SESSION_EXPIRES_AFTER'`` config key. When another user uses this
 	endpoint, all expired guest accounts will also be deleted, provided that
 	they have no public content. (threads, posts, forums)
 	"""

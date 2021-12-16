@@ -61,8 +61,8 @@ forum_subscribers = sqlalchemy.Table(
 
 @sqlalchemy.orm.declarative_mixin
 class ForumPermissionMixin:
-	"""A `Forum` helper mixin with columns corresponding to all permissions
-	relevant in forums, as well as their default values and a `to_permissions`
+	"""A ``Forum`` helper mixin with columns corresponding to all permissions
+	relevant in forums, as well as their default values and a ``to_permissions``
 	method.
 	"""
 
@@ -259,11 +259,13 @@ class ForumParsedPermissions(
 	ReprMixin,
 	Base
 ):
-	"""A `Forum` helper model to store cached parsed permissions for specific
+	"""A ``Forum`` helper model to store cached parsed permissions for specific
 	users. Not meant to be exposed directly. Contains:
-		- A `forum_id` foreign key column, associating the instance with a `Forum`.
-		- A `user_id` foreign key column, associating the instance with a `User`.
-		- All columns from the `ForumPermissionMixin`, but non-nullable.
+		- A ``forum_id`` foreign key column, associating the instance with a
+		``Forum``.
+		- A ``user_id`` foreign key column, associating the instance with a
+		``User``.
+		- All columns from the ``ForumPermissionMixin``, but non-nullable.
 	"""
 
 	__tablename__ = "forum_parsed_permissions"
@@ -421,8 +423,8 @@ class ForumParsedPermissions(
 	)
 
 	def __repr__(self: ForumParsedPermissions) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
-		which uses the `id` attribute this model lacks.
+		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
+		which uses the ``id`` attribute this model lacks.
 		"""
 
 		return self._repr(
@@ -439,13 +441,15 @@ class ForumPermissionsGroup(
 	EditInfoMixin,
 	Base
 ):
-	"""A `Forum` helper mixin to store permissions for specific `Group`s.
+	"""A ``Forum`` helper mixin to store permissions for specific ``Group``s.
 	Contains:
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A `forum_id` foreign key column, associating the instance with a `Forum`.
-		- A `group_id` foreign key column, associating the instance with a `Group`.
-		- All columns from the `ForumPemrissionMixin`.
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A ``forum_id`` foreign key column, associating the instance with a
+		``Forum``.
+		- A ``group_id`` foreign key column, associating the instance with a
+		``Group``.
+		- All columns from the ``ForumPemrissionMixin``.
 	"""
 
 	__tablename__ = "forum_permissions_group"
@@ -473,8 +477,8 @@ class ForumPermissionsGroup(
 		self: ForumPermissionsGroup,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Deletes the parent forum's `ForumParsedPermissions` for the members of
-		this instance's `group_id`. Adds this instance to the `session`.
+		"""Deletes the parent forum's ``ForumParsedPermissions`` for the members of
+		this instance's ``group_id``. Adds this instance to the ``session``.
 		"""
 
 		session.execute(
@@ -493,8 +497,8 @@ class ForumPermissionsGroup(
 		CDWMixin.write(self, session)
 
 	def __repr__(self: ForumPermissionsGroup) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
-		which uses the `id` attribute this model lacks.
+		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
+		which uses the ``id`` attribute this model lacks.
 		"""
 
 		return self._repr(
@@ -511,13 +515,14 @@ class ForumPermissionsUser(
 	EditInfoMixin,
 	Base
 ):
-	"""A `Forum` helper mixin to store permissions for specific `User`s.
+	"""A ``Forum`` helper mixin to store permissions for specific ``User``s.
 	Contains:
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A `forum_id` foreign key column, associating the instance with a `Forum`.
-		- A `user_id` foreign key column, associating the instance with a `User`.
-		- All columns from the `ForumPemrissionMixin`.
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A ``forum_id`` foreign key column, associating the instance with a
+		``Forum``.
+		- A ``user_id`` foreign key column, associating the instance with a ``User``.
+		- All columns from the ``ForumPemrissionMixin``.
 	"""
 
 	__tablename__ = "forum_permissions_user"
@@ -545,8 +550,8 @@ class ForumPermissionsUser(
 		self: ForumPermissionsUser,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Deletes the parent forum's `ForumParsedPermissions` for
-		the associated user. Adds this instance to the `session`.
+		"""Deletes the parent forum's ``ForumParsedPermissions`` for
+		the associated user. Adds this instance to the ``session``.
 		"""
 
 		session.execute(
@@ -562,8 +567,8 @@ class ForumPermissionsUser(
 		CDWMixin.write(self, session)
 
 	def __repr__(self: ForumPermissionsUser) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
-		which uses the `id` attribute this model lacks.
+		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
+		which uses the ``id`` attribute this model lacks.
 		"""
 
 		return self._repr(
@@ -582,22 +587,22 @@ class Forum(
 	Base
 ):
 	"""Forum model. Contains:
-		- An `id` column from the `IdMixin`.
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A nullable `parent_forum_id` foreign key column that corresponds to
+		- An ``id`` column from the ``IdMixin``.
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A nullable ``parent_forum_id`` foreign key column that corresponds to
 		this forum's parent. This can later be used for nested permissions, as
 		well as subforums.
-		- A `user_id` foreign key column, associating this forum with its author,
-		a `User`.
-		- `name` and `description` columns. `description` is nullable.
-		- An `order` column, used for default ordering.
-		- A dynamic `subscriber_count` column, corresponding to how many users
+		- A ``user_id`` foreign key column, associating this forum with its author,
+		a ``User``.
+		- ``name`` and ``description`` columns. ``description`` is nullable.
+		- An ``order`` column, used for default ordering.
+		- A dynamic ``subscriber_count`` column, corresponding to how many users
 		have subscribed to this forum.
-		- A dynamic `thread_count` column, corresponding to how many threads exist
-		with this forum's `id` defined as their `forum_id`.
-		- A dynamic `last_thread_timestamp` column, corresponding to the latest
-		thread in this forum's `creation_timestamp`.
+		- A dynamic ``thread_count`` column, corresponding to how many threads exist
+		with this forum's ``id`` defined as their ``forum_id``.
+		- A dynamic ``last_thread_timestamp`` column, corresponding to the latest
+		thread in this forum's ``creation_timestamp``.
 	"""
 
 	__tablename__ = "forums"
@@ -895,7 +900,7 @@ class Forum(
 		] = None
 	) -> None:
 		"""Deletes all notifications associated with this forum, as well as the
-		forum itself. If the `session` argument is `None`, it's set to this
+		forum itself. If the ``session`` argument is ``None``, it's set to this
 		object's session.
 		"""
 
@@ -941,7 +946,7 @@ class Forum(
 			uuid.UUID
 		] = None
 	) -> typing.List[uuid.UUID]:
-		"""Returns this forum's `id`, combined with its child forums'."""
+		"""Returns this forum's ``id``, combined with its child forums'."""
 
 		if current_id is None:
 			current_id = self.id
@@ -1045,7 +1050,7 @@ class Forum(
 		ForumParsedPermissions
 	]:
 		"""Returns this forum's parsed permissions for user with the given
-		`user_id`.
+		``user_id``.
 		"""
 
 		if session is None:
@@ -1088,7 +1093,7 @@ class Forum(
 			uuid.UUID
 		] = None
 	) -> typing.Dict[str, bool]:
-		"""Gets this forum's permissions for the group with the given `group_id`,
+		"""Gets this forum's permissions for the group with the given ``group_id``,
 		as well as the parent forums'. This forum's permissions will take
 		precedence.
 		"""
@@ -1142,7 +1147,7 @@ class Forum(
 			uuid.UUID
 		] = None
 	) -> typing.Dict[str, bool]:
-		"""Gets this forum's permissions for the user with the given `user_id`,
+		"""Gets this forum's permissions for the user with the given ``user_id``,
 		as well as the parent forums'. This forum's permissions will take
 		precedence.
 		"""
@@ -1195,14 +1200,14 @@ class Forum(
 			sqlalchemy.orm.Session
 		] = None
 	) -> ForumParsedPermissions:
-		"""Sets the given user's `ForumParsedPermissions` to:
-			- The given `user`'s `parsed_permissions`.
-			- Any defined permissions for groups that this `user` is part of for
+		"""Sets the given user's ``ForumParsedPermissions`` to:
+			- The given ``user``'s ``parsed_permissions``.
+			- Any defined permissions for groups that this ``user`` is part of for
 			this forum, as well as the parent forum(s),
 			where the group with the highest level is most important.
-			- Any permissions specific to the given `user` defined for this forum,
+			- Any permissions specific to the given ``user`` defined for this forum,
 			as well as the parent forum(s).
-		This instance of `ForumParsedPermissions` is created if inexistent,
+		This instance of ``ForumParsedPermissions`` is created if inexistent,
 		then filled with the calculated values.
 		"""
 

@@ -145,9 +145,9 @@ def find_notification_by_id(
 	session: sqlalchemy.orm.Session,
 	user_id: uuid.UUID
 ) -> models.Notification:
-	"""Finds the notification with the given `id_`. If it exists, but doesn't
-	belong to the user with the provided `user_id`,
-	`exceptions.APINotificationNotFound` will be raised as if it didn't exist.
+	"""Finds the notification with the given ``id_``. If it exists, but doesn't
+	belong to the user with the provided ``user_id``,
+	``exceptions.APINotificationNotFound`` will be raised as if it didn't exist.
 	"""
 
 	notification = session.execute(
@@ -173,7 +173,7 @@ def find_notification_by_id(
 )
 @authentication.authenticate_via_jwt
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all notifications belonging to `flask.g.user` that match the
+	"""Lists all notifications belonging to ``flask.g.user`` that match the
 	requested filter.
 	"""
 
@@ -215,7 +215,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all notifications belonging to `flask.g.user` that match the
+	"""Deletes all notifications belonging to ``flask.g.user`` that match the
 	requested filter.
 	"""
 
@@ -261,7 +261,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 )
 @authentication.authenticate_via_jwt
 def mass_confirm_read() -> typing.Tuple[flask.Response, int]:
-	"""Confirms that all notifications belonging to `flask.g.user` that match
+	"""Confirms that all notifications belonging to ``flask.g.user`` that match
 	the requested filter have been read.
 	"""
 
@@ -307,7 +307,7 @@ def mass_confirm_read() -> typing.Tuple[flask.Response, int]:
 @notification_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the notification with the requested `id_`."""
+	"""Deletes the notification with the requested ``id_``."""
 
 	notification = find_notification_by_id(
 		id_,
@@ -325,7 +325,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @notification_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns the notification with the requested `id_`."""
+	"""Returns the notification with the requested ``id_``."""
 
 	return flask.jsonify(
 		find_notification_by_id(
@@ -339,7 +339,7 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @notification_blueprint.route("/<uuid:id_>/confirm-read", methods=["PUT"])
 @authentication.authenticate_via_jwt
 def confirm_read(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Confirms that the notification with the requested `id_` has been read."""
+	"""Confirms that the notification with the requested ``id_`` has been read."""
 
 	notification = find_notification_by_id(
 		id_,

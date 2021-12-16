@@ -34,12 +34,12 @@ class ThreadVote(
 	EditInfoMixin,
 	Base
 ):
-	"""A `Thread` helper model for storing votes. Contains:
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A `thread_id` column, associating the instance with a `Thread`.
-		- A `user_id` column, associating the instance with a `User`.
-		- An `upvote` column, signifying whether this is a downvote or an upvote.
+	"""A ``Thread`` helper model for storing votes. Contains:
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A ``thread_id`` column, associating the instance with a ``Thread``.
+		- A ``user_id`` column, associating the instance with a ``User``.
+		- An ``upvote`` column, signifying whether this is a downvote or an upvote.
 	"""
 
 	__tablename__ = "thread_votes"
@@ -70,8 +70,8 @@ class ThreadVote(
 	)
 
 	def __repr__(self: ThreadVote) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
-		which uses the `id` attribute this model lacks.
+		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
+		which uses the ``id`` attribute this model lacks.
 		"""
 
 		return self._repr(
@@ -116,27 +116,28 @@ class Thread(
 	Base
 ):
 	"""Thread model. Contains:
-		- An `id` column from the `IdMixin`.
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- `edit_timestamp` and `edit_count` columns from the `EditInfoMixin`.
-		- A `forum_id` foreign key column, associating this thread with a `Forum`.
-		- A `user_id` foreign key column, associating this thread with its author,
-		a `User`.
-		- An `is_locked` column, signifying whether or not this thread is locked.
-		- An `is_pinned` column, signifying whether or not this thread is pinned.
+		- An ``id`` column from the ``IdMixin``.
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		- A ``forum_id`` foreign key column, associating this thread with a
+		``Forum``.
+		- A ``user_id`` foreign key column, associating this thread with its author,
+		a ``User``.
+		- An ``is_locked`` column, signifying whether or not this thread is locked.
+		- An ``is_pinned`` column, signifying whether or not this thread is pinned.
 		On frontend applications, this should make pinned threads float to the top
 		of their respective lists.
-		- A `tags` column, signifying this thread's tags
-		(e.g. `'Support'`, `'Important'`).
-		- `name` and `content` columns.
-		- A dynamic `vote_value` column, corresponding to the total count of this
+		- A ``tags`` column, signifying this thread's tags
+		(e.g. ``'Support'``, ``'Important'``).
+		- ``name`` and ``content`` columns.
+		- A dynamic ``vote_value`` column, corresponding to the total count of this
 		thread's upvotes, with the downvotes' count subtracted.
-		- A dynamic `post_count` column, corresponding to how many posts exist
-		with this thread's `id` defined as their `thread_id`.
-		- A dynamic `subscriber_count` column, corresponding to how many users
+		- A dynamic ``post_count`` column, corresponding to how many posts exist
+		with this thread's ``id`` defined as their ``thread_id``.
+		- A dynamic ``subscriber_count`` column, corresponding to how many users
 		have subscribed to this thread.
-		- A dynamic `last_post_timestamp` column, corresponding to the latest
-		post in this thread's `creation_timestamp`.
+		- A dynamic ``last_post_timestamp`` column, corresponding to the latest
+		post in this thread's ``creation_timestamp``.
 	"""
 
 	__tablename__ = "threads"
@@ -413,7 +414,7 @@ class Thread(
 		] = None
 	) -> None:
 		"""Deletes all notifications associated with this thread, as well as the
-		thread itself. If the `session` argument is `None`, it's set to this
+		thread itself. If the ``session`` argument is ``None``, it's set to this
 		object's session.
 		"""
 
@@ -449,7 +450,7 @@ class Thread(
 		"""Creates a notification about this thread for:
 			- Users subscribed to the parent forum.
 			- The author's followers. (Who aren't subscribed to the forum)
-		Adds the current instance to the `session`.
+		Adds the current instance to the ``session``.
 		"""
 
 		# Premature session add and flush. We have to access the ID later.

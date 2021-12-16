@@ -35,7 +35,7 @@ def generate_list_schema(
 		]
 	]:
 	"""Generates a Cerberus schema used for validating input to
-	all `list_` API endpoints.
+	all ``list_`` API endpoints.
 	"""
 
 	result = {
@@ -116,7 +116,7 @@ def generate_search_schema_registry(
 	],
 	schema_name: str = "search"
 ) -> cerberus.schema.SchemaRegistry:
-	"""Generates a search schema registry with `'$and'`, `'$or'` and `'$not'`
+	"""Generates a search schema registry with ``'$and'``, ``'$or'`` and ``'$not'``
 	rules combined with the given ones.
 	"""
 

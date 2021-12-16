@@ -296,8 +296,8 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 @authentication.authenticate_via_jwt
 @requires_permission("create", models.Forum)
 def create() -> typing.Tuple[flask.Response, int]:
-	"""Creates a forum with the requested `parent_forum_id`, `name`, `description`
-	and default order position (`order`).
+	"""Creates a forum with the requested ``parent_forum_id``, ``name``,
+	``description`` and default order position (``order``).
 	"""
 
 	forum = models.Forum(
@@ -345,7 +345,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all forums that match the requested filter, and `flask.g.user` has
+	"""Lists all forums that match the requested filter, and ``flask.g.user`` has
 	permission to view. If parsed permissions don't exist for them, they're
 	automatically calculated.
 	"""
@@ -438,7 +438,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Forum)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all forums that match the requested filter, and `flask.g.user` has
+	"""Deletes all forums that match the requested filter, and ``flask.g.user`` has
 	permission to both view and delete. If parsed permissions don't exist for
 	them, they're automatically calculated.
 	"""
@@ -570,7 +570,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Forum)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the forum with the requested `id_`."""
+	"""Deletes the forum with the requested ``id_``."""
 
 	forum = find_forum_by_id(
 		id_,
@@ -599,7 +599,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Forum)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Updates the forum with the requested `id_` with the requested values."""
+	"""Updates the forum with the requested ``id_`` with the requested values."""
 
 	forum = find_forum_by_id(
 		id_,
@@ -671,7 +671,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns the forum with the requested `id_`."""
+	"""Returns the forum with the requested ``id_``."""
 
 	return flask.jsonify(
 		find_forum_by_id(
@@ -688,8 +688,8 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def authorized_actions_forum(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that `flask.g.user` is authorized to perform on the
-	forum with the requested `id_`.
+	"""Returns all actions that ``flask.g.user`` is authorized to perform on the
+	forum with the requested ``id_``.
 	"""
 
 	return flask.jsonify(
@@ -712,8 +712,8 @@ def authorized_actions_forum(
 @authentication.authenticate_via_jwt
 @requires_permission("merge", models.Forum)
 def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Moves all threads and posts from the forum with the given `id_` to the
-	one with the `id` provided in the request body, then deletes the old forum.
+	"""Moves all threads and posts from the forum with the given ``id_`` to the
+	one with the ``id`` provided in the request body, then deletes the old forum.
 	"""
 
 	old_forum = find_forum_by_id(
@@ -779,8 +779,8 @@ def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def view_parsed_permissions(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns the parsed permissions for `flask.g.user` for the forum with the
-	requested `id_`. If they haven't been parsed yet, it's done so atomatically.
+	"""Returns the parsed permissions for ``flask.g.user`` for the forum with the
+	requested ``id_``. If they haven't been parsed yet, it's done so atomatically.
 	"""
 
 	forum = find_forum_by_id(
@@ -808,8 +808,8 @@ def delete_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the permissions for the group with the requested `group_id` for the
-	forum with the given `forum_id`.
+	"""Deletes the permissions for the group with the requested ``group_id`` for
+	the forum with the given ``forum_id``.
 	"""
 
 	forum = find_forum_by_id(
@@ -870,8 +870,8 @@ def edit_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Updates the permissions for the group with the requested `group_id` for the
-	forum with the given `forum_id` with the requested values.
+	"""Updates the permissions for the group with the requested ``group_id`` for
+	the forum with the given ``forum_id`` with the requested values.
 	"""
 
 	forum = find_forum_by_id(
@@ -947,8 +947,8 @@ def view_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns `group_id`'s permissions for the forum with the requested
-	`forum_id`.
+	"""Returns ``group_id``'s permissions for the forum with the requested
+	``forum_id``.
 	"""
 
 	forum = find_forum_by_id(
@@ -992,8 +992,8 @@ def delete_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the permissions for the user with the requested `user_id` for the
-	forum with the given `forum_id`.
+	"""Deletes the permissions for the user with the requested ``user_id`` for the
+	forum with the given ``forum_id``.
 	"""
 
 	forum = find_forum_by_id(
@@ -1052,8 +1052,8 @@ def edit_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Updates the permissions for the user with the requested `user_id` for the
-	forum with the given `forum_id` with the requested values.
+	"""Updates the permissions for the user with the requested ``user_id`` for the
+	forum with the given ``forum_id`` with the requested values.
 	"""
 
 	forum = find_forum_by_id(
@@ -1127,8 +1127,8 @@ def view_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns `user_id`'s permissions for the forum with the requested
-	`forum_id`.
+	"""Returns ``user_id``'s permissions for the forum with the requested
+	``forum_id``.
 	"""
 
 	forum = find_forum_by_id(
@@ -1163,8 +1163,8 @@ def view_permissions_user(
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Forum)
 def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Creates a subscription for `flask.g.user` to the forum with the
-	requested `id_`.
+	"""Creates a subscription for ``flask.g.user`` to the forum with the
+	requested ``id_``.
 	"""
 
 	forum = find_forum_by_id(
@@ -1209,8 +1209,8 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_subscription", models.Forum)
 def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Removes `flask.g.user`'s subscription to the forum with the requested
-	`id_`.
+	"""Removes ``flask.g.user``'s subscription to the forum with the requested
+	``id_``.
 	"""
 
 	forum = find_forum_by_id(
@@ -1249,8 +1249,8 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
 def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns whether or not `flask.g.user` is subscribed to the forum with the
-	requested `id_`.
+	"""Returns whether or not ``flask.g.user`` is subscribed to the forum with the
+	requested ``id_``.
 	"""
 
 	return flask.jsonify(
@@ -1275,7 +1275,7 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @forum_blueprint.route("/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that `flask.g.user` is authorized to perform on
+	"""Returns all actions that ``flask.g.user`` is authorized to perform on
 	forums without any knowledge on which one they'll be done on.
 	"""
 

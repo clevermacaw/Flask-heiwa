@@ -24,7 +24,7 @@ __version__ = "1.9.0"
 
 class APIValidator(cerberus.Validator):
 	"""Cerberus validator for the API. Adds methods related to UUIDs,
-	ISO-formatted datetime, URLs, regex and the `makes_required` rule.
+	ISO-formatted datetime, URLs, regex and the ``makes_required`` rule.
 	"""
 
 	def _check_with_is_valid_regex(
@@ -32,7 +32,7 @@ class APIValidator(cerberus.Validator):
 		field: str,
 		value: str
 	) -> None:
-		"""Checks whether or not `value` is a valid regular expression."""
+		"""Checks whether or not ``value`` is a valid regular expression."""
 
 		try:
 			re.compile(value)
@@ -107,7 +107,7 @@ class APIValidator(cerberus.Validator):
 		field: str,
 		value: typing.Any
 	) -> None:
-		"""For every key in `makes_required`:
+		"""For every key in ``makes_required``:
 			- If the key's value is an iterable, and the corresponding field's
 			value equals one of them, the field is treated as if it was required.
 			- If the key's value is not an iterable, and the corresponding field
@@ -158,12 +158,13 @@ def validate_json(
 		typing.Any
 	]
 ]:
-	"""Checks JSON data sent in the `flask.request` against a Cerberus schema.
-	If there is no data at all, `exceptions.APIJSONMissing` will be raised.
-	If there is data, but it's not a dictionary as `cerberus.Validator` requires,
-	`exceptions.APIJSONInvalid` will be raised will no additional details.
-	If the data is invalid as per the schema, `exceptions.APIJSONInvalid` will
-	be raised with the validation errors given in its details.
+	"""Checks JSON data sent in the ``flask.request`` against a Cerberus schema.
+	If there is no data at all, ``exceptions.APIJSONMissing`` will be raised.
+	If there is data, but it's not a dictionary as ``cerberus.Validator``
+	requires, ``exceptions.APIJSONInvalid`` will be raised will no additional
+	details. If the data is invalid as per the schema,
+	``exceptions.APIJSONInvalid`` will be raised with the validation errors
+	given in its details.
 	"""
 
 	def wrapper(

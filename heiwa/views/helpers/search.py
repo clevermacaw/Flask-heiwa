@@ -30,7 +30,7 @@ def parse_search(
 	model: heiwa.models.Base
 ):
 	"""Converts the given dictionary formatted conditions to SQLAlchemy ones.
-	For example: ```
+	For example: ``````
 		{
 			"$and": [
 				{"$gt": {"post_count": 1000}},
@@ -40,9 +40,9 @@ def parse_search(
 				]}
 			]
 		}
-	```
+	``````
 	Will be converted to:
-		`post_count > 1000 AND (user_id = UUID_HERE OR user_id = UUID_HERE)`
+		``post_count > 1000 AND (user_id = UUID_HERE OR user_id = UUID_HERE)``
 	"""
 
 	operator = next(iter(conditions))

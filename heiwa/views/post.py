@@ -209,8 +209,8 @@ def find_post_by_id(
 	session: sqlalchemy.orm.Session,
 	user: models.User
 ) -> models.Post:
-	"""Returns the post with the given ID. Raises `exceptions.APIPostNotFound`
-	if it doesn't exist, or `flask.g.user` doesn't have permission to view it.
+	"""Returns the post with the given ID. Raises ``exceptions.APIPostNotFound``
+	if it doesn't exist, or ``flask.g.user`` doesn't have permission to view it.
 	If parsed permissions don't exist for the respective forum, they're
 	automatically calculated.
 	"""
@@ -282,7 +282,7 @@ def find_post_by_id(
 @authentication.authenticate_via_jwt
 @requires_permission("create_post", models.Thread)
 def create() -> typing.Tuple[flask.Response, int]:
-	"""Creates a post with the requested `thread_id` and `content`."""
+	"""Creates a post with the requested ``thread_id`` and ``content``."""
 
 	thread = find_thread_by_id(
 		flask.g.json["thread_id"],
@@ -318,7 +318,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Post)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all posts that match the requested filter, and `flask.g.user` has
+	"""Lists all posts that match the requested filter, and ``flask.g.user`` has
 	permission to view. If parsed permissions don't exist for their respective
 	threads' forums, they're automatically calculated.
 	"""
@@ -419,7 +419,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Post)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all posts that match the requested filter, and `flask.g.user` has
+	"""Deletes all posts that match the requested filter, and ``flask.g.user`` has
 	permission to both view and delete. If parsed permissions don't exist for
 	their respective threads' forums, they're automatically calculated.
 	"""
@@ -541,7 +541,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Post)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes the post with the requested `id_`."""
+	"""Deletes the post with the requested ``id_``."""
 
 	post = find_post_by_id(
 		id_,
@@ -567,7 +567,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit", models.Post)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Updates the post with the requested `id_` with the requested values."""
+	"""Updates the post with the requested ``id_`` with the requested values."""
 
 	post = find_post_by_id(
 		id_,
@@ -622,7 +622,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Post)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns the post with the requested `id_`."""
+	"""Returns the post with the requested ``id_``."""
 
 	return flask.jsonify(
 		find_post_by_id(
@@ -639,8 +639,8 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 def authorized_actions_post(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that `flask.g.user` is authorized to perform on the
-	post with the requested `id_`.
+	"""Returns all actions that ``flask.g.user`` is authorized to perform on the
+	post with the requested ``id_``.
 	"""
 
 	return flask.jsonify(
@@ -662,9 +662,9 @@ def authorized_actions_post(
 @authentication.authenticate_via_jwt
 @requires_permission("edit_vote", models.Post)
 def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Creates a vote from `flask.g.user` for the post with the requested `id_`,
-	or updates the existing one. It can either be a downvote or an upvote.
-	(`upvote` -> `True` or `False`)
+	"""Creates a vote from ``flask.g.user`` for the post with the requested
+	``id_``, or updates the existing one. It can either be a downvote or an
+	upvote. (``upvote`` -> ``True`` or ``False``)
 	"""
 
 	post = find_post_by_id(
@@ -720,7 +720,7 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("edit_vote", models.Post)
 def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Deletes `flask.g.user`'s vote on the post with the requested `id_`,
+	"""Deletes ``flask.g.user``'s vote on the post with the requested ``id_``,
 	if there is one.
 	"""
 
@@ -760,7 +760,7 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view_vote", models.Post)
 def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Returns `flask.g.user`'s vote on the post with the requested `id_`."""
+	"""Returns ``flask.g.user``'s vote on the post with the requested ``id_``."""
 
 	post = find_post_by_id(
 		id_,
@@ -788,7 +788,7 @@ def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @post_blueprint.route("/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
 def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
-	"""Returns all actions that `flask.g.user` is authorized to perform on posts
+	"""Returns all actions that ``flask.g.user`` is authorized to perform on posts
 	without any knowledge on which one they'll be done on.
 	"""
 

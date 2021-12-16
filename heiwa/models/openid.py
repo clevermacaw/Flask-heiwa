@@ -20,10 +20,10 @@ class OpenIDAuthentication(
 ):
 	"""CSRF / replay attack protection model for OpenID authentication.
 	Contains:
-		- A `creation_timestamp` column from the `CreationTimestampMixin`.
-		- An `identifier` column, a unique identifier for the user requesting
+		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		- An ``identifier`` column, a unique identifier for the user requesting
 		to authenticate. This will generally be an IP address.
-		- `none` and `state` columns, used as per the OpenID protocol.
+		- ``none`` and ``state`` columns, used as per the OpenID protocol.
 	"""
 
 	__tablename__ = "openid_authentication"
@@ -43,8 +43,8 @@ class OpenIDAuthentication(
 	)
 
 	def __repr__(self: OpenIDAuthentication) -> str:
-		"""Creates a `__repr__` of the current instance. Overrides the mixin method,
-		which uses the `id` attribute this model lacks.
+		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
+		which uses the ``id`` attribute this model lacks.
 		"""
 
 		return self._repr(

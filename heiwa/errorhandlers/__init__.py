@@ -20,8 +20,8 @@ __version__ = "1.3.3"
 def handle_api_exception(
 	exception: exceptions.APIException
 ) -> typing.Tuple[flask.Response, int]:
-	"""Converts an `APIException` object to a tuple of
-	a `flask.Response`-ified dictionary, and its status code.
+	"""Converts an ``APIException`` object to a tuple of
+	a ``flask.Response``-ified dictionary, and its status code.
 	"""
 
 	return flask.jsonify({
@@ -35,8 +35,8 @@ def handle_api_exception(
 def handle_http_exception(
 	exception: werkzeug.exceptions.HTTPException
 ) -> typing.Tuple[flask.Response, int]:
-	"""Converts an `HTTPException` object to a tuple of
-	a `flask.Response`-ified dictionary, and its status code.
+	"""Converts an ``HTTPException`` object to a tuple of
+	a ``flask.Response``-ified dictionary, and its status code.
 	Flask does know how to handle HTTP exceptions on its own, but uses HTML
 	documents to do so - which would be inconsistent with the rest of our API.
 	"""

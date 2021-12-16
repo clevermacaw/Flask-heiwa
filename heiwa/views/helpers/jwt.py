@@ -12,7 +12,7 @@ def create_jwt(
 	name: str = None,
 	expires_after: int = None
 ) -> str:
-	"""Creates a JWT for the user with the given `user_id`."""
+	"""Creates a JWT for the user with the given ``user_id``."""
 
 	current_timestamp = round(
 		datetime.datetime.now(tz=datetime.timezone.utc).timestamp()
