@@ -1,12 +1,13 @@
 import datetime
+import io
 import typing
 
+import PIL
 import authlib.common.security
 import authlib.integrations.requests_client
 import authlib.jose
 import authlib.oidc.core
 import flask
-import magic
 import requests
 import sqlalchemy
 
@@ -156,10 +157,15 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 		avatar_type = None
 
 		if avatar_url is not None:
-			avatar = requests.get(avatar_url)
+			try:
+				avatar = requests.get(avatar_url).content
 
-			libmagic = magic.Magic(mime=True)
-			avatar_type = libmagic.from_buffer(avatar)
+				image = PIL.Image.open(io.BytesIO(avatar))
+				image.verify()
+			except OSError:
+				avatar = None
+			else:
+				avatar_type = PIL.Image.MIME[image.format]
 
 		if user is None:
 			user = models.User.create(

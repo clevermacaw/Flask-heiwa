@@ -679,10 +679,10 @@ def edit_avatar(
 	try:
 		image = PIL.Image.open(io.BytesIO(flask.g.json["avatar"]))
 		image.verify()
-
-		avatar_type = PIL.Image.MIME[image.format]
 	except OSError:
 		raise exceptions.APIUserAvatarInvalid
+
+	avatar_type = PIL.Image.MIME[image.format]
 
 	if avatar_type not in flask.current_app.config["USER_AVATAR_TYPES"]:
 		raise exceptions.APIUserAvatarNotAllowedType(avatar_type)

@@ -701,28 +701,24 @@ def authorized_actions_forum(
 	)
 
 
-@forum_blueprint.route("/<uuid:id_>/merge", methods=["PUT"])
-@validators.validate_json({
-	"id": {
-		"type": "uuid",
-		"coerce": "convert_to_uuid",
-		"required": True
-	}
-})
+@forum_blueprint.route("/<uuid:id_old>/merge/<uuid:id_new>", methods=["PUT"])
 @authentication.authenticate_via_jwt
 @requires_permission("merge", models.Forum)
-def merge(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
-	"""Moves all threads and posts from the forum with the given ``id_`` to the
-	one with the ``id`` provided in the request body, then deletes the old forum.
+def merge(
+	id_old: uuid.UUID,
+	id_new: uuid.UUID
+) -> typing.Tuple[flask.Response, int]:
+	"""Moves all threads and posts from the forum with the given ``id_old`` to
+	the one with the ``id_new``, then deletes the old forum.
 	"""
 
 	old_forum = find_forum_by_id(
-		id_,
+		id_old,
 		flask.g.sa_session,
 		flask.g.user
 	)
 	new_forum = find_forum_by_id(
-		flask.g.json["id"],
+		id_new,
 		flask.g.sa_session,
 		flask.g.user
 	)
