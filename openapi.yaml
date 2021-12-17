@@ -112,6 +112,40 @@ paths:
               schema:
                 allOf:
                   - $ref: "#/components/schemas/Forum"
+        "403":
+          description: "The forum has not been changed, or was requested to have
+          its parent become itself."
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  -
+                    allOf:
+                      - $ref: "#/components/schemas/Exception"
+                    properties:
+                      exception:
+                        properties:
+                          type:
+                            enum:
+                              - APIForumUnchanged
+                          details:
+                            allOf:
+                              - $ref: "#/components/schemas/Forum/properties/id"
+                    description: The forum has not been changed.
+                  -
+                    allOf:
+                      - $ref: "#/components/schemas/Exception"
+                    properties:
+                      exception:
+                        properties:
+                          type:
+                            enum:
+                              - APIForumParentIsChild
+                          details:
+                            allOf:
+                              - $ref: "#/components/schemas/Forum/properties/id"
+                    description: "The current forum's ID is the same as
+                    the requested parent forum's."
     get:
       summary: Returns the requested forum.
       parameters:
@@ -162,7 +196,7 @@ paths:
           required: true
           description: The original forum\'s ID.
         - in: path
-          name: id_old
+          name: id_new
           schema:
             type: string
             format: uuid
@@ -196,6 +230,98 @@ paths:
               schema:
                 allOf:
                   - $ref: "#/components/schemas/ForumNullablePermissions"
+  /forums/{forum_id}/permissions/group/{group_id}:
+    delete:
+      summary: Deletes the given group\'s permissions for the given forum.
+      parameters:
+        - in: path
+          name: forum_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+        - in: path
+          name: group_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The group\'s ID.
+      responses:
+        "204":
+          description: Success. The permissions have been deleted.
+        "404":
+          description: There are no group permissions to be found.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Exception"
+                properties:
+                  exception:
+                    properties:
+                      type:
+                        enum:
+                          - APIForumPermissionsGroupNotFound
+                      details:
+                        type: object
+                        properties:
+                          forum_id:
+                            allOf:
+                              - $ref: "#/components/schemas/Forum/properties/id"
+                          group_id:
+                            allOf:
+                              - $ref: "#/components/schemas/Group/properties/id"
+    put:
+      summary: "Updates the given forum's permissions for the given group.
+      If there are none, they're created automatically."
+      parameters:
+        - in: path
+          name: forum_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+        - in: path
+          name: group_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The group\'s ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ForumPermissionsGroup"  # TODO (remove group_id?)
+      responses:
+        "200":
+          description: The new permissions.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ForumPermissionsGroup"
+        "403":
+          description: The permissions have not been changed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Exception"
+                properties:
+                  exception:
+                    properties:
+                      type:
+                        enum:
+                          - APIForumPermissionsGroupUnchanged
+                      details:
+                        allOf:
+                          - $ref: "#/components/schemas/Forum/properties/id"
 components:
   schemas:
     # ----- Models used primarily in responses -----
