@@ -4,6 +4,7 @@ from . import helpers
 from .forum import forum_blueprint
 from .group import group_blueprint
 from .guest import guest_blueprint
+from .message import message_blueprint
 from .meta import meta_blueprint
 from .notification import notification_blueprint
 from .openid import openid_blueprint
@@ -16,6 +17,7 @@ __all__ = [
 	"group_blueprint",
 	"guest_blueprint",
 	"helpers",
+	"message_blueprint",
 	"meta_blueprint",
 	"notification_blueprint",
 	"openid_blueprint",
@@ -23,4 +25,4 @@ __all__ = [
 	"thread_blueprint",
 	"user_blueprint"
 ]
-__version__ = "0.55.19"
+__version__ = "0.56.0"

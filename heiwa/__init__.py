@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.13.50"
+__version__ = "0.14.0"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -143,6 +143,7 @@ def create_app() -> ConfiguredLockFlask:
 			forum_blueprint,
 			group_blueprint,
 			guest_blueprint,
+			message_blueprint,
 			meta_blueprint,
 			notification_blueprint,
 			openid_blueprint,
@@ -155,6 +156,7 @@ def create_app() -> ConfiguredLockFlask:
 			forum_blueprint,
 			group_blueprint,
 			guest_blueprint,
+			message_blueprint,
 			meta_blueprint,
 			notification_blueprint,
 			openid_blueprint,

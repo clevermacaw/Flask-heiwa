@@ -64,50 +64,17 @@ LIST_SCHEMA = generate_list_schema(
 LT_GT_SEARCH_SCHEMA = {
 	"creation_timestamp": ATTR_SCHEMAS["creation_timestamp"]
 }
-EQ_SEARCH_SCHEMA = {
-	"id": ATTR_SCHEMAS["id"],
-	"creation_timestamp": ATTR_SCHEMAS["creation_timestamp"],
-	"user_id": ATTR_SCHEMAS["user_id"],
-	"is_read": ATTR_SCHEMAS["is_read"],
-	"type": ATTR_SCHEMAS["type"],
-	"identifier": ATTR_SCHEMAS["identifier"]
-}
-IN_SEARCH_SCHEMA = {
-	"id": {
-		"type": "list",
-		"schema": ATTR_SCHEMAS["id"],
-		"minlength": 1,
-		"maxlength": 32
-	},
-	"creation_timestamp": {
-		"type": "list",
-		"schema": ATTR_SCHEMAS["creation_timestamp"],
-		"minlength": 1,
-		"maxlength": 32
-	},
-	"user_id": {
-		"type": "list",
-		"schema": ATTR_SCHEMAS["user_id"],
-		"minlength": 1,
-		"maxlength": 32
-	},
-	"type": {
-		"type": "list",
-		"schema": ATTR_SCHEMAS["type"],
-		"minlength": 1,
-		"maxlength": 32
-	},
-	"identifier": {
-		"type": "list",
-		"schema": ATTR_SCHEMAS["identifier"],
-		"minlength": 1,
-		"maxlength": 32
-	}
-}
 SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 	"$eq": {
 		"type": "dict",
-		"schema": EQ_SEARCH_SCHEMA,
+		"schema": {
+			"id": ATTR_SCHEMAS["id"],
+			"creation_timestamp": ATTR_SCHEMAS["creation_timestamp"],
+			"user_id": ATTR_SCHEMAS["user_id"],
+			"is_read": ATTR_SCHEMAS["is_read"],
+			"type": ATTR_SCHEMAS["type"],
+			"identifier": ATTR_SCHEMAS["identifier"]
+		},
 		"maxlength": 1
 	},
 	"$lt": {
@@ -125,15 +92,44 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 		"schema": LT_GT_SEARCH_SCHEMA,
 		"maxlength": 1
 	},
-	"$in": {
-		"type": "dict",
-		"schema": IN_SEARCH_SCHEMA,
-		"maxlength": 1
-	},
 	"$ge": {
 		"type": "dict",
+		"schema": LT_GT_SEARCH_SCHEMA,
+		"maxlength": 1
+	},
+	"$in": {
+		"type": "dict",
 		"schema": {
-			"creation_timestamp": ATTR_SCHEMAS["creation_timestamp"]
+			"id": {
+				"type": "list",
+				"schema": ATTR_SCHEMAS["id"],
+				"minlength": 1,
+				"maxlength": 32
+			},
+			"creation_timestamp": {
+				"type": "list",
+				"schema": ATTR_SCHEMAS["creation_timestamp"],
+				"minlength": 1,
+				"maxlength": 32
+			},
+			"user_id": {
+				"type": "list",
+				"schema": ATTR_SCHEMAS["user_id"],
+				"minlength": 1,
+				"maxlength": 32
+			},
+			"type": {
+				"type": "list",
+				"schema": ATTR_SCHEMAS["type"],
+				"minlength": 1,
+				"maxlength": 32
+			},
+			"identifier": {
+				"type": "list",
+				"schema": ATTR_SCHEMAS["identifier"],
+				"minlength": 1,
+				"maxlength": 32
+			}
 		},
 		"maxlength": 1
 	}

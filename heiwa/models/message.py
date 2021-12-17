@@ -36,9 +36,10 @@ class Message(
 		- An ``encrypted_session_key`` column, containing this message's randomly
 		generated key, which should be encrypted using the receiver's
 		``public_key``.
-		- A nullable ``tag`` column, containing bytes derived from the original
+		- A nullable ``tag`` column, containing a string derived from the original
 		message used to check for any unauthorized changes to the decrypted
-		content, once its receiver attempts to read it.
+		content, once its receiver attempts to read it. This can, for example,
+		be a BCrypt hash.
 		- An ``encrypted_content`` column, containing the message content, which
 		should be encrypted with the receiver's ``public_key``. Its validity cannot
 		be checked, since we don't (and shouldn't) have access to the receiver's
@@ -78,7 +79,7 @@ class Message(
 		nullable=False
 	)
 	tag = sqlalchemy.Column(
-		sqlalchemy.LargeBinary,
+		sqlalchemy.String(64),
 		nullable=True
 	)
 

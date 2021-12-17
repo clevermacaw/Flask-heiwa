@@ -75,6 +75,13 @@ ATTR_SCHEMAS = {
 	"is_banned": {
 		"type": "boolean"
 	},
+	"public_key": {
+		"type": "binary",
+		"check_with": check_rsa_public_key_valid,
+		"coerce": "decode_base64",
+		"minlength": 161,  # 1024-bit RSA public key
+		"maxlength": 550  # 4096-bit RSA public key
+	},
 	"avatar_type": {
 		"type": "string",
 		"minlength": 3,
@@ -154,6 +161,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			},
 			"edit_count": ATTR_SCHEMAS["edit_count"],
 			"is_banned": ATTR_SCHEMAS["is_banned"],
+			"public_key": ATTR_SCHEMAS["public_key"],
 			"avatar_type": {
 				**ATTR_SCHEMAS["avatar_type"],
 				"nullable": True
@@ -221,6 +229,15 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
+				"minlength": 1,
+				"maxlength": 32
+			},
+			"public_key": {
+				"type": "list",
+				"schema": {
+					**ATTR_SCHEMAS["public_key"],
+					"nullable": True
+				},
 				"minlength": 1,
 				"maxlength": 32
 			},
@@ -504,13 +521,13 @@ def delete(
 	"encrypted_private_key": {
 		"type": "binary",
 		"coerce": "decode_base64",
+		"minlength": 624,  # 1024-bit RSA private key, AES-CBC
+		"maxlength": 2352,  # 4096-bit private key, AES-CBC
 		"nullable": True,
 		"required": True
 	},
 	"public_key": {
-		"type": "binary",
-		"check_with": check_rsa_public_key_valid,
-		"coerce": "decode_base64",
+		**ATTR_SCHEMAS["public_key"],
 		"nullable": True,
 		"required": True
 	}
