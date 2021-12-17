@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import typing
+import uuid
 
 import sqlalchemy
 import sqlalchemy.orm

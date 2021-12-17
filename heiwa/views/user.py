@@ -1562,4 +1562,4 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		models.User.get_allowed_class_actions(flask.g.user)
-	)
+	), helpers.STATUS_OK

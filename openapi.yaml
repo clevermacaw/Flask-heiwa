@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   description: A forum API.
   title: Heiwa
-  version: 0.13.49
+  version: 0.13.50
 paths:
   /forums:
     post:
@@ -15,7 +15,7 @@ paths:
               allOf:
                 - $ref: "#/components/schemas/ForumCreateEdit"
       responses:
-        "200":
+        "201":
           description: The newly created forum.
           content:
             application/json:
@@ -59,7 +59,8 @@ paths:
                   $ref: "#/components/schemas/Forum"
     delete:
       summary: "Deletes the forums that match the current user has access to,
-      and matches the filter if there is one requested."
+      and matches the filter if there is one requested. The objects associated
+      with them are deleted as well."
       requestBody:
         required: true
         content:
@@ -72,7 +73,8 @@ paths:
           description: Success, the forums have been deleted.
   /forums/{id}:
     delete:
-      summary: Deletes the requested forum.
+      summary: "Deletes the requested forum,
+      as well as objects associated with it."
       parameters:
         - in: path
           name: id
@@ -322,6 +324,293 @@ paths:
                       details:
                         allOf:
                           - $ref: "#/components/schemas/Forum/properties/id"
+    get:
+      summary: Returns the given group\'s permissions for the given forum.
+      parameters:
+        - in: path
+          name: forum_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+        - in: path
+          name: group_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The group\'s ID.
+      responses:
+        "200":
+          description: The permissions. If null, they\'re unset.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ForumPermissionsGroup"
+                nullable: true
+  /forums/{forum_id}/permissions/user/{user_id}:
+    delete:
+      summary: Deletes the given user\'s permissions for the given forum.
+      parameters:
+        - in: path
+          name: forum_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+        - in: path
+          name: user_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The user\'s ID.
+      responses:
+        "204":
+          description: Success. The permissions have been deleted.
+        "404":
+          description: There are no user permissions to be found.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Exception"
+                properties:
+                  exception:
+                    properties:
+                      type:
+                        enum:
+                          - APIForumPermissionsUserNotFound
+                      details:
+                        type: object
+                        properties:
+                          forum_id:
+                            allOf:
+                              - $ref: "#/components/schemas/Forum/properties/id"
+                          user_id:
+                            allOf:
+                              - $ref: "#/components/schemas/User/properties/id"
+    put:
+      summary: "Updates the given forum's permissions for the given user.
+      If there are none, they're created automatically."
+      parameters:
+        - in: path
+          name: forum_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+        - in: path
+          name: user_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The user\'s ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ForumPermissionsUser"  # TODO (remove user_id?)
+      responses:
+        "200":
+          description: The new permissions.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ForumPermissionsUser"
+        "403":
+          description: The permissions have not been changed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Exception"
+                properties:
+                  exception:
+                    properties:
+                      type:
+                        enum:
+                          - APIForumPermissionsUserUnchanged
+                      details:
+                        allOf:
+                          - $ref: "#/components/schemas/Forum/properties/id"
+    get:
+      summary: Returns the given user\'s permissions for the given forum.
+      parameters:
+        - in: path
+          name: forum_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+        - in: path
+          name: user_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The user\'s ID.
+      responses:
+        "200":
+          description: The permissions. If null, they\'re unset.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ForumPermissionsUser"
+                nullable: true
+  /forums/{id}/subscription:
+    put:
+      summary: Subscribes the current user to the given forum.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+      responses:
+        "204":
+          description: Success. The subscription has been created.
+        "403":
+          description: The user has already subscribed to the forum before.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Exception"
+                properties:
+                  exception:
+                    properties:
+                      type:
+                        enum:
+                          - APIForumSubscriptionAlreadyExists
+                      details:
+                        allOf:
+                          - $ref: "#/components/schemas/Forum/properties/id"
+    delete:
+      summary: Deletes the current user\'s subscription for the given forum.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+      responses:
+        "204":
+          description: Success. The subscription has been deleted.
+        "403":
+          description: There is no subscription to delete.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Exception"
+                properties:
+                  exception:
+                    properties:
+                      type:
+                        enum:
+                          - APIForumSubscriptionNotFound
+                      details:
+                        allOf:
+                          - $ref: "#/components/schemas/Forum/properties/id"
+    get:
+      summary: "Returns whether or not the current user is subscribed to
+      the given forum."
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The forum\'s ID.
+      responses:
+        "200":
+          description: "If the user is subscribed to the forum, true.
+          Otherwise, false."
+          content:
+            application/json:
+              schema:
+                type: boolean
+  /forums/authorized-actions:
+    get:
+      summary: "Returns the current user's authorized actions for all forums,
+      irrespective of which one it'll be."
+      responses:
+        "200":
+          description: The authorized actions.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ForumAuthorizedActions"
+  /threads:
+    post:
+      summary: Creates a new thread.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ThreadCreateEdit"  # TODO: Make schema
+      responses:
+        "201":
+          description: The newly created thread.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Thread"
+    get:
+      summary: "Returns a list of threads that the current user has access to,
+      and matches the requested filter, if there is one."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ThreadSearch"  # TODO: Make schema
+      responses:
+        "200":
+          description: The list of threads,
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/Thread"
+    delete:
+      summary: "Deletes the threads that the current user has access to,
+      and match the requested filter, if there is one. The objects assosicated
+      with them are deleted as well."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ThreadSearch"  # TODO: Make schema
+      responses:
+        "204":
+          description: Success. The threads have been deleted.
+            
 components:
   schemas:
     # ----- Models used primarily in responses -----
