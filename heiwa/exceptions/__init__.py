@@ -68,7 +68,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.30.0"
+__version__ = "1.30.1"
 
 
 class APIException(Exception):
@@ -94,13 +94,17 @@ class APIException(Exception):
 					typing.Any
 				]
 			],
-		] = details
+		] = details,
+		*args,
+		**kwargs
 	) -> None:
 		"""Sets the ``details`` class variable to the given value. If this method
 		isn't used, it remains ``None``.
 		"""
 
 		self.details = details
+
+		Exception.__init__(self, *args, **kwargs)
 
 
 class APIAuthorizationHeaderInvalid(APIException):

@@ -14,7 +14,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 __all__ = ["JSONEncoder"]
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 
 
 # Flask does have a custom encoder already that would take care of UUID
@@ -22,7 +22,7 @@ __version__ = "1.3.1"
 # the ISO date(time) formatting over Flask's choice of RFC 822, and overriding
 # that feels somewhat hacky. So I'll just use json.JSONEncoder instead.
 class JSONEncoder(json.JSONEncoder):
-	"""A JSON encoder based on the default ``JSONEncoder``, modified to add a few
+	r"""A JSON encoder based on the default ``JSONEncoder``, modified to add a few
 	necessary features.
 
 	Conversions:

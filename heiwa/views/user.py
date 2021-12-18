@@ -1026,9 +1026,9 @@ def list_followers(
 
 	conditions = (
 		models.User.id.in_(
-			sqlalchemy.select(models.user_follows.followee_id).
+			sqlalchemy.select(models.user_follows.c.followee_id).
 			where(
-				models.user_follows.follower_id == user.id
+				models.user_follows.c.follower_id == user.id
 			)
 		)
 	)
@@ -1088,9 +1088,9 @@ def list_followees(
 
 	conditions = (
 		models.User.id.in_(
-			sqlalchemy.select(models.user_follows.follower_id).
+			sqlalchemy.select(models.user_follows.c.follower_id).
 			where(
-				models.user_follows.followee_id == user.id
+				models.user_follows.c.followee_id == user.id
 			)
 		)
 	)

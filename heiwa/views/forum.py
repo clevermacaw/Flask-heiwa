@@ -655,6 +655,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	if flask.g.json["user_id"] != forum.user_id:
 		models.Notification.create(
+			flask.g.sa_session,
 			user_id=flask.g.json["user_id"],
 			type=enums.NotificationTypes.FORUM_CHANGED_OWNERSHIP,
 			identifier=forum.id
@@ -743,7 +744,7 @@ def merge(
 	)
 	flask.g.sa_session.execute(
 		sqlalchemy.update(models.forum_subscribers).
-		where(models.forum_subscribers.forum_id == old_forum.id).
+		where(models.forum_subscribers.c.forum_id == old_forum.id).
 		values(parent_forum_id=new_forum.id)
 	)
 	flask.g.sa_session.execute(

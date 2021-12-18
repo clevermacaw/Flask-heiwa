@@ -63,7 +63,7 @@ def generate_list_schema(
 		"offset": {
 			"type": "integer",
 			"min": 0,
-			"max": limit_max,
+			"max": offset_max,
 			"default": 0,
 			"required": True
 		}
