@@ -363,7 +363,7 @@ def get_user_self_or_id(
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.User)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all users that match the requested filter."""
+	"""Lists all users that match the requested filter, if there is one."""
 
 	conditions = True
 
@@ -404,8 +404,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.User)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all users that match the requested filter, and ``flask.g.user`` has
-	permission to delete.
+	"""Deletes all users that match the requested filter if there is one, and
+	``flask.g.user`` has permission to delete.
 	"""
 
 	conditions = sqlalchemy.or_(
@@ -560,7 +560,7 @@ def edit(
 			setattr(user, key, value)
 
 	if unchanged:
-		raise exceptions.APIUserUnchanged(user.id)
+		raise exceptions.APIUserUnchanged
 
 	user.edited()
 
@@ -642,7 +642,7 @@ def delete_avatar(
 	)
 
 	if user.avatar is None:
-		raise exceptions.APIUserAvatarNotFound(user.id)
+		raise exceptions.APIUserAvatarNotFound
 
 	user.avatar = None
 
@@ -764,7 +764,7 @@ def delete_ban(
 	)
 
 	if not user.is_banned:
-		raise exceptions.APIUserBanNotFound(user.id)
+		raise exceptions.APIUserBanNotFound
 
 	user.remove_ban()
 
@@ -815,15 +815,13 @@ def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			user.ban.expiration_timestamp == flask.g.json["expiration_timestamp"] and
 			user.ban.reason == flask.g.json["reason"]
 		):
-			raise exceptions.APIUserBanUnchanged(user.ban)
+			raise exceptions.APIUserBanUnchanged
 
 	if (
 		datetime.datetime.now(tz=flask.g.json["expiration_timestamp"].tzinfo)
 		> flask.g.json["expiration_timestamp"]
 	):
-		raise exceptions.APIUserBanAlreadyExpired(
-			flask.g.json["expiration_timestamp"]
-		)
+		raise exceptions.APIUserBanAlreadyExpired
 
 	if user.is_banned:
 		user.ban.expiration_timestamp = flask.g.json["expiration_timestamp"]
@@ -911,7 +909,7 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			)
 		).scalars().one_or_none()
 	) is not None:
-		raise exceptions.APIUserBlockAlreadyExists(user.id)
+		raise exceptions.APIUserBlockAlreadyExists
 
 	flask.g.sa_session.execute(
 		sqlalchemy.delete(models.user_follows).
@@ -966,7 +964,7 @@ def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	).scalars().one_or_none()
 
 	if existing_block is None:
-		raise exceptions.APIUserBlockNotFound(user.id)
+		raise exceptions.APIUserBlockNotFound
 
 	flask.g.sa_session.delete(existing_block)
 	flask.g.sa_session.commit()
@@ -1016,7 +1014,8 @@ def list_followers(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
 	"""Lists all followers of the user with the requested ``id_`` (or
-	``flask.g.user``'s, if it's ``None``) that match the requested filter.
+	``flask.g.user``'s, if it's ``None``) that match the requested filter, if
+	there is one.
 	"""
 
 	user = get_user_self_or_id(
@@ -1078,7 +1077,8 @@ def list_followees(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
 	"""Lists all followees of the user with the requested ``id_`` (or
-	``flask.g.user``'s, if it's ``None``) that match the requested filter.
+	``flask.g.user``'s, if it's ``None``) that match the requested filter, if
+	there is one.
 	"""
 
 	user = get_user_self_or_id(
@@ -1154,7 +1154,7 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			)
 		).scalars().one_or_none()
 	) is not None:
-		raise exceptions.APIUserFollowAlreadyExists(user.id)
+		raise exceptions.APIUserFollowAlreadyExists
 
 	flask.g.sa_session.execute(
 		sqlalchemy.insert(models.user_follows).
@@ -1199,7 +1199,7 @@ def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	).scalars().one_or_none()
 
 	if existing_follow is None:
-		raise exceptions.APIUserFollowNotFound(user.id)
+		raise exceptions.APIUserFollowNotFound
 
 	flask.g.sa_session.delete(existing_follow)
 
@@ -1318,7 +1318,7 @@ def add_group(
 		exists().
 		select()
 	).scalars().one_or_none():
-		raise exceptions.APIUserGroupAlreadyAdded(group.id)
+		raise exceptions.APIUserGroupAlreadyAdded
 
 	flask.g.sa_session.execute(
 		sqlalchemy.insert(models.user_groups).
@@ -1383,7 +1383,7 @@ def delete_group(
 	).scalars().one_or_none()
 
 	if existing_group_association is None:
-		raise exceptions.APIUserGroupNotAdded(group.id)
+		raise exceptions.APIUserGroupNotAdded
 
 	if "*" in group.default_for:
 		found_default_group = False
@@ -1436,7 +1436,7 @@ def delete_permissions(
 	)
 
 	if user.permissions is None:
-		raise exceptions.APIUserPermissionsNotFound(user.id)
+		raise exceptions.APIUserPermissionsNotFound
 
 	user.permissions.delete()
 
@@ -1530,7 +1530,7 @@ def edit_permissions(
 				setattr(user.permissions, key, value)
 
 		if unchanged:
-			raise exceptions.APIUserPermissionsUnchanged(user.id)
+			raise exceptions.APIUserPermissionsUnchanged
 
 		user.permissions.edited()
 

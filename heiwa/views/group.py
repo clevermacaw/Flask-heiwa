@@ -292,7 +292,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Group)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all groups that match the requested filter."""
+	"""Lists all groups that match the requested filter, if there is one."""
 
 	conditions = True
 
@@ -333,7 +333,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Group)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all groups that match the requested filter,
+	"""Deletes all groups that match the requested filter if there is one,
 	and ``flask.g.user`` has permission to both view and delete.
 	"""
 
@@ -402,7 +402,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 
 	if "*" in group.default_for and check_if_last_default_group(group.id):
-		raise exceptions.APIGroupCannotDeleteLastDefault(group.id)
+		raise exceptions.APIGroupCannotDeleteLastDefault
 
 	group.delete()
 
@@ -437,7 +437,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			setattr(group, key, value)
 
 	if unchanged:
-		raise exceptions.APIGroupUnchanged(group.id)
+		raise exceptions.APIGroupUnchanged
 
 	group.edited()
 
@@ -496,10 +496,10 @@ def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 
 	if "*" in group.default_for and check_if_last_default_group(group.id):
-		raise exceptions.APIGroupCannotDeletePermissionsForLastDefault(group.id)
+		raise exceptions.APIGroupCannotDeletePermissionsForLastDefault
 
 	if group.permissions is None:
-		raise exceptions.APIGroupPermissionsNotFound(id)
+		raise exceptions.APIGroupPermissionsNotFound
 
 	group.permissions.delete()
 
@@ -531,10 +531,7 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	if "*" in group.default_for:
 		for key, value in flask.g.json.items():
 			if value is None:
-				raise exceptions.APIGroupCannotLeavePermissionNullForLastDefault({
-					"group_id": group.id,
-					"permission": key
-				})
+				raise exceptions.APIGroupCannotLeavePermissionNullForLastDefault
 
 	if group.permissions is None:
 		models.GroupPermissions.create(
@@ -553,7 +550,7 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				setattr(group.permissions, key, value)
 
 		if unchanged:
-			raise exceptions.APIGroupPermissionsUnchanged(group.id)
+			raise exceptions.APIGroupPermissionsUnchanged
 
 		group.permissions.edited()
 

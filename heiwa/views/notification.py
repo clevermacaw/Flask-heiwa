@@ -137,27 +137,27 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 
 
 def find_notification_by_id(
-	id_: uuid.UUID,
+	notification_id: uuid.UUID,
 	session: sqlalchemy.orm.Session,
 	user_id: uuid.UUID
 ) -> models.Notification:
-	"""Finds the notification with the given ``id_``. If it exists, but doesn't
-	belong to the user with the provided ``user_id``,
-	``exceptions.APINotificationNotFound`` will be raised as if it didn't exist.
+	"""Finds the notification with the given ``notification_id``. If it exists,
+	but doesn't belong to the user with the provided ``user_id``,
+	``APINotificationNotFound`` will be raised as if it didn't exist.
 	"""
 
 	notification = session.execute(
 		sqlalchemy.select(models.Notification).
 		where(
 			sqlalchemy.and_(
-				models.Notification.id == id_,
+				models.Notification.id == notification_id,
 				models.Notification.user_id == user_id
 			)
 		)
 	).scalars().one_or_none()
 
 	if notification is None:
-		raise exceptions.APINotificationNotFound(id)
+		raise exceptions.APINotificationNotFound
 
 	return notification
 
@@ -170,7 +170,7 @@ def find_notification_by_id(
 @authentication.authenticate_via_jwt
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists all notifications belonging to ``flask.g.user`` that match the
-	requested filter.
+	requested filter, if there is one.
 	"""
 
 	conditions = (models.Notification.user_id == flask.g.user.id)
@@ -212,7 +212,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all notifications belonging to ``flask.g.user`` that match the
-	requested filter.
+	requested filter, if there is one.
 	"""
 
 	conditions = (models.Notification.user_id == flask.g.user.id)
@@ -258,7 +258,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 def mass_confirm_read() -> typing.Tuple[flask.Response, int]:
 	"""Confirms that all notifications belonging to ``flask.g.user`` that match
-	the requested filter have been read.
+	the requested filter (if there is one) have been read.
 	"""
 
 	conditions = sqlalchemy.and_(

@@ -362,9 +362,9 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Thread)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all threads that match the requested filter, and ``flask.g.user`` has
-	permission to view. If parsed permissions don't exist for their respective
-	forums, they're automatically calculated.
+	"""Lists all threads that match the requested filter if there is one, and
+	``flask.g.user`` has permission to view. If parsed permissions don't exist
+	for their respective forums, they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -455,9 +455,9 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Thread)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all threads that match the requested filter, and ``flask.g.user``
-	has permission to both view and delete. If parsed permissions don't exist
-	for their respective forums, they're automatically calculated.
+	"""Deletes all threads that match the requested filter if there is one, and
+	``flask.g.user`` has permission to both view and delete. If parsed permissions
+	don't exist for their respective forums, they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -626,7 +626,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			setattr(thread, key, value)
 
 	if unchanged:
-		raise exceptions.APIThreadUnchanged(thread.id)
+		raise exceptions.APIThreadUnchanged
 
 	if thread.forum_id != flask.g.json["forum_id"]:
 		future_forum = find_forum_by_id(
@@ -792,7 +792,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			)
 		).scalars().one_or_none()
 	) is not None:
-		raise exceptions.APIThreadSubscriptionAlreadyExists(thread.id)
+		raise exceptions.APIThreadSubscriptionAlreadyExists
 
 	flask.g.sa_session.execute(
 		sqlalchemy.insert(models.thread_subscribers).
@@ -838,7 +838,7 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	).scalars().one_or_none()
 
 	if existing_subscription is None:
-		raise exceptions.APIThreadSubscriptionNotFound(thread.id)
+		raise exceptions.APIThreadSubscriptionNotFound
 
 	flask.g.sa_session.delete(existing_subscription)
 
@@ -915,7 +915,7 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		vote is not None and
 		vote.upvote is flask.g.json["upvote"]
 	):
-		raise exceptions.APIThreadVoteUnchanged(flask.g.json["upvote"])
+		raise exceptions.APIThreadVoteUnchanged
 
 	if vote is None:
 		vote = models.ThreadVote.create(
@@ -969,7 +969,7 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	).scalars().one_or_none()
 
 	if existing_vote is None:
-		raise exceptions.APIThreadVoteNotFound(id)
+		raise exceptions.APIThreadVoteNotFound
 
 	existing_vote.delete()
 

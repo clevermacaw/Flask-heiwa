@@ -272,7 +272,7 @@ def find_post_by_id(
 		).one_or_none()
 
 	if row is None:
-		raise exceptions.APIPostNotFound(id)
+		raise exceptions.APIPostNotFound
 
 	return row[0]
 
@@ -297,7 +297,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 	)
 
 	if thread.is_locked:
-		raise exceptions.APIThreadLocked(thread.id)
+		raise exceptions.APIThreadLocked
 
 	post = models.Post.create(
 		flask.g.sa_session,
@@ -318,9 +318,9 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Post)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all posts that match the requested filter, and ``flask.g.user`` has
-	permission to view. If parsed permissions don't exist for their respective
-	threads' forums, they're automatically calculated.
+	"""Lists all posts that match the requested filter if there is one, and
+	``flask.g.user`` has permission to view. If parsed permissions don't exist
+	for their respective threads' forums, they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -419,9 +419,10 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Post)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all posts that match the requested filter, and ``flask.g.user`` has
-	permission to both view and delete. If parsed permissions don't exist for
-	their respective threads' forums, they're automatically calculated.
+	"""Deletes all posts that match the requested filter if there is one, and
+	``flask.g.user`` has permission to both view and delete. If parsed permissions
+	don't exist for their respective threads' forums, they're automatically
+	calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -589,7 +590,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			setattr(post, key, value)
 
 	if unchanged:
-		raise exceptions.APIPostUnchanged(post.id)
+		raise exceptions.APIPostUnchanged
 
 	if post.thread_id != flask.g.json["thread_id"]:
 		future_thread = find_thread_by_id(
@@ -607,7 +608,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		)
 
 		if future_thread.is_locked:
-			raise exceptions.APIThreadLocked(future_thread.id)
+			raise exceptions.APIThreadLocked
 
 		post.thread = future_thread
 
@@ -693,7 +694,7 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		vote is not None and
 		vote.upvote is flask.g.json["upvote"]
 	):
-		raise exceptions.APIPostVoteUnchanged(flask.g.json["upvote"])
+		raise exceptions.APIPostVoteUnchanged
 
 	if vote is None:
 		vote = models.PostVote.create(
@@ -747,7 +748,7 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	).scalars().one_or_none()
 
 	if existing_vote is None:
-		raise exceptions.APIPostVoteNotFound(id)
+		raise exceptions.APIPostVoteNotFound
 
 	existing_vote.delete()
 

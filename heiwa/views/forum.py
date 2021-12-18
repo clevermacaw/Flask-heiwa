@@ -345,9 +345,9 @@ def create() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("view", models.Forum)
 def list_() -> typing.Tuple[flask.Response, int]:
-	"""Lists all forums that match the requested filter, and ``flask.g.user`` has
-	permission to view. If parsed permissions don't exist for them, they're
-	automatically calculated.
+	"""Lists all forums that match the requested filter if there is one, and
+	``flask.g.user`` has permission to view. If parsed permissions don't exist
+	for them, they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -438,9 +438,9 @@ def list_() -> typing.Tuple[flask.Response, int]:
 @authentication.authenticate_via_jwt
 @requires_permission("delete", models.Forum)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
-	"""Deletes all forums that match the requested filter, and ``flask.g.user`` has
-	permission to both view and delete. If parsed permissions don't exist for
-	them, they're automatically calculated.
+	"""Deletes all forums that match the requested filter if there is one, and
+	``flask.g.user`` has permission to both view and delete. If parsed permissions
+	don't exist for them, they're automatically calculated.
 	"""
 
 	inner_conditions = sqlalchemy.and_(
@@ -621,11 +621,11 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			setattr(forum, key, value)
 
 	if unchanged:
-		raise exceptions.APIForumUnchanged(forum.id)
+		raise exceptions.APIForumUnchanged
 
 	if flask.g.json["parent_forum_id"] != forum.parent_forum_id:
 		if forum.id == flask.g.json["parent_forum_id"]:
-			raise exceptions.APIForumParentIsChild(id)
+			raise exceptions.APIForumParentIsChild
 
 		future_parent = find_forum_by_id(
 			flask.g.json["parent_forum_id"],
@@ -794,6 +794,9 @@ def view_parsed_permissions(
 	return flask.jsonify(parsed_permissions), helpers.STATUS_OK
 
 
+# TODO: List and mass delete permissions for groups and users
+
+
 @forum_blueprint.route(
 	"/<uuid:forum_id>/permissions/group/<uuid:group_id>",
 	methods=["DELETE"]
@@ -839,10 +842,7 @@ def delete_permissions_group(
 	).scalars().one_or_none()
 
 	if permissions is None:
-		raise exceptions.APIForumPermissionsGroupNotFound({
-			"forum_id": forum.id,
-			"group_id": group.id
-		})
+		raise exceptions.APIForumPermissionsGroupNotFound
 
 	flask.g.sa_session.execute(
 		sqlalchemy.delete(models.ForumParsedPermissions).
@@ -918,7 +918,7 @@ def edit_permissions_group(
 				setattr(permissions, key, value)
 
 		if unchanged:
-			raise exceptions.APIForumPermissionsGroupUnchanged(forum.id)
+			raise exceptions.APIForumPermissionsGroupUnchanged
 
 		permissions.edited()
 
@@ -1021,10 +1021,7 @@ def delete_permissions_user(
 	).scalars().one_or_none()
 
 	if permissions is None:
-		raise exceptions.APIForumPermissionsUserNotFound({
-			"forum_id": forum.id,
-			"user_id": user.id
-		})
+		raise exceptions.APIForumPermissionsUserNotFound
 
 	flask.g.sa_session.execute(
 		sqlalchemy.delete(models.ForumParsedPermissions).
@@ -1098,7 +1095,7 @@ def edit_permissions_user(
 				setattr(permissions, key, value)
 
 		if unchanged:
-			raise exceptions.APIForumPermissionsUserUnchanged(forum.id)
+			raise exceptions.APIForumPermissionsUserUnchanged
 
 		permissions.edited()
 
@@ -1187,7 +1184,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			)
 		).scalars().one_or_none()
 	) is not None:
-		raise exceptions.APIForumSubscriptionAlreadyExists(forum.id)
+		raise exceptions.APIForumSubscriptionAlreadyExists
 
 	flask.g.sa_session.execute(
 		sqlalchemy.insert(models.forum_subscribers).
@@ -1233,7 +1230,7 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	).scalars().one_or_none()
 
 	if existing_subscription is None:
-		raise exceptions.APIForumSubscriptionNotFound(forum.id)
+		raise exceptions.APIForumSubscriptionNotFound
 
 	flask.g.sa_session.delete(existing_subscription)
 

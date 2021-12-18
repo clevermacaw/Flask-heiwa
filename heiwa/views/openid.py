@@ -83,7 +83,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 	"""
 
 	if client_name not in flask.current_app.config["OPENID_SERVICES"]:
-		raise exceptions.APIOpenIDServiceNotFound(client_name)
+		raise exceptions.APIOpenIDServiceNotFound
 
 	# Delete all expired entries
 	flask.g.sa_session.execute(
@@ -213,7 +213,7 @@ def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 	"""
 
 	if client_name not in flask.current_app.config["OPENID_SERVICES"]:
-		raise exceptions.APIOpenIDServiceNotFound(client_name)
+		raise exceptions.APIOpenIDServiceNotFound
 
 	with authlib.integrations.requests_client.OAuth2Session(
 		**get_config(client_name)

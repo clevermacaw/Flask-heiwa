@@ -33,6 +33,11 @@ __all__ = [
 	"APIJWTInvalid",
 	"APIJWTInvalidClaims",
 	"APIJWTUserNotFound",
+	"APIMessageCannotMarkSentAsRead",
+	"APIMessageCannotSendToSelf",
+	"APIMessageNotFound",
+	"APIMessageReceiverBlockedSender",
+	"APIMessageUnchanged",
 	"APINoPermission",
 	"APINotificationNotFound",
 	"APIOpenIDAuthenticationFailed",
@@ -68,7 +73,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.30.2"
+__version__ = "1.31.0"
 
 
 class APIException(Exception):
@@ -307,6 +312,44 @@ class APIJWTUserNotFound(APIException):
 	"""
 
 	code = helpers.STATUS_NOT_FOUND
+
+
+class APIMessageCannotSendToSelf(APIException):
+	"""Exception class for when a user attempts to send a message to
+	themselves.
+	"""
+
+	code = helpers.STATUS_FORBIDDEN
+
+
+class APIMessageCannotMarkSentAsRead(APIException):
+	"""Exception class for when a user attempts to mark a message as read,
+	but they're also its sender.
+	"""
+
+	code = helpers.STATUS_FORBIDDEN
+
+
+class APIMessageNotFound(APIException):
+	"""Exception class for when a requested message
+	(e.g. ``'/messages/inexistent-id'``) does not exist.
+	"""
+
+	code = helpers.STATUS_NOT_FOUND
+
+
+class APIMessageReceiverBlockedSender(APIException):
+	"""Exception class for when a user attempts to send a message to another user,
+	but they've blocked them.
+	"""
+
+	code = helpers.STATUS_FORBIDDEN
+
+
+class APIMessageUnchanged(APIException):
+	"""Exception class for when a user attempts to edit a message,
+	but all values are the exact same as the existing ones.
+	"""
 
 
 class APINoPermission(APIException):
