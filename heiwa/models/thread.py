@@ -36,11 +36,11 @@ class ThreadVote(
 	Base
 ):
 	"""A ``Thread`` helper model for storing votes. Contains:
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A ``thread_id`` column, associating the instance with a ``Thread``.
-		- A ``user_id`` column, associating the instance with a ``User``.
-		- An ``upvote`` column, signifying whether this is a downvote or an upvote.
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A ``thread_id`` column, associating the instance with a ``Thread``.
+		#. A ``user_id`` column, associating the instance with a ``User``.
+		#. An ``upvote`` column, signifying whether this is a downvote or an upvote.
 	"""
 
 	__tablename__ = "thread_votes"
@@ -69,16 +69,6 @@ class ThreadVote(
 		index=True,
 		nullable=False
 	)
-
-	def __repr__(self: ThreadVote) -> str:
-		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
-		which uses the ``id`` attribute this model lacks.
-		"""
-
-		return self._repr(
-			thread_id=self.thread_id,
-			user_id=self.user_id
-		)
 
 
 thread_subscribers = sqlalchemy.Table(
@@ -117,27 +107,27 @@ class Thread(
 	Base
 ):
 	"""Thread model. Contains:
-		- An ``id`` column from the ``IdMixin``.
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A ``forum_id`` foreign key column, associating this thread with a
+		#. An ``id`` column from the ``IdMixin``.
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A ``forum_id`` foreign key column, associating this thread with a
 		``Forum``.
-		- A ``user_id`` foreign key column, associating this thread with its author,
+		#. A ``user_id`` foreign key column, associating this thread with its author,
 		a ``User``.
-		- An ``is_locked`` column, signifying whether or not this thread is locked.
-		- An ``is_pinned`` column, signifying whether or not this thread is pinned.
+		#. An ``is_locked`` column, signifying whether or not this thread is locked.
+		#. An ``is_pinned`` column, signifying whether or not this thread is pinned.
 		On frontend applications, this should make pinned threads float to the top
 		of their respective lists.
-		- A ``tags`` column, signifying this thread's tags
+		#. A ``tags`` column, signifying this thread's tags
 		(e.g. ``'Support'``, ``'Important'``).
-		- ``name`` and ``content`` columns.
-		- A dynamic ``vote_value`` column, corresponding to the total count of this
+		#. ``name`` and ``content`` columns.
+		#. A dynamic ``vote_value`` column, corresponding to the total count of this
 		thread's upvotes, with the downvotes' count subtracted.
-		- A dynamic ``post_count`` column, corresponding to how many posts exist
+		#. A dynamic ``post_count`` column, corresponding to how many posts exist
 		with this thread's ``id`` defined as their ``thread_id``.
-		- A dynamic ``subscriber_count`` column, corresponding to how many users
+		#. A dynamic ``subscriber_count`` column, corresponding to how many users
 		have subscribed to this thread.
-		- A dynamic ``last_post_timestamp`` column, corresponding to the latest
+		#. A dynamic ``last_post_timestamp`` column, corresponding to the latest
 		post in this thread's ``creation_timestamp``.
 	"""
 
@@ -449,9 +439,8 @@ class Thread(
 		session: sqlalchemy.orm.Session
 	) -> None:
 		"""Creates a notification about this thread for:
-			- Users subscribed to the parent forum.
-			- The author's followers. (Who aren't subscribed to the forum)
-		Adds the current instance to the ``session``.
+			#. Users subscribed to the parent forum.
+			#. The author's followers. (Who aren't subscribed to the forum)
 		"""
 
 		# Premature session add and flush. We have to access the ID later.

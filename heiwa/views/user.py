@@ -521,8 +521,8 @@ def delete(
 	"encrypted_private_key": {
 		"type": "binary",
 		"coerce": "decode_base64",
-		"minlength": 624,  # 1024-bit RSA private key, AES-CBC
-		"maxlength": 2352,  # 4096-bit private key, AES-CBC
+		"minlength": 624,  # 1024-bit RSA private key, AES-CBC, block size 16
+		"maxlength": 2352,  # 4096-bit private key, AES-CBC, block size 16
 		"nullable": True,
 		"required": True
 	},

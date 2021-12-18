@@ -19,7 +19,7 @@ import validators
 from .. import exceptions
 
 __all__ = ["APIValidator", "validate_json"]
-__version__ = "1.9.0"
+__version__ = "1.9.1"
 
 
 class APIValidator(cerberus.Validator):
@@ -108,9 +108,9 @@ class APIValidator(cerberus.Validator):
 		value: typing.Any
 	) -> None:
 		"""For every key in ``makes_required``:
-			- If the key's value is an iterable, and the corresponding field's
+			* If the key's value is an iterable, and the corresponding field's
 			value equals one of them, the field is treated as if it was required.
-			- If the key's value is not an iterable, and the corresponding field
+			* If the key's value is not an iterable, and the corresponding field
 			equals it, it's treated as if it was required.
 		The rule's arguments are validated against this schema:
 		{

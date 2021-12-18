@@ -68,14 +68,13 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.30.1"
+__version__ = "1.30.2"
 
 
 class APIException(Exception):
-	"""The base class for all API exceptions.
-	Default values:
-		- (HTTP) ``code``: ``500``
-		- ``details``: ``None``
+	"""The base class for all API exceptions. Default values:
+		* (HTTP) ``code``: ``500``
+		* ``details``: ``None``
 	"""
 
 	code = helpers.STATUS_INTERNAL_SERVER_ERROR

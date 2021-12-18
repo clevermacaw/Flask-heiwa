@@ -52,7 +52,7 @@ ATTR_SCHEMAS = {
 	"encrypted_content": {
 		"type": "binary",
 		"coerce": "decode_base64",
-		"minlength": 16,  # Min. AES-CBC length
+		"minlength": 16,  # Min. AES-CBC length, block size 16
 		"maxlength": 65552  # ~65536 character message, padding
 	}
 }

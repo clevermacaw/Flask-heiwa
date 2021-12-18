@@ -11,7 +11,7 @@ import flask
 from .. import exceptions, models
 
 __all__ = ["authenticate_via_jwt"]
-__version__ = "3.2.2"
+__version__ = "3.2.3"
 
 
 def authenticate_via_jwt(

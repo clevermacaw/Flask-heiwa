@@ -33,11 +33,11 @@ class PostVote(
 	Base
 ):
 	"""A ``Post`` helper model for storing votes. Contains:
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A ``post_id`` column, associating the instance with a ``Post``.
-		- A ``user_id`` column, associating the instance with a ``User``.
-		- An ``upvote`` column, signifying whether this is a downvote or an upvote.
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A ``post_id`` column, associating the instance with a ``Post``.
+		#. A ``user_id`` column, associating the instance with a ``User``.
+		#. An ``upvote`` column, signifying whether this is a downvote or an upvote.
 	"""
 
 	__tablename__ = "post_votes"
@@ -67,16 +67,6 @@ class PostVote(
 		nullable=False
 	)
 
-	def __repr__(self: PostVote) -> str:
-		"""Creates a __repr__ of the current instance. Overrides the mixin method,
-		which uses the "id" attribute this model lacks.
-		"""
-
-		return self._repr(
-			post_id=self.post_id,
-			user_id=self.user_id
-		)
-
 
 class Post(
 	CDWMixin,
@@ -88,15 +78,15 @@ class Post(
 	Base
 ):
 	"""Post model. Contains:
-		- An ``id`` column from the ``IdMixin``.
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A ``thread_id`` foreign key column, associating this post with its
+		#. An ``id`` column from the ``IdMixin``.
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A ``thread_id`` foreign key column, associating this post with its
 		``Thread``.
-		- A ``user_id`` foreign key column, associating this post with its author,
+		#. A ``user_id`` foreign key column, associating this post with its author,
 		a ``User``.
-		- A ``content`` column.
-		- A dynamic ``vote_value`` column, corresponding to the total count of this
+		#. A ``content`` column.
+		#. A dynamic ``vote_value`` column, corresponding to the total count of this
 		post's upvotes, with the downvotes' count subtracted.
 	"""
 
@@ -301,9 +291,8 @@ class Post(
 		session: sqlalchemy.orm.Session
 	) -> None:
 		"""Creates a notification about this post for:
-			- Users subscribed to the parent thread.
-			- The author's followers. (Who aren't subscribed to the thread)
-		Adds the current instance to the ``session``.
+			#. Users subscribed to the parent thread.
+			#. The author's followers. (Who aren't subscribed to the thread)
 		"""
 
 		# Premature session add and flush. We have to access the ID later.

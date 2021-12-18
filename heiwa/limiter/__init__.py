@@ -9,7 +9,7 @@ import limits.storage
 import limits.strategies
 
 __all__ = ["Limiter"]
-__version__ = "2.2.1"
+__version__ = "2.2.2"
 
 
 class Limiter:
@@ -110,13 +110,13 @@ class Limiter:
 			]
 		]
 	]:
-		"""Returns whether or not the user with the given identifier
-		(the output of ``self.key_func`` by default) can access ``endpoint``
-		(the output of ``self.endpoint_func`` by default) with its rate limit.
-		If ``add_expires`` is ``True`` and the user has passed the check,
-		the time when the lowest rate limit's entry in the storage expires
-		is also returned. Otherwise, if the user has not passed the check,
-		the storage expiration time of the rate limit it failed on is returned.
+		"""Returns whether or not the user with the given identifier (the output of
+		``key_func`` by default) can access ``endpoint`` (the output of
+		``endpoint_func`` by default) with its rate limit. If ``add_expires`` is
+		``True`` and the user has passed the check, the time when the lowest rate
+		limit's entry in the storage expires is also returned. Otherwise, if the
+		user has not passed the check, the storage expiration time of the rate
+		limit it failed on is returned.
 		"""
 
 		identifier = self.key_func() if identifier is None else identifier

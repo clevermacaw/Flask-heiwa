@@ -1,4 +1,4 @@
-"""Blueprints for different parts of the Heiwa API."""
+"""Blueprints for different parts of the API."""
 
 from . import helpers
 from .forum import forum_blueprint
@@ -25,4 +25,4 @@ __all__ = [
 	"thread_blueprint",
 	"user_blueprint"
 ]
-__version__ = "0.56.1"
+__version__ = "0.56.2"

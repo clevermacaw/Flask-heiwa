@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.14.1"
+__version__ = "0.14.2"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -24,11 +24,11 @@ class ConfiguredLockFlask(flask.Flask):
 	@property
 	@functools.lru_cache()
 	def configured(self: ConfiguredLockFlask) -> bool:
-		"""Returns whether or not this instance has been configured.
-		This value depends on whether or not either the file located at
-		the ``CONFIGURED_LOCK_LOCATION`` environment variable exists, or the
-		``$current_working_directory/configured.lock`` file exists.
-		(Exists → False, Doesn't exist → True)
+		"""Returns whether or not this app has been configured. This depends on
+		whether or not the file located where the ``'CONFIGURED_LOCK_LOCATION'``
+		environment variable (or ``'$current_working_directory/configured.lock'``,
+		if it's unset) describes. If it does exist, it has not been configured.
+		Otherwise, it has.
 		"""
 
 		return not os.path.isfile(
@@ -43,8 +43,8 @@ class ConfiguredLockFlask(flask.Flask):
 		self: ConfiguredLockFlask,
 		configured: bool
 	) -> None:
-		"""Sets whether or not this instance has been configured, and clears
-		the getter's cache.
+		"""Sets whether or not this app has been configured, creates or removes
+		the lock file, and clears the getter's cache.
 		"""
 
 		location = os.environ.get(
@@ -61,11 +61,10 @@ class ConfiguredLockFlask(flask.Flask):
 
 
 def create_app() -> ConfiguredLockFlask:
-	"""Creates a pre-configured ``ConfiguredLockFlask`` Heiwa app.
-	If the file defining whether or not this app has been configured
-	before exists (meaning that isn't the case), the database models
-	and tables are also created. Once that's done, default groups are
-	also created.
+	r"""Creates a pre-configured ``ConfiguredLockFlask`` app. If the app is
+	detected as not having been fully configured before, all database models and
+	tables are also created. Once that's done, default ``Group``\ s are also
+	created.
 	"""
 
 	app = ConfiguredLockFlask(__name__)

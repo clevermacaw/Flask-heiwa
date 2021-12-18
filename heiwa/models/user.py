@@ -121,13 +121,13 @@ class UserBan(
 	Base
 ):
 	"""``User`` ban helper model. Contains:
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A ``user_id`` foreign key column, associating this instance with its
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A ``user_id`` foreign key column, associating this instance with its
 		``User``.
-		- An ``expiration_timestamp`` column, signifying the time of this ban's
+		#. An ``expiration_timestamp`` column, signifying the time of this ban's
 		expiry.
-		- A nullable ``reason`` column.
+		#. A nullable ``reason`` column.
 	"""
 
 	__tablename__ = "user_bans"
@@ -152,15 +152,6 @@ class UserBan(
 		nullable=True
 	)
 
-	def __repr__(self: UserBan) -> str:
-		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
-		which uses the ``id`` attribute this model lacks.
-		"""
-
-		return self._repr(
-			user_id=self.user_id
-		)
-
 
 class UserPermissions(
 	CDWMixin,
@@ -171,10 +162,10 @@ class UserPermissions(
 	Base
 ):
 	"""``User`` permission helper model. Contains:
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- All columns from the ``BasePermissionMixin``.
-		- A ``user_id`` foreign key column, associating this instance with its
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. All columns from the ``BasePermissionMixin``.
+		#. A ``user_id`` foreign key column, associating this instance with its
 		``User``.
 	"""
 
@@ -190,15 +181,6 @@ class UserPermissions(
 		primary_key=True
 	)
 
-	def __repr__(self: UserPermissions) -> str:
-		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
-		which uses the ``id`` attribute this model lacks.
-		"""
-
-		return self._repr(
-			user_id=self.user_id
-		)
-
 
 class User(
 	CDWMixin,
@@ -210,47 +192,47 @@ class User(
 	Base
 ):
 	"""User model. Contains:
-		- An ``id`` column from the ``IdMixin``.
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A nullable ``registered_by`` column that contains the service this user
+		#. An ``id`` column from the ``IdMixin``.
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A nullable ``registered_by`` column that contains the service this user
 		was registered by. Groups whose ``default_for`` is at the start of it will
 		automatically be assigned to this user. By default, the only two services
 		that can register users are ``'/openid'`` and ``'/guest'`` APIs.
-		- A nullable ``external_id`` column, the service this user was registered
+		#. A nullable ``external_id`` column, the service this user was registered
 		by's identifier for them.
-		- An ``avatar_type`` column, containing the MIME type of this user's
+		#. An ``avatar_type`` column, containing the MIME type of this user's
 		avatar, if there is one.
-		- An ``is_banned`` column, specifying whether or not this user has been
+		#. An ``is_banned`` column, specifying whether or not this user has been
 		banned.
-		- A JSON ``parsed_permissions`` column, containing this user's parsed
+		#. A JSON ``parsed_permissions`` column, containing this user's parsed
 		permissions. This is a combination of this user's group's permissions
 		(where groups with the highest ``level`` take precedence), and this user's
 		specific permissions.
-		- An ``encrypted_private_key`` column, optionally used to store an encrypted
-		- A ``public_key`` column, containing this user's raw RSA public key.
+		#. An ``encrypted_private_key`` column, optionally used to store an encrypted
+		#. A ``public_key`` column, containing this user's raw RSA public key.
 		version of this user's RSA private key. If desired, this can be left empty
 		with a public key still present.
-		- Nullable ``name`` and ``status`` columns.
-		- A dynamic, deferred ``followee_count`` column, corresponding to how many
+		#. Nullable ``name`` and ``status`` columns.
+		#. A dynamic, deferred ``followee_count`` column, corresponding to how many
 		users this user has followed.
-		- A dynamic, deferred ``follower_count`` column, corresponding to how many
+		#. A dynamic, deferred ``follower_count`` column, corresponding to how many
 		users have followed this user.
-		- A dynamic, deferred ``forum_count`` column, corresponding to how many
+		#. A dynamic, deferred ``forum_count`` column, corresponding to how many
 		forums with this user's ``id`` in their ``user_id`` column exist.
-		- A dynamic, deferred ``message_received_count`` coulumn corresponding to
+		#. A dynamic, deferred ``message_received_count`` coulumn corresponding to
 		how many messages this user has received.
-		- A dynamic, deferred ``message_received_unread_count`` column corresponding
+		#. A dynamic, deferred ``message_received_unread_count`` column corresponding
 		to how many messages this user has received, and hasn't read yet.
-		- A dynamic, deferred ``message_sent_count`` coulumn corresponding to
+		#. A dynamic, deferred ``message_sent_count`` coulumn corresponding to
 		how many messages this user has sent.
-		- A dynamic, deferred ``notification_count`` column corresponding to how
+		#. A dynamic, deferred ``notification_count`` column corresponding to how
 		many notifications with this user's ``id`` in their ``user_id`` column exist.
-		- A dynamic, deferred ``notification_unread_count`` column corresponding to
+		#. A dynamic, deferred ``notification_unread_count`` column corresponding to
 		how many unread notifications this user has.
-		- A dynamic, deferred ``post_count`` column, corresponding to how many
+		#. A dynamic, deferred ``post_count`` column, corresponding to how many
 		posts with this user's ``id`` in their ``user_id`` column exist.
-		- A dynamic, deferred ``thread_count`` column, corresponding to how many
+		#. A dynamic, deferred ``thread_count`` column, corresponding to how many
 		thread with this user's ``id`` in their ``user_id`` column exist.
 	"""
 
@@ -558,13 +540,12 @@ class User(
 		session: sqlalchemy.orm.Session,
 		bypass_first_user_check: bool = False
 	) -> None:
-		"""If no groups are specified, sets ``self.groups`` to all ``Group``s where
-		``default_for`` contains the service this user was registered by, or ``*``.
-		If the current app is not configured (presumably, no users exist), and
-		``bypass_first_user_check`` is ``False``, ``Group``s specified in
-		``GROUPS_FIRST_USER`` will be added as well.
-		If no ``parsed_permissions`` are specified, they are automatically parsed.
-		Adds the current instance to the ``session``.
+		r"""If no groups are specified, sets this user's groups to all ``Group``\ s
+		where ``default_for`` contains the service this user was registered by,
+		or ``'*'``. If the current app is not configured (presumably, no users
+		exist), and ``bypass_first_user_check`` is ``False``, ``Group``\ s specified
+		in the ``GROUPS_FIRST_USER`` config key will be added as well. If no
+		``parsed_permissions`` are specified, they are automatically parsed.
 		"""
 
 		if self.parsed_permissions is None:
@@ -787,10 +768,11 @@ class User(
 		] = None
 	) -> None:
 		"""Sets this user's ``parsed_permissions`` column to the combination of:
-			- This user's group permissions, where the group with the highest
+			#. This user's group permissions, where the group with the highest
 			``level`` is most important.
-			- This user's permissions.
-		The ``session`` argument is only meant to be used during the initial creation
+			#. This user's permissions.
+		Where the lower on the list an item is, the higher priority it has. The
+		``session`` argument is only meant to be used during the initial creation
 		of this user, but it doesn't have to be.
 		"""
 

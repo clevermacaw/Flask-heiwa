@@ -261,11 +261,11 @@ class ForumParsedPermissions(
 ):
 	"""A ``Forum`` helper model to store cached parsed permissions for specific
 	users. Not meant to be exposed directly. Contains:
-		- A ``forum_id`` foreign key column, associating the instance with a
+		#. A ``forum_id`` foreign key column, associating the instance with a
 		``Forum``.
-		- A ``user_id`` foreign key column, associating the instance with a
+		#. A ``user_id`` foreign key column, associating the instance with a
 		``User``.
-		- All columns from the ``ForumPermissionMixin``, but non-nullable.
+		#. All columns from the ``ForumPermissionMixin``, but non-nullable.
 	"""
 
 	__tablename__ = "forum_parsed_permissions"
@@ -422,16 +422,6 @@ class ForumParsedPermissions(
 		nullable=False
 	)
 
-	def __repr__(self: ForumParsedPermissions) -> str:
-		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
-		which uses the ``id`` attribute this model lacks.
-		"""
-
-		return self._repr(
-			forum_id=self.forum_id,
-			user_id=self.user_id
-		)
-
 
 class ForumPermissionsGroup(
 	ForumPermissionMixin,
@@ -441,15 +431,15 @@ class ForumPermissionsGroup(
 	EditInfoMixin,
 	Base
 ):
-	"""A ``Forum`` helper mixin to store permissions for specific ``Group``s.
+	r"""A ``Forum`` helper mixin to store permissions for specific ``Group``\ s.
 	Contains:
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A ``forum_id`` foreign key column, associating the instance with a
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A ``forum_id`` foreign key column, associating the instance with a
 		``Forum``.
-		- A ``group_id`` foreign key column, associating the instance with a
+		#. A ``group_id`` foreign key column, associating the instance with a
 		``Group``.
-		- All columns from the ``ForumPemrissionMixin``.
+		#. All columns from the ``ForumPemrissionMixin``.
 	"""
 
 	__tablename__ = "forum_permissions_group"
@@ -478,7 +468,7 @@ class ForumPermissionsGroup(
 		session: sqlalchemy.orm.Session
 	) -> None:
 		"""Deletes the parent forum's ``ForumParsedPermissions`` for the members of
-		this instance's ``group_id``. Adds this instance to the ``session``.
+		this instance's ``group_id``.
 		"""
 
 		session.execute(
@@ -496,16 +486,6 @@ class ForumPermissionsGroup(
 
 		CDWMixin.write(self, session)
 
-	def __repr__(self: ForumPermissionsGroup) -> str:
-		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
-		which uses the ``id`` attribute this model lacks.
-		"""
-
-		return self._repr(
-			forum_id=self.forum_id,
-			group_id=self.group_id
-		)
-
 
 class ForumPermissionsUser(
 	ForumPermissionMixin,
@@ -515,14 +495,15 @@ class ForumPermissionsUser(
 	EditInfoMixin,
 	Base
 ):
-	"""A ``Forum`` helper mixin to store permissions for specific ``User``s.
+	r"""A ``Forum`` helper mixin to store permissions for specific ``User``\ s.
 	Contains:
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A ``forum_id`` foreign key column, associating the instance with a
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A ``forum_id`` foreign key column, associating the instance with a
 		``Forum``.
-		- A ``user_id`` foreign key column, associating the instance with a ``User``.
-		- All columns from the ``ForumPemrissionMixin``.
+		#. A ``user_id`` foreign key column, associating the instance with a
+		``User``.
+		#. All columns from the ``ForumPemrissionMixin``.
 	"""
 
 	__tablename__ = "forum_permissions_user"
@@ -551,7 +532,7 @@ class ForumPermissionsUser(
 		session: sqlalchemy.orm.Session
 	) -> None:
 		"""Deletes the parent forum's ``ForumParsedPermissions`` for
-		the associated user. Adds this instance to the ``session``.
+		the associated user.
 		"""
 
 		session.execute(
@@ -566,16 +547,6 @@ class ForumPermissionsUser(
 
 		CDWMixin.write(self, session)
 
-	def __repr__(self: ForumPermissionsUser) -> str:
-		"""Creates a ``__repr__`` of the current instance. Overrides the mixin method,
-		which uses the ``id`` attribute this model lacks.
-		"""
-
-		return self._repr(
-			forum_id=self.forum_id,
-			user_id=self.user_id
-		)
-
 
 class Forum(
 	CDWMixin,
@@ -587,21 +558,21 @@ class Forum(
 	Base
 ):
 	"""Forum model. Contains:
-		- An ``id`` column from the ``IdMixin``.
-		- A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		- ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		- A nullable ``parent_forum_id`` foreign key column that corresponds to
+		#. An ``id`` column from the ``IdMixin``.
+		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+		#. A nullable ``parent_forum_id`` foreign key column that corresponds to
 		this forum's parent. This can later be used for nested permissions, as
 		well as subforums.
-		- A ``user_id`` foreign key column, associating this forum with its author,
+		#. A ``user_id`` foreign key column, associating this forum with its author,
 		a ``User``.
-		- ``name`` and ``description`` columns. ``description`` is nullable.
-		- An ``order`` column, used for default ordering.
-		- A dynamic ``subscriber_count`` column, corresponding to how many users
+		#. ``name`` and ``description`` columns. ``description`` is nullable.
+		#. An ``order`` column, used for default ordering.
+		#. A dynamic ``subscriber_count`` column, corresponding to how many users
 		have subscribed to this forum.
-		- A dynamic ``thread_count`` column, corresponding to how many threads exist
+		#. A dynamic ``thread_count`` column, corresponding to how many threads exist
 		with this forum's ``id`` defined as their ``forum_id``.
-		- A dynamic ``last_thread_timestamp`` column, corresponding to the latest
+		#. A dynamic ``last_thread_timestamp`` column, corresponding to the latest
 		thread in this forum's ``creation_timestamp``.
 	"""
 
@@ -1201,14 +1172,15 @@ class Forum(
 		] = None
 	) -> ForumParsedPermissions:
 		"""Sets the given user's ``ForumParsedPermissions`` to:
-			- The given ``user``'s ``parsed_permissions``.
-			- Any defined permissions for groups that this ``user`` is part of for
+			#. The given ``user``'s ``parsed_permissions``.
+			#. Any defined permissions for groups that this ``user`` is part of for
 			this forum, as well as the parent forum(s),
 			where the group with the highest level is most important.
-			- Any permissions specific to the given ``user`` defined for this forum,
+			#. Any permissions specific to the given ``user`` defined for this forum,
 			as well as the parent forum(s).
-		This instance of ``ForumParsedPermissions`` is created if inexistent,
-		then filled with the calculated values.
+		Where the lower on the list an item is, the higher priority it has. This
+		instance of ``ForumParsedPermissions`` is created if inexistent, then filled
+		with the calculated values.
 		"""
 
 		if session is None:

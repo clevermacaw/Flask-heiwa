@@ -329,12 +329,12 @@ class CreationTimestampMixin:
 class EditInfoMixin:
 	"""A helper mixin which contains information about the mixed-in object's
 	edits. Contains:
-		- A timezone-aware timestamp column named ``edit_timestamp``, which will
+		#. A timezone-aware timestamp column named ``edit_timestamp``, which will
 		be set to the current time whenever the ``edited`` method is called.
 		The ``onupdate`` property will unfortunately not work here, since some
 		columns aren't changed explicitly by users, and updates on those columns
 		shouldn't be counted as "real".
-		- A nullable ``edit_count`` column, which signals how many times the
+		#. A nullable ``edit_count`` column, which signals how many times the
 		mixed-in object has been edited, and increments by 1 every time the
 		``edited`` method is called. The default value is ``0``. This is primarily
 		for detecting database collisions, but is also useful for other things.
@@ -425,8 +425,8 @@ class PermissionControlMixin:
 		user
 	) -> typing.List[str]:
 		"""Returns all columns in this instance that ``user`` is allowed to view
-		as per ``viewable_columns``. If the variable is an empty ``set``,
-		all columns are returned.
+		as per ``viewable_columns``. If the variable is an empty set, all columns
+		are returned.
 		"""
 
 		if self.viewable_columns == {}:
@@ -477,18 +477,23 @@ class ReprMixin:
 	"""A helper mixin which adds a default, pretty ``__repr__`` method."""
 
 	def __repr__(self: ReprMixin) -> str:
-		"""Returns the ``self._repr`` method with a mapped ``id`` column,
-		assuming it exists.
+		"""Returns the ``_repr`` method with all of the mixed-in model's primary
+		keys.
 		"""
 
-		return self._repr(id=self.id)
+		return self._repr(
+			**{
+				primary_key.key: getattr(self, primary_key.key)
+				for primary_key in sqlalchemy.inspect(self).mapper.primary_key
+			}
+		)
 
 	def _repr(
 		self: ReprMixin,
 		**fields: typing.Dict[str, typing.Any]
 	) -> str:
-		"""Automatically generates a pretty ``__repr__``,
-		based on keyword arguments.
+		"""Automatically generates a pretty ``__repr__``, based on keyword
+		arguments.
 		"""
 
 		field_strings = []
