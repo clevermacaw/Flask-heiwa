@@ -33,7 +33,7 @@ __all__ = [
 	"APIJWTInvalid",
 	"APIJWTInvalidClaims",
 	"APIJWTUserNotFound",
-	"APIMessageCannotMarkSentAsRead",
+	"APIMessageCannotChangeIsReadOfSent",
 	"APIMessageCannotSendToSelf",
 	"APIMessageNotFound",
 	"APIMessageReceiverBlockedSender",
@@ -322,8 +322,8 @@ class APIMessageCannotSendToSelf(APIException):
 	code = helpers.STATUS_FORBIDDEN
 
 
-class APIMessageCannotMarkSentAsRead(APIException):
-	"""Exception class for when a user attempts to mark a message as read,
+class APIMessageCannotChangeIsReadOfSent(APIException):
+	"""Exception class for when a user attempts to mark a message as read / unread,
 	but they're also its sender.
 	"""
 

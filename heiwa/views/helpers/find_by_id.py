@@ -29,16 +29,7 @@ def find_forum_by_id(
 		heiwa.models.ForumParsedPermissions.user_id == user.id
 	)
 
-	first_iteration = True
-
-	while first_iteration or (row is not None and not row[1]):
-		if not first_iteration:
-			row[0].reparse_permissions(user)
-
-			session.commit()
-
-		first_iteration = False
-
+	while True:
 		row = session.execute(
 			sqlalchemy.select(
 				heiwa.models.Forum,
@@ -72,10 +63,19 @@ def find_forum_by_id(
 			)
 		).one_or_none()
 
-	if row is None:
-		raise heiwa.exceptions.APIForumNotFound(id_)
+		if row is not None:
+			forum, parsed_permissions_exist = row
 
-	return row[0]
+			if parsed_permissions_exist:
+				break
+			else:
+				forum.reparse_permissions(user)
+
+				session.commit()
+		else:
+			raise heiwa.exceptions.APIForumNotFound
+
+	return forum
 
 
 def find_group_by_id(
@@ -116,16 +116,7 @@ def find_thread_by_id(
 		heiwa.models.ForumParsedPermissions.user_id == user.id
 	)
 
-	first_iteration = True
-
-	while first_iteration or (row is not None and not row[1]):
-		if not first_iteration:
-			row[0].forum.reparse_permissions(user)
-
-			session.commit()
-
-		first_iteration = False
-
+	while True:
 		row = session.execute(
 			sqlalchemy.select(
 				heiwa.models.Thread,
@@ -159,10 +150,19 @@ def find_thread_by_id(
 			)
 		).one_or_none()
 
-	if row is None:
-		raise heiwa.exceptions.APIThreadNotFound(id_)
+		if row is not None:
+			thread, parsed_forum_permissions_exist = row
 
-	return row[0]
+			if parsed_forum_permissions_exist:
+				break
+			else:
+				thread.forum.reparse_permissions(user)
+
+				session.commit()
+		else:
+			raise heiwa.exceptions.APIThreadNotFound
+
+	return thread
 
 
 def find_user_by_id(

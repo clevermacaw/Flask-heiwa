@@ -16,10 +16,10 @@ import cerberus
 import flask
 import validators
 
-from .. import exceptions
+from .. import exceptions, types
 
 __all__ = ["APIValidator", "validate_json"]
-__version__ = "1.9.1"
+__version__ = "1.10.0"
 
 
 class APIValidator(cerberus.Validator):
@@ -94,6 +94,23 @@ class APIValidator(cerberus.Validator):
 			value,
 			validate=True
 		)
+
+	def _validate_length_divisible_by(
+		self: APIValidator,
+		divider: int,
+		field: str,
+		value: types.SupportsLength
+	) -> None:
+		"""Checks whether or not the length of ``value`` is divisible by ``divider``.
+		If not, an error is raised.
+		The rule's arguments are validated against this schema:
+		{
+			'type': 'integer'
+		}
+		"""
+
+		if len(value) % divider != 0:
+			self._error(field, f"length must be divisible by {divider}")
 
 	def _validate_makes_required(
 		self: APIValidator,

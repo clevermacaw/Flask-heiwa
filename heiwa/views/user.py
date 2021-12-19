@@ -22,7 +22,7 @@ from .helpers import (
 	PERMISSION_KEY_SCHEMA,
 	find_group_by_id,
 	find_user_by_id,
-	generate_list_schema,
+	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
@@ -124,7 +124,7 @@ ATTR_SCHEMAS = {
 	}
 }
 
-LIST_SCHEMA = generate_list_schema(
+SEARCH_SCHEMA = generate_search_schema(
 	(
 		"creation_timestamp",
 		"edit_timestamp",
@@ -357,7 +357,7 @@ def get_user_self_or_id(
 
 @user_blueprint.route("/users", methods=["GET"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -398,7 +398,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 @user_blueprint.route("/users", methods=["DELETE"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -1005,7 +1005,7 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	methods=["GET"]
 )
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -1068,7 +1068,7 @@ def list_followers(
 	methods=["GET"]
 )
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt

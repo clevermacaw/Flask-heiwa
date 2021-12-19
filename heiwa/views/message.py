@@ -15,7 +15,7 @@ from .. import (
 
 from .helpers import (
 	find_user_by_id,
-	generate_list_schema,
+	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search
 )
@@ -61,6 +61,7 @@ ATTR_SCHEMAS = {
 	"encrypted_session_key": {
 		"type": "binary",
 		"coerce": "decode_base64",
+		"length_divisible_by": 16,
 		"minlength": 128,  # encrypted with 1024-bit RSA
 		"maxlength": 512   # encrypted with 4096-bit RSA
 	},
@@ -72,6 +73,7 @@ ATTR_SCHEMAS = {
 	"encrypted_content": {
 		"type": "binary",
 		"coerce": "decode_base64",
+		"length_divisible_by": 16,
 		"minlength": 16,  # Min. AES-CBC length, block size 16
 		"maxlength": 65552  # ~65536 character message, padding
 	}
@@ -96,7 +98,7 @@ CREATE_EDIT_SCHEMA = {
 		"required": True
 	}
 }
-LIST_SCHEMA = generate_list_schema(
+SEARCH_SCHEMA = generate_search_schema(
 	(
 		"creation_timestamp",
 		"edit_timestamp",
@@ -280,6 +282,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 	message = models.Message.create(
 		flask.g.sa_session,
+		sender_id=flask.g.user.id,
 		**flask.g.json
 	)
 
@@ -290,7 +293,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 @message_blueprint.route("", methods=["GET"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -335,7 +338,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 @message_blueprint.route("", methods=["DELETE"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -389,14 +392,110 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
 
 
+@message_blueprint.route("", methods=["PUT"])
+@validators.validate_json(
+	{
+		**SEARCH_SCHEMA,
+		"values": {
+			"type": "dict",
+			"minlength": 1,
+			"schema": {
+				"receiver_id": {
+					**ATTR_SCHEMAS["receiver_id"],
+					"required": False  # Explicit just in case
+				},
+				"is_read": {
+					**ATTR_SCHEMAS["is_read"],
+					"required": False
+				},
+				"encrypted_session_key": {
+					**ATTR_SCHEMAS["encrypted_session_key"],
+					"required": False
+				},
+				"tag": {
+					**ATTR_SCHEMAS["tag"],
+					"nullable": True,
+					"required": False
+				},
+				"encrypted_content": {
+					**ATTR_SCHEMAS["encrypted_content"],
+					"required": False
+				}
+			}
+		}
+	},
+	schema_registry=SEARCH_SCHEMA_REGISTRY
+)
+@authentication.authenticate_via_jwt
+def mass_edit() -> typing.Tuple[flask.Response, int]:
+	"""Updates all messages sent or received by ``flask.g.user`` that match the
+	requested filter, if there is one. If ``'is_read'`` is part of the values to
+	update, only received messages are considered.
+
+	.. [#]
+		_Receiver ID editing footnote
+		Changing the receiver ID originally wasn't allowed, but there are edge
+		cases where it could be helpful - like a user migrating to a new account
+		where they've kept their previous public key they also use elsewhere.
+		And since there isn't any real reason to prevent users from doing it,
+		it's now allowed.
+	"""
+
+	conditions = (models.Message.receiver_id == flask.g.user.id)
+
+	# Don't change read status of sent messages
+	if "is_read" not in flask.g.json["values"]:
+		conditions = sqlalchemy.or_(
+			conditions,
+			models.Message.sender_id == flask.g.user.id
+		)
+
+	if "filter" in flask.g.json:
+		conditions = sqlalchemy.and_(
+			conditions,
+			parse_search(
+				flask.g.json["filter"],
+				models.Message
+			)
+		)
+
+	order_column = getattr(
+		models.Message,
+		flask.g.json["order"]["by"]
+	)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.update(models.Message).
+		where(
+			models.Message.id.in_(
+				sqlalchemy.select(models.Message.id).
+				where(conditions).
+				order_by(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				).
+				limit(flask.g.json["limit"]).
+				offset(flask.g.json["offset"])
+			)
+		).
+		values(**flask.g.json["values"]).
+		execution_options(synchronize_session="fetch")
+	)
+
+	flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
 @message_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the message with the requested ``id_``, provided that it exists
 	and has been either sent or received by the current user.
 
-	.. [#]
-		See the `Received message deletion footnote`_ for the ``mass_delete``
+	.. seealso::
+		The `Received message deletion footnote`_ for the ``mass_delete``
 		endpoint.
 	"""
 
@@ -412,18 +511,20 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 
 @message_blueprint.route("/<uuid:id_>", methods=["PUT"])
-@validators.validate_json(CREATE_EDIT_SCHEMA)
+@validators.validate_json({
+	"is_read": {
+		**ATTR_SCHEMAS["is_read"],
+		"required": True
+	},
+	**CREATE_EDIT_SCHEMA
+})
 @authentication.authenticate_via_jwt
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the message with the requested ``id_`` with the requested values,
 	provided that it exists and the current user has either sent or receieved it.
 
-	.. [#]
-		Changing the receiver ID originally wasn't allowed, but there are edge
-		cases where it could be helpful - like a user migrating to a new account
-		where they've kept their previous public key they also use elsewhere.
-		And since there isn't any real reason to prevent users from doing it,
-		it's now allowed.
+	.. seealso::
+		The `Receiver ID editing footnote`_ for the ``mass_edit`` endpoint.
 	"""
 
 	message = find_message_by_id(
@@ -436,7 +537,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		message.sender_id == flask.g.user.id and
 		message.is_read != flask.g.json["is_read"]
 	):
-		raise exceptions.APIMessageCannotMarkSentAsRead
+		raise exceptions.APIMessageCannotChangeIsReadOfSent
 
 	unchanged = True
 

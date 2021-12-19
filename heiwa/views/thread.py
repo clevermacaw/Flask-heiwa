@@ -16,7 +16,7 @@ from .. import (
 from .helpers import (
 	find_forum_by_id,
 	find_thread_by_id,
-	generate_list_schema,
+	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
@@ -130,7 +130,7 @@ CREATE_EDIT_SCHEMA = {
 		"required": True
 	}
 }
-LIST_SCHEMA = generate_list_schema(
+SEARCH_SCHEMA = generate_search_schema(
 	(
 		"creation_timestamp",
 		"edit_timestamp",
@@ -308,6 +308,77 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 })
 
 
+def get_thread_ids_from_search(
+	conditions: typing.Union[
+		sqlalchemy.sql.expression.BinaryExpression,
+		sqlalchemy.sql.expression.ClauseList
+	],
+	inner_conditions: typing.Union[
+		sqlalchemy.sql.expression.BinaryExpression,
+		sqlalchemy.sql.expression.ClauseList
+	]
+) -> typing.List[uuid.UUID]:
+	"""Returns the IDs of threads that match the current search query, and
+	``conditions``.
+	"""
+	if "filter" in flask.g.json:
+		conditions = sqlalchemy.and_(
+			conditions,
+			parse_search(
+				flask.g.json["filter"],
+				models.Thread
+			)
+		)
+
+	order_column = getattr(
+		models.Thread,
+		flask.g.json["order"]["by"]
+	)
+
+	thread_without_parsed_forum_permissions_exists = False
+	first_iteration = True
+
+	while first_iteration or thread_without_parsed_forum_permissions_exists:
+		first_iteration = False
+		thread_without_parsed_forum_permissions_exists = False
+
+		rows = flask.g.sa_session.execute(
+			sqlalchemy.select(
+				models.Thread,
+				(
+					sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+					where(inner_conditions).
+					exists()
+				)
+			).
+			where(conditions).
+			order_by(
+				sqlalchemy.asc(order_column)
+				if flask.g.json["order"]["asc"]
+				else sqlalchemy.desc(order_column)
+			).
+			limit(flask.g.json["limit"]).
+			offset(flask.g.json["offset"])
+		).all()
+
+		thread_ids = []
+
+		for row in rows:
+			thread_id, parsed_forum_permissions_exist = row
+
+			if not parsed_forum_permissions_exist:
+				thread_without_parsed_forum_permissions_exists = True
+
+				thread_id.forum.reparse_permissions(flask.g.user)
+
+			thread_ids.append(thread_id)
+
+		if thread_without_parsed_forum_permissions_exists:
+			flask.g.sa_session.commit()
+
+	return thread_ids
+
+
 @thread_blueprint.route("", methods=["POST"])
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
@@ -356,7 +427,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("", methods=["GET"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -404,12 +475,12 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		flask.g.json["order"]["by"]
 	)
 
-	thread_without_forum_permissions_exists = False
+	thread_without_parsed_forum_permissions_exists = False
 	first_iteration = True
 
-	while first_iteration or thread_without_forum_permissions_exists:
+	while first_iteration or thread_without_parsed_forum_permissions_exists:
 		first_iteration = False
-		thread_without_forum_permissions_exists = False
+		thread_without_parsed_forum_permissions_exists = False
 
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
@@ -430,26 +501,27 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			offset(flask.g.json["offset"])
 		).all()
 
+		threads = []
+
 		for row in rows:
-			if not row[1]:
-				thread_without_forum_permissions_exists = True
+			thread, parsed_forum_permissions_exist = row
 
-				row[0].forum.reparse_permissions(flask.g.user)
+			if not parsed_forum_permissions_exist:
+				thread_without_parsed_forum_permissions_exists = True
 
-		if thread_without_forum_permissions_exists:
+				thread.forum.reparse_permissions(flask.g.user)
+
+			threads.append(thread)
+
+		if thread_without_parsed_forum_permissions_exists:
 			flask.g.sa_session.commit()
 
-	return flask.jsonify(
-		[
-			row[0]
-			for row in rows
-		]
-	), helpers.STATUS_OK
+	return flask.jsonify(threads), helpers.STATUS_OK
 
 
 @thread_blueprint.route("", methods=["DELETE"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -465,98 +537,48 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		models.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
-	conditions = sqlalchemy.or_(
-		~(
-			sqlalchemy.select(models.ForumParsedPermissions.forum_id).
-			where(inner_conditions).
-			exists()
-		),
-		(
-			sqlalchemy.select(models.ForumParsedPermissions.forum_id).
-			where(
-				sqlalchemy.and_(
-					inner_conditions,
-					models.ForumParsedPermissions.thread_view.is_(True),
-					sqlalchemy.or_(
-						sqlalchemy.and_(
-							models.Thread.user_id == flask.g.user.id,
-							models.ForumParsedPermissions.thread_delete_own.is_(True)
-						),
-						models.ForumParsedPermissions.thread_delete_any.is_(True)
+	thread_ids = get_thread_ids_from_search(
+		sqlalchemy.or_(
+			~(
+				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				where(inner_conditions).
+				exists()
+			),
+			(
+				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				where(
+					sqlalchemy.and_(
+						inner_conditions,
+						models.ForumParsedPermissions.thread_view.is_(True),
+						sqlalchemy.or_(
+							sqlalchemy.and_(
+								models.Thread.user_id == flask.g.user.id,
+								models.ForumParsedPermissions.thread_delete_own.is_(True)
+							),
+							models.ForumParsedPermissions.thread_delete_any.is_(True)
+						)
 					)
-				)
-			).
-			exists()
-		)
-	)
-
-	if "filter" in flask.g.json:
-		conditions = sqlalchemy.and_(
-			conditions,
-			parse_search(
-				flask.g.json["filter"],
-				models.Thread
+				).
+				exists()
 			)
-		)
-
-	order_column = getattr(
-		models.Thread,
-		flask.g.json["order"]["by"]
+		),
+		inner_conditions
 	)
 
-	thread_without_forum_permissions_exists = False
-	first_iteration = True
-
-	while first_iteration or thread_without_forum_permissions_exists:
-		first_iteration = False
-		thread_without_forum_permissions_exists = False
-
-		rows = flask.g.sa_session.execute(
-			sqlalchemy.select(
-				models.Thread,
-				(
-					sqlalchemy.select(models.ForumParsedPermissions.forum_id).
-					where(inner_conditions).
-					exists()
-				)
-			).
-			where(conditions).
-			order_by(
-				sqlalchemy.asc(order_column)
-				if flask.g.json["order"]["asc"]
-				else sqlalchemy.desc(order_column)
-			).
-			limit(flask.g.json["limit"]).
-			offset(flask.g.json["offset"])
-		).all()
-
-		ids = []
-
-		for row in rows:
-			ids.append(row[0].id)
-
-			if not row[1]:
-				thread_without_forum_permissions_exists = True
-
-				row[0].forum.reparse_permissions(flask.g.user)
-
-		if thread_without_forum_permissions_exists:
-			flask.g.sa_session.commit()
-
-	if len(ids) != 0:
+	if len(thread_ids) != 0:
 		flask.g.sa_session.execute(
 			sqlalchemy.delete(models.Notification).
 			where(
 				sqlalchemy.or_(
 					sqlalchemy.and_(
 						models.Notification.type.in_(models.Thread.NOTIFICATION_TYPES),
-						models.Notification.identifier.in_(ids)
+						models.Notification.identifier.in_(thread_ids)
 					),
 					sqlalchemy.and_(
 						models.Notification.type.in_(models.Post.NOTIFICATION_TYPES),
 						models.Notification.identifier.in_(
 							sqlalchemy.select(models.Post.id).
-							where(models.Post.thread_id.in_(ids))
+							where(models.Post.thread_id.in_(thread_ids))
 						)
 					)
 				)
@@ -566,7 +588,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 		flask.g.sa_session.execute(
 			sqlalchemy.delete(models.Thread).
-			where(models.Thread.id.in_(ids))
+			where(models.Thread.id.in_(thread_ids))
 		)
 
 		flask.g.sa_session.commit()

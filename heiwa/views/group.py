@@ -17,7 +17,7 @@ from .. import (
 from .helpers import (
 	BASE_PERMISSION_SCHEMA,
 	find_group_by_id,
-	generate_list_schema,
+	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
@@ -101,7 +101,7 @@ CREATE_EDIT_SCHEMA = {
 		"required": True
 	}
 }
-LIST_SCHEMA = generate_list_schema(
+SEARCH_SCHEMA = generate_search_schema(
 	(
 		"creation_timestamp",
 		"edit_timestamp",
@@ -286,7 +286,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 @group_blueprint.route("", methods=["GET"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -327,7 +327,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 @group_blueprint.route("", methods=["DELETE"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt

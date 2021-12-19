@@ -3,12 +3,12 @@ import typing
 import cerberus.schema
 
 __all__ = [
-	"generate_list_schema",
+	"generate_search_schema",
 	"generate_search_schema_registry"
 ]
 
 
-def generate_list_schema(
+def generate_search_schema(
 	allowed_order_attributes: typing.Iterable[str],
 	use_filter: bool = True,
 	default_order_by: str = None,
@@ -34,8 +34,8 @@ def generate_list_schema(
 			]
 		]
 	]:
-	"""Generates a Cerberus schema used for validating input to
-	all ``list_`` API endpoints.
+	"""Generates a Cerberus schema used for validating input to all ``list_``,
+	``mass_delete`` and ``mass_edit`` API endpoints.
 	"""
 
 	result = {

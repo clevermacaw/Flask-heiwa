@@ -14,7 +14,7 @@ from .. import (
 	validators
 )
 from .helpers import (
-	generate_list_schema,
+	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search
 )
@@ -55,7 +55,7 @@ ATTR_SCHEMAS = {
 	}
 }
 
-LIST_SCHEMA = generate_list_schema(
+SEARCH_SCHEMA = generate_search_schema(
 	("creation_timestamp",),
 	default_order_by="creation_timestamp",
 	default_order_asc=False
@@ -164,7 +164,7 @@ def find_notification_by_id(
 
 @notification_blueprint.route("", methods=["GET"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -206,7 +206,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 @notification_blueprint.route("", methods=["DELETE"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
@@ -252,7 +252,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 @notification_blueprint.route("/confirm-read", methods=["PUT"])
 @validators.validate_json(
-	LIST_SCHEMA,
+	SEARCH_SCHEMA,
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
