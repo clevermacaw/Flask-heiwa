@@ -232,17 +232,21 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(
-			sqlalchemy.select(models.Notification).
-			where(conditions).
-			order_by(
-				sqlalchemy.asc(order_column)
-				if flask.g.json["order"]["asc"]
-				else sqlalchemy.desc(order_column)
-			).
-			limit(flask.g.json["limit"]).
-			offset(flask.g.json["offset"])
-		)
+		sqlalchemy.delete(models.Notification).
+		where(
+			models.Notification.id.in_(
+				sqlalchemy.select(models.Notification.id).
+				where(conditions).
+				order_by(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				).
+				limit(flask.g.json["limit"]).
+				offset(flask.g.json["offset"])
+			)
+		).
+		execution_options(synchronize_session="fetch")
 	)
 
 	flask.g.sa_session.commit()

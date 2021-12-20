@@ -1039,7 +1039,6 @@ class Forum(
 
 	def get_subscriber_ids(
 		self: Forum,
-		user_id: uuid.UUID,
 		session: typing.Union[
 			None,
 			sqlalchemy.orm.Session

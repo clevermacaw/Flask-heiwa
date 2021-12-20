@@ -176,12 +176,11 @@ def validate_json(
 	]
 ]:
 	"""Checks JSON data sent in the ``flask.request`` against a Cerberus schema.
-	If there is no data at all, ``exceptions.APIJSONMissing`` will be raised.
-	If there is data, but it's not a dictionary as ``cerberus.Validator``
-	requires, ``exceptions.APIJSONInvalid`` will be raised will no additional
-	details. If the data is invalid as per the schema,
-	``exceptions.APIJSONInvalid`` will be raised with the validation errors
-	given in its details.
+	If there is no data at all, ``exceptions.APIJSONMissing`` will be raised. If
+	there is data, but it's not a dictionary as ``cerberus.Validator`` requires,
+	``exceptions.APIJSONInvalid`` will be raised will no additional details. If
+	the data is invalid as per the schema, ``exceptions.APIJSONInvalid`` will be
+	raised with the validation errors given in its details.
 	"""
 
 	def wrapper(

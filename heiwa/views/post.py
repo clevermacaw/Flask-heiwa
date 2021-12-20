@@ -566,13 +566,17 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	{
 		**SEARCH_SCHEMA,
 		"values": {
-			"thread_id": {
-				**ATTR_SCHEMAS["thread_id"],
-				"required": False
-			},
-			"content": {
-				**ATTR_SCHEMAS["content"],
-				"required": False
+			"type": "dict",
+			"minlength": 1,
+			"schema": {
+				"thread_id": {
+					**ATTR_SCHEMAS["thread_id"],
+					"required": False
+				},
+				"content": {
+					**ATTR_SCHEMAS["content"],
+					"required": False
+				}
 			}
 		}
 	},

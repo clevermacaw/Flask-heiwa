@@ -14,10 +14,10 @@ from .. import (
 )
 
 from .helpers import (
-	find_user_by_id,
 	generate_search_schema,
 	generate_search_schema_registry,
-	parse_search
+	parse_search,
+	validate_user_exists
 )
 
 __all__ = ["message_blueprint"]
@@ -262,7 +262,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 	if flask.g.json["receiver_id"] == flask.g.user.id:
 		raise exceptions.APIMessageCannotSendToSelf
 
-	receiver = find_user_by_id(
+	validate_user_exists(
 		flask.g.json["receiver_id"],
 		flask.g.sa_session
 	)
@@ -271,7 +271,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 		sqlalchemy.select(models.user_blocks.c.blockee_id).
 		where(
 			sqlalchemy.and_(
-				models.user_blocks.c.blocker_id == receiver.id,
+				models.user_blocks.c.blocker_id == flask.g.json["receiver_id"],
 				models.user_blocks.c.blockee_id == flask.g.user.id
 			)
 		).
@@ -374,17 +374,21 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(
-			sqlalchemy.select(models.Message).
-			where(conditions).
-			order_by(
-				sqlalchemy.asc(order_column)
-				if flask.g.json["order"]["asc"]
-				else sqlalchemy.desc(order_column)
-			).
-			limit(flask.g.json["limit"]).
-			offset(flask.g.json["offset"])
-		)
+		sqlalchemy.delete(models.Message).
+		where(
+			models.Message.id.in_(
+				sqlalchemy.select(models.Message.id).
+				where(conditions).
+				order_by(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				).
+				limit(flask.g.json["limit"]).
+				offset(flask.g.json["offset"])
+			)
+		).
+		execution_options(synchronize_session="fetch")
 	)
 
 	flask.g.sa_session.commit()
@@ -442,6 +446,12 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	conditions = (models.Message.receiver_id == flask.g.user.id)
+
+	if "receiver_id" in flask.g.json["values"]:
+		validate_user_exists(
+			flask.g.json["values"]["receiver_id"],
+			flask.g.sa_session
+		)
 
 	# Don't change read status of sent messages
 	if "is_read" not in flask.g.json["values"]:

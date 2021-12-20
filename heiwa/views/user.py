@@ -26,7 +26,8 @@ from .helpers import (
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
-	validate_permission
+	validate_permission,
+	validate_user_exists
 )
 
 __all__ = ["user_blueprint"]
@@ -74,6 +75,12 @@ ATTR_SCHEMAS = {
 	},
 	"is_banned": {
 		"type": "boolean"
+	},
+	"encrypted_private_key": {
+		"type": "binary",
+		"coerce": "decode_base64",
+		"minlength": 624,  # 1024-bit RSA private key, AES-CBC, block size 16
+		"maxlength": 2352  # 4096-bit private key, AES-CBC, block size 16
 	},
 	"public_key": {
 		"type": "binary",
@@ -440,17 +447,116 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(
-			sqlalchemy.select(models.User).
-			where(conditions).
-			order_by(
-				sqlalchemy.asc(order_column)
-				if flask.g.json["order"]["asc"]
-				else sqlalchemy.desc(order_column)
+		sqlalchemy.delete(models.User).
+		where(
+			models.User.id.in_(
+				sqlalchemy.select(models.User).
+				where(conditions).
+				order_by(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				).
+				limit(flask.g.json["limit"]).
+				offset(flask.g.json["offset"])
+			)
+		).
+		execution_options(synchronize_session="fetch")
+	)
+
+	flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
+@user_blueprint.route("/users", methods=["PUT"])
+@validators.validate_json(
+	{
+		**SEARCH_SCHEMA,
+		"values": {
+			"type": "dict",
+			"minlength": 1,
+			"schema": {
+				"name": {
+					**ATTR_SCHEMAS["name"],
+					"nullable": True,
+					"required": False
+				},
+				"status": {
+					**ATTR_SCHEMAS["status"],
+					"nullable": True,
+					"required": False
+				},
+				"encrypted_private_key": {
+					**ATTR_SCHEMAS["encrypted_private_key"],
+					"nullable": True,
+					"required": False
+				},
+				"public_key": {
+					**ATTR_SCHEMAS["public_key"],
+					"nullable": True,
+					"required": False
+				}
+			}
+		}
+	},
+	schema_registry=SEARCH_SCHEMA_REGISTRY
+)
+@authentication.authenticate_via_jwt
+@requires_permission("edit", models.User)
+def mass_edit() -> typing.Tuple[flask.Response, int]:
+	"""Updates all users that match the requested filter if there is one, and
+	``flask.g.user`` has permission to edit.
+	"""
+
+	conditions = sqlalchemy.or_(
+		models.User.id == flask.g.user.id,
+		(
+			sqlalchemy.select(models.Group.level).
+			where(
+				models.Group.id.in_(
+					sqlalchemy.select(models.user_groups.c.group_id).
+					where(models.user_groups.c.user_id == models.User.id)
+				)
 			).
-			limit(flask.g.json["limit"]).
-			offset(flask.g.json["offset"])
+			order_by(
+				sqlalchemy.desc(models.Group.level)
+			).
+			limit(1)
+		) < flask.g.user.highest_group.level
+	)
+
+	if "filter" in flask.g.json:
+		conditions = sqlalchemy.and_(
+			conditions,
+			parse_search(
+				flask.g.json["filter"],
+				models.User
+			)
 		)
+
+	order_column = getattr(
+		models.User,
+		flask.g.json["order"]["by"]
+	)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.update(models.User).
+		where(
+			models.User.id.in_(
+				sqlalchemy.select(models.User.id).
+				where(conditions).
+				order_by(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				).
+				limit(flask.g.json["limit"]).
+				offset(flask.g.json["offset"])
+			)
+		).
+		values(**flask.g.json["values"]).
+		execution_options(synchronize_session="fetch")
 	)
 
 	flask.g.sa_session.commit()
@@ -519,10 +625,7 @@ def delete(
 		"required": True
 	},
 	"encrypted_private_key": {
-		"type": "binary",
-		"coerce": "decode_base64",
-		"minlength": 624,  # 1024-bit RSA private key, AES-CBC, block size 16
-		"maxlength": 2352,  # 4096-bit private key, AES-CBC, block size 16
+		**ATTR_SCHEMAS["encrypted_private_key"],
 		"nullable": True,
 		"required": True
 	},
@@ -980,16 +1083,18 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	requested ``id_``.
 	"""
 
+	validate_user_exists(
+		id_,
+		flask.g.sa_session
+	)
+
 	return flask.jsonify(
 		flask.g.sa_session.execute(
 			sqlalchemy.select(models.user_blocks.c.blocker_id).
 			where(
 				sqlalchemy.and_(
 					models.user_blocks.c.blocker_id == flask.g.user.id,
-					models.user_blocks.c.blockee_id == find_user_by_id(
-						id_,
-						flask.g.sa_session
-					).id
+					models.user_blocks.c.blockee_id == id_
 				)
 			).
 			exists().
@@ -1216,16 +1321,18 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	requested ``id_``.
 	"""
 
+	validate_user_exists(
+		id_,
+		flask.g.sa_session
+	)
+
 	return flask.jsonify(
 		flask.g.sa_session.execute(
 			sqlalchemy.select(models.user_follows.c.follower_id).
 			where(
 				sqlalchemy.and_(
 					models.user_follows.c.follower_id == flask.g.user.id,
-					models.user_follows.c.followee_id == find_user_by_id(
-						id_,
-						flask.g.sa_session
-					).id
+					models.user_follows.c.followee_id == id_
 				)
 			).
 			exists().

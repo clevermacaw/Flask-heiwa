@@ -251,7 +251,7 @@ def check_if_last_default_group(group_id: uuid.UUID) -> bool:
 	"""
 
 	return flask.g.sa_session.execute(
-		sqlalchemy.select(models.Group).
+		sqlalchemy.select(models.Group.id).
 		where(
 			sqlalchemy.and_(
 				models.Group.id != group_id,
@@ -261,7 +261,8 @@ def check_if_last_default_group(group_id: uuid.UUID) -> bool:
 				)
 			)
 		).
-		exists()
+		exists().
+		select()
 	).scalars().one()
 
 
@@ -337,6 +338,105 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	and ``flask.g.user`` has permission to both view and delete.
 	"""
 
+	order_column = getattr(
+		models.Group,
+		flask.g.json["order"]["by"]
+	)
+
+	# Don't delete the last default group
+	conditions = (
+		models.Group.id != (
+			sqlalchemy.select(models.Group.id).
+			where(
+				models.Group.default_for.any(
+					"*",
+					operator=operator.eq
+				)
+			).
+			order_by(
+				# Order the opposite way
+
+				# TODO: Check if this always works. I think it does, but I can't quite
+				# get my head around what this does when presented with offsets in the
+				# deletion query.
+
+				sqlalchemy.asc(order_column)
+				if not flask.g.json["order"]["asc"]
+				else sqlalchemy.desc(order_column)
+			).
+			scalar_subquery()
+		)
+	)
+
+	if "filter" in flask.g.json:
+		conditions = sqlalchemy.and_(
+			conditions,
+			parse_search(
+				flask.g.json["filter"],
+				models.Group
+			)
+		)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.delete(models.Group).
+		where(
+			models.Group.id.in_(
+				sqlalchemy.select(models.Group.id).
+				where(conditions).
+				order_by(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				).
+				limit(flask.g.json["limit"]).
+				offset(flask.g.json["offset"])
+			)
+		).
+		execution_options(synchronize_session="fetch")
+	)
+
+	flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
+@group_blueprint.route("", methods=["PUT"])
+@validators.validate_json(
+	{
+		**SEARCH_SCHEMA,
+		"values": {
+			"type": "dict",
+			"minlength": 1,
+			"schema": {
+				"default_for": {
+					**ATTR_SCHEMAS["default_for"],
+					"required": False
+				},
+				"level": {
+					**ATTR_SCHEMAS["level"],
+					"required": False
+				},
+				"name": {
+					**ATTR_SCHEMAS["name"],
+					"required": False
+				},
+				"description": {
+					**ATTR_SCHEMAS["description"],
+					"nullable": True,
+					"required": False
+				}
+			}
+		}
+	},
+	schema_registry=SEARCH_SCHEMA_REGISTRY
+)
+@authentication.authenticate_via_jwt
+@requires_permission("edit", models.Group)
+def mass_edit() -> typing.Tuple[flask.Response, int]:
+	"""Updates all groups that match the requested filter if there is one,
+	and ``flask.g.user`` has permission to both view and edit.
+	"""
+
 	conditions = True
 
 	if "filter" in flask.g.json:
@@ -353,33 +453,26 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		flask.g.json["order"]["by"]
 	)
 
-	groups = flask.g.sa_session.execute(
-		sqlalchemy.select(models.Group).
-		where(conditions).
-		order_by(
-			sqlalchemy.asc(order_column)
-			if flask.g.json["order"]["asc"]
-			else sqlalchemy.desc(order_column)
+	flask.g.sa_session.execute(
+		sqlalchemy.update(models.Group).
+		where(
+			models.Group.id.in_(
+				sqlalchemy.select(models.Group.id).
+				where(conditions).
+				order_by(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				).
+				limit(flask.g.json["limit"]).
+				offset(flask.g.json["offset"])
+			)
 		).
-		limit(flask.g.json["limit"]).
-		offset(flask.g.json["offset"])
-	).scalars().all()
+		values(**flask.g.json["values"]).
+		execution_options(synchronize_session="fetch")
+	)
 
-	if len(groups) != 0:
-		ids = []
-
-		for group in groups:
-			ids.append(group.id)
-
-			if "*" in group.default_for and check_if_last_default_group(group.id):
-				raise exceptions.APIGroupCannotDeleteLastDefault(group.id)
-
-		flask.g.sa_session.execute(
-			sqlalchemy.delete(models.Group).
-			where(models.Group.id.in_(ids))
-		)
-
-		flask.g.sa_session.commit()
+	flask.g.sa_session.commit()
 
 	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
 

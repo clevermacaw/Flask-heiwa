@@ -1,10 +1,13 @@
 """Helpers for the API views."""
 
-from .find_by_id import (
+from .find_and_validate import (
 	find_forum_by_id,
 	find_group_by_id,
 	find_thread_by_id,
-	find_user_by_id
+	find_user_by_id,
+	validate_forum_exists,
+	validate_thread_exists,
+	validate_user_exists
 )
 from .jwt import create_jwt
 from .permissions import requires_permission, validate_permission
@@ -24,6 +27,9 @@ __all__ = [
 	"generate_search_schema_registry",
 	"parse_search",
 	"requires_permission",
-	"validate_permission"
+	"validate_permission",
+	"validate_forum_exists",
+	"validate_thread_exists",
+	"validate_user_exists"
 ]
-__version__ = "1.27.1"
+__version__ = "1.28.0"

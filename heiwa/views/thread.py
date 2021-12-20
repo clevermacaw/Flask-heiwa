@@ -20,7 +20,8 @@ from .helpers import (
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
-	validate_permission
+	validate_permission,
+	validate_thread_exists
 )
 
 __all__ = ["thread_blueprint"]
@@ -603,6 +604,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		**SEARCH_SCHEMA,
 		"values": {
 			"type": "dict",
+			"minlength": 1,
 			"schema": {
 				"forum_id": {
 					**ATTR_SCHEMAS["forum_id"],
@@ -977,16 +979,18 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	requested ``id_``.
 	"""
 
+	validate_thread_exists(
+		id_,
+		flask.g.sa_session,
+		flask.g.user
+	)
+
 	return flask.jsonify(
 		flask.g.sa_session.execute(
 			sqlalchemy.select(models.thread_subscribers.c.thread_id).
 			where(
 				sqlalchemy.and_(
-					models.thread_subscribers.c.thread_id == find_thread_by_id(
-						id_,
-						flask.g.sa_session,
-						flask.g.user
-					).id,
+					models.thread_subscribers.c.thread_id == id_,
 					models.thread_subscribers.c.user_id == flask.g.user.id
 				)
 			).
