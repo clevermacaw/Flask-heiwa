@@ -17,4 +17,3 @@ class SupportsLength(typing.Protocol):
 	@abc.abstractmethod
 	def __len__(self: SupportsLength) -> int:
 		pass
-

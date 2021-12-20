@@ -321,6 +321,7 @@ def get_thread_ids_from_search(
 	"""Returns the IDs of threads that match the current search query, and
 	``conditions``.
 	"""
+
 	if "filter" in flask.g.json:
 		conditions = sqlalchemy.and_(
 			conditions,
@@ -344,7 +345,7 @@ def get_thread_ids_from_search(
 
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
-				models.Thread,
+				models.Thread.id,
 				(
 					sqlalchemy.select(models.ForumParsedPermissions.forum_id).
 					where(inner_conditions).
@@ -589,6 +590,105 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		flask.g.sa_session.execute(
 			sqlalchemy.delete(models.Thread).
 			where(models.Thread.id.in_(thread_ids))
+		)
+
+		flask.g.sa_session.commit()
+
+	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+
+
+@thread_blueprint.route("", methods=["PUT"])
+@validators.validate_json(
+	{
+		**SEARCH_SCHEMA,
+		"values": {
+			"type": "dict",
+			"schema": {
+				"forum_id": {
+					**ATTR_SCHEMAS["forum_id"],
+					"required": False
+				},
+				"is_locked": {
+					**ATTR_SCHEMAS["is_locked"],
+					"required": False
+				},
+				"is_pinned": {
+					**ATTR_SCHEMAS["is_pinned"],
+					"required": False
+				},
+				"tags": {
+					**ATTR_SCHEMAS["tags"],
+					"required": False
+				},
+				"name": {
+					**ATTR_SCHEMAS["name"],
+					"required": False
+				},
+				"content": {
+					**ATTR_SCHEMAS["content"],
+					"required": False
+				}
+			}
+		}
+	},
+	schema_registry=SEARCH_SCHEMA_REGISTRY
+)
+@authentication.authenticate_via_jwt
+@requires_permission("edit", models.Thread)
+def mass_edit() -> typing.Tuple[flask.Response, int]:
+	"""Updates all threads that match the requested filter if there is one, and
+	``flask.g.user`` has permission to both view and edit. If parsed permissions
+	don't exist for their respective forums, they're automatically calculated.
+	"""
+
+	inner_conditions = sqlalchemy.and_(
+		models.Thread.forum_id == models.ForumParsedPermissions.forum_id,
+		models.ForumParsedPermissions.user_id == flask.g.user.id
+	)
+
+	thread_ids = get_thread_ids_from_search(
+		sqlalchemy.or_(
+			~(
+				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				where(inner_conditions).
+				exists()
+			),
+			(
+				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				where(
+					sqlalchemy.and_(
+						inner_conditions,
+						models.ForumParsedPermissions.thread_view.is_(True),
+						sqlalchemy.or_(
+							sqlalchemy.and_(
+								models.Thread.user_id == flask.g.user.id,
+								models.ForumParsedPermissions.thread_edit_own.is_(True)
+							),
+							models.ForumParsedPermissions.thread_edit_any.is_(True)
+						),
+						sqlalchemy.or_(
+							sqlalchemy.and_(
+								models.Thread.user_id == flask.g.user.id,
+								models.ForumParsedPermissions.thread_edit_lock_own.is_(True)
+							),
+							models.ForumParsedPermissions.thread_edit_lock_any.is_(True)
+						) if "is_locked" in flask.g.json else True,
+						(
+							models.ForumParsedPermissions.thread_edit_pin.is_(True)
+						) if "is_pinned" in flask.g.json else True
+					)
+				).
+				exists()
+			)
+		),
+		inner_conditions
+	)
+
+	if len(thread_ids) != 0:
+		flask.g.sa_session.execute(
+			sqlalchemy.update(models.Thread).
+			where(models.Thread.id.in_(thread_ids)).
+			values(**flask.g.json["values"])
 		)
 
 		flask.g.sa_session.commit()
