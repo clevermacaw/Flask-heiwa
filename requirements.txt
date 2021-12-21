@@ -1,9 +1,9 @@
-authlib==0.15.4
+authlib==0.15.5
 cerberus==1.3.4
-Flask==2.0.1
-SQLAlchemy==1.4.23
-pillow==8.3.2
+Flask==2.0.2
+SQLAlchemy==1.4.28
+pillow==8.4.0
 validators==0.18.2
 requests==2.26.0
-oso==0.20.1
+oso==0.24.0
 pycryptodome==3.12.0
