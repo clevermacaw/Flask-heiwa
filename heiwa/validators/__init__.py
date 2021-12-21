@@ -19,13 +19,11 @@ import validators
 from .. import exceptions, types
 
 __all__ = ["APIValidator", "validate_json"]
-__version__ = "1.10.0"
+__version__ = "1.10.1"
 
 
 class APIValidator(cerberus.Validator):
-	"""Cerberus validator for the API. Adds methods related to UUIDs,
-	ISO-formatted datetime, URLs, regex and the ``makes_required`` rule.
-	"""
+	"""Cerberus validator for the API."""
 
 	def _check_with_is_valid_regex(
 		self: APIValidator,
@@ -44,7 +42,7 @@ class APIValidator(cerberus.Validator):
 		field: str,
 		value: str
 	) -> None:
-		"""Checks that this URL is valid, and corresponds to a public resource."""
+		"""Checks that ``value`` is a valid URL, and corresponds to a public resource."""
 
 		try:
 			validators.url(value, public=True)
@@ -56,7 +54,7 @@ class APIValidator(cerberus.Validator):
 		field: str,
 		value: typing.List[typing.Any]
 	) -> None:
-		"""Checks that the given list contains no duplicate items."""
+		"""Checks that the list in ``value`` contains no duplicate items."""
 
 		if len(value) != len(set(value)):
 			self._error(field, "must contain no duplicate items")
@@ -65,7 +63,7 @@ class APIValidator(cerberus.Validator):
 		self: APIValidator,
 		value: str
 	) -> uuid.UUID:
-		"""Converts a given string into a UUID."""
+		"""Converts the ``value`` to an UUID."""
 
 		return uuid.UUID(value)
 
@@ -73,8 +71,8 @@ class APIValidator(cerberus.Validator):
 		self: APIValidator,
 		value: str
 	) -> datetime.datetime:
-		"""Converts a given ISO formatted datetime string to a datetime.
-		Must have a timezone in order to work properly with the rest of the API.
+		"""As long as ``value`` is a string formatted as per ISO-8601,
+		it's converted to a ``datetime`` object.
 		"""
 
 		result = datetime.datetime.fromisoformat(value)
@@ -88,7 +86,7 @@ class APIValidator(cerberus.Validator):
 		self: APIValidator,
 		value: str
 	) -> bytes:
-		"""Converts a given base64 string to the bytes it represents."""
+		"""Converts the base64 ``value`` to the bytes it represents."""
 
 		return base64.b64decode(
 			value,
@@ -129,6 +127,14 @@ class APIValidator(cerberus.Validator):
 			value equals one of them, the field is treated as if it was required.
 			* If the key's value is not an iterable, and the corresponding field
 			equals it, it's treated as if it was required.
+
+		.. note::
+			There are no ``valuesrules`` defined for the rule validation schema,
+			since unlike type *hints*, where they serve as a hint and no actual
+			validation is performed, checking whether or not the value is a ``list``
+			of ``any`` / simply ``any`` would be redundant and always resolve to
+			``True``.
+
 		The rule's arguments are validated against this schema:
 		{
 			'type': 'dict',

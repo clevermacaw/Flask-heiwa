@@ -41,7 +41,7 @@ def handle_http_exception(
 		#. The dictionary contained within a ``flask.Response``.
 		#. Its status code.
 
-	.. [#]
+	.. note::
 		Flask's default error handler knows how to handle this type of exception
 		already, but since it uses HTML documents to do so, it would be inconsistent
 		with the rest of the API.

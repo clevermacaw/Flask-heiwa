@@ -346,8 +346,8 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all messages sent or received by ``flask.g.user`` that match the
 	requested filter, if there is one.
 
-	.. [#]
-		.. _Received message deletion footnote:
+	.. note::
+		.. _Received message deletion note:
 		The choice of allowing receivers to delete messages may be controversial.
 		However, especially in one-on-one chats (which are the only ones currently
 		supported), the element of extra privacy outweighs edge cases where being
@@ -436,8 +436,8 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	requested filter, if there is one. If ``'is_read'`` is part of the values to
 	update, only received messages are considered.
 
-	.. [#]
-		_Receiver ID editing footnote
+	.. note::
+		_Receiver ID editing note
 		Changing the receiver ID originally wasn't allowed, but there are edge
 		cases where it could be helpful - like a user migrating to a new account
 		where they've kept their previous public key they also use elsewhere.
@@ -505,7 +505,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	and has been either sent or received by the current user.
 
 	.. seealso::
-		The `Received message deletion footnote`_ for the ``mass_delete``
+		The `Received message deletion note`_ for the ``mass_delete``
 		endpoint.
 	"""
 
@@ -534,7 +534,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	provided that it exists and the current user has either sent or receieved it.
 
 	.. seealso::
-		The `Receiver ID editing footnote`_ for the ``mass_edit`` endpoint.
+		The `Receiver ID editing note`_ for the ``mass_edit`` endpoint.
 	"""
 
 	message = find_message_by_id(
