@@ -5,5 +5,4 @@ SQLAlchemy==1.4.28
 pillow==8.4.0
 validators==0.18.2
 requests==2.26.0
-oso==0.24.0
 pycryptodome==3.12.0
