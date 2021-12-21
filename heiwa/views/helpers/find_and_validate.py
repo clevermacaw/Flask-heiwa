@@ -71,10 +71,10 @@ def find_forum_by_id(
 
 			if parsed_permissions_exist:
 				break
-			else:
-				forum.reparse_permissions(user)
 
-				session.commit()
+			forum.reparse_permissions(user)
+
+			session.commit()
 		else:
 			raise heiwa.exceptions.APIForumNotFound
 
@@ -158,10 +158,10 @@ def find_thread_by_id(
 
 			if parsed_forum_permissions_exist:
 				break
-			else:
-				thread.forum.reparse_permissions(user)
 
-				session.commit()
+			thread.forum.reparse_permissions(user)
+
+			session.commit()
 		else:
 			raise heiwa.exceptions.APIThreadNotFound
 
@@ -241,13 +241,13 @@ def validate_forum_exists(
 
 			if parsed_permissions_exist:
 				break
-			else:
-				session.execute(
-					sqlalchemy.select(heiwa.models.Forum).
-					where(heiwa.models.Forum.id == forum_id)
-				).scalars().one().reparse_permissions(user)
 
-				session.commit()
+			session.execute(
+				sqlalchemy.select(heiwa.models.Forum).
+				where(heiwa.models.Forum.id == forum_id)
+			).scalars().one().reparse_permissions(user)
+
+			session.commit()
 		else:
 			raise heiwa.exceptions.APIForumNotFound
 
@@ -309,13 +309,13 @@ def validate_thread_exists(
 
 			if parsed_forum_permissions_exist:
 				break
-			else:
-				session.execute(
-					sqlalchemy.select(heiwa.models.Forum).
-					where(heiwa.models.Forum.id == forum_id)
-				).scalars().one().reparse_permissions(user)
 
-				session.commit()
+			session.execute(
+				sqlalchemy.select(heiwa.models.Forum).
+				where(heiwa.models.Forum.id == forum_id)
+			).scalars().one().reparse_permissions(user)
+
+			session.commit()
 		else:
 			raise heiwa.exceptions.APIThreadNotFound
 

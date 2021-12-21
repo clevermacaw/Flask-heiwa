@@ -264,13 +264,13 @@ def find_post_by_id(
 
 			if parsed_forum_permissions_exist:
 				break
-			else:
-				session.execute(
-					sqlalchemy.select(models.Forum).
-					where(models.Forum.id == forum_id)
-				).scalars().one().reparse_permissions(user)
 
-				session.commit()
+			session.execute(
+				sqlalchemy.select(models.Forum).
+				where(models.Forum.id == forum_id)
+			).scalars().one().reparse_permissions(user)
+
+			session.commit()
 		else:
 			raise exceptions.APIPostNotFound
 

@@ -661,7 +661,10 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 			)
 
 	if "user_id" in flask.g.json["values"]:
-		validate_user_exists(flask.g.json["values"]["user_id"])
+		validate_user_exists(
+			flask.g.json["values"]["user_id"],
+			flask.g.sa_session
+		)
 
 	forum_ids = get_forum_ids_from_search(
 		sqlalchemy.or_(
@@ -816,7 +819,10 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		forum.delete_all_parsed_permissions(flask.g.sa_session)
 
 	if flask.g.json["user_id"] != forum.user_id:
-		validate_user_exists(flask.g.json["user_id"])
+		validate_user_exists(
+			flask.g.json["user_id"],
+			flask.g.sa_session
+		)
 
 		models.Notification.create(
 			flask.g.sa_session,

@@ -477,7 +477,6 @@ class Thread(
 
 	def get_subscriber_ids(
 		self: Thread,
-		user_id: uuid.UUID,
 		session: typing.Union[
 			None,
 			sqlalchemy.orm.Session
