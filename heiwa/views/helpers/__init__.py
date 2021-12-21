@@ -7,7 +7,7 @@ from .find_and_validate import (
 	find_user_by_id,
 	validate_forum_exists,
 	validate_thread_exists,
-	validate_user_exists
+	validate_user_exists,
 )
 from .jwt import create_jwt
 from .permissions import requires_permission, validate_permission

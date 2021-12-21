@@ -78,8 +78,9 @@ __version__ = "1.31.0"
 
 class APIException(Exception):
 	"""The base class for all API exceptions. Default values:
-		* (HTTP) ``code``: ``500``
-		* ``details``: ``None``
+
+	* (HTTP) ``code``: ``500``
+	* ``details``: ``None``
 	"""
 
 	code = helpers.STATUS_INTERNAL_SERVER_ERROR

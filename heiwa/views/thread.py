@@ -7,10 +7,10 @@ import sqlalchemy.orm
 
 from .. import (
 	authentication,
+	database,
 	encoders,
 	exceptions,
 	helpers,
-	models,
 	validators
 )
 from .helpers import (
@@ -21,7 +21,7 @@ from .helpers import (
 	parse_search,
 	requires_permission,
 	validate_permission,
-	validate_thread_exists
+	validate_thread_exists,
 )
 
 __all__ = ["thread_blueprint"]
@@ -328,12 +328,12 @@ def get_thread_ids_from_search(
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Thread
+				database.Thread
 			)
 		)
 
 	order_column = getattr(
-		models.Thread,
+		database.Thread,
 		flask.g.json["order"]["by"]
 	)
 
@@ -346,9 +346,9 @@ def get_thread_ids_from_search(
 
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
-				models.Thread.id,
+				database.Thread.id,
 				(
-					sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 					where(inner_conditions).
 					exists()
 				)
@@ -384,7 +384,7 @@ def get_thread_ids_from_search(
 @thread_blueprint.route("", methods=["POST"])
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("create_thread", models.Forum)
+@requires_permission("create_thread", database.Forum)
 def create() -> typing.Tuple[flask.Response, int]:
 	"""Creates a thread with the requested ``forum_id``, locked status
 	(``is_locked``), pinned status (``is_pinned``), ``name`` and ``content``.
@@ -416,7 +416,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 			forum
 		)
 
-	thread = models.Thread.create(
+	thread = database.Thread.create(
 		flask.g.sa_session,
 		user_id=flask.g.user.id,
 		**flask.g.json
@@ -433,7 +433,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Thread)
+@requires_permission("view", database.Thread)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists all threads that match the requested filter if there is one, and
 	``flask.g.user`` has permission to view. If parsed permissions don't exist
@@ -441,22 +441,22 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	inner_conditions = sqlalchemy.and_(
-		models.Thread.forum_id == models.ForumParsedPermissions.forum_id,
-		models.ForumParsedPermissions.user_id == flask.g.user.id
+		database.Thread.forum_id == database.ForumParsedPermissions.forum_id,
+		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
 	conditions = sqlalchemy.or_(
 		~(
-			sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+			sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 			where(inner_conditions).
 			exists()
 		),
 		(
-			sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+			sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 			where(
 				sqlalchemy.and_(
 					inner_conditions,
-					models.ForumParsedPermissions.thread_view.is_(True)
+					database.ForumParsedPermissions.thread_view.is_(True)
 				)
 			).
 			exists()
@@ -468,12 +468,12 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Thread
+				database.Thread
 			)
 		)
 
 	order_column = getattr(
-		models.Thread,
+		database.Thread,
 		flask.g.json["order"]["by"]
 	)
 
@@ -486,9 +486,9 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
-				models.Thread,
+				database.Thread,
 				(
-					sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 					where(inner_conditions).
 					exists()
 				)
@@ -527,7 +527,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("delete", models.Thread)
+@requires_permission("delete", database.Thread)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all threads that match the requested filter if there is one, and
 	``flask.g.user`` has permission to both view and delete. If parsed permissions
@@ -535,29 +535,29 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	inner_conditions = sqlalchemy.and_(
-		models.Thread.forum_id == models.ForumParsedPermissions.forum_id,
-		models.ForumParsedPermissions.user_id == flask.g.user.id
+		database.Thread.forum_id == database.ForumParsedPermissions.forum_id,
+		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
 	thread_ids = get_thread_ids_from_search(
 		sqlalchemy.or_(
 			~(
-				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 				where(inner_conditions).
 				exists()
 			),
 			(
-				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 				where(
 					sqlalchemy.and_(
 						inner_conditions,
-						models.ForumParsedPermissions.thread_view.is_(True),
+						database.ForumParsedPermissions.thread_view.is_(True),
 						sqlalchemy.or_(
 							sqlalchemy.and_(
-								models.Thread.user_id == flask.g.user.id,
-								models.ForumParsedPermissions.thread_delete_own.is_(True)
+								database.Thread.user_id == flask.g.user.id,
+								database.ForumParsedPermissions.thread_delete_own.is_(True)
 							),
-							models.ForumParsedPermissions.thread_delete_any.is_(True)
+							database.ForumParsedPermissions.thread_delete_any.is_(True)
 						)
 					)
 				).
@@ -569,18 +569,18 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 	if len(thread_ids) != 0:
 		flask.g.sa_session.execute(
-			sqlalchemy.delete(models.Notification).
+			sqlalchemy.delete(database.Notification).
 			where(
 				sqlalchemy.or_(
 					sqlalchemy.and_(
-						models.Notification.type.in_(models.Thread.NOTIFICATION_TYPES),
-						models.Notification.identifier.in_(thread_ids)
+						database.Notification.type.in_(database.Thread.NOTIFICATION_TYPES),
+						database.Notification.identifier.in_(thread_ids)
 					),
 					sqlalchemy.and_(
-						models.Notification.type.in_(models.Post.NOTIFICATION_TYPES),
-						models.Notification.identifier.in_(
-							sqlalchemy.select(models.Post.id).
-							where(models.Post.thread_id.in_(thread_ids))
+						database.Notification.type.in_(database.Post.NOTIFICATION_TYPES),
+						database.Notification.identifier.in_(
+							sqlalchemy.select(database.Post.id).
+							where(database.Post.thread_id.in_(thread_ids))
 						)
 					)
 				)
@@ -589,8 +589,8 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		)
 
 		flask.g.sa_session.execute(
-			sqlalchemy.delete(models.Thread).
-			where(models.Thread.id.in_(thread_ids))
+			sqlalchemy.delete(database.Thread).
+			where(database.Thread.id.in_(thread_ids))
 		)
 
 		flask.g.sa_session.commit()
@@ -636,7 +636,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.Thread)
+@requires_permission("edit", database.Thread)
 def mass_edit() -> typing.Tuple[flask.Response, int]:
 	"""Updates all threads that match the requested filter if there is one, and
 	``flask.g.user`` has permission to both view and edit. If parsed permissions
@@ -644,39 +644,39 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	inner_conditions = sqlalchemy.and_(
-		models.Thread.forum_id == models.ForumParsedPermissions.forum_id,
-		models.ForumParsedPermissions.user_id == flask.g.user.id
+		database.Thread.forum_id == database.ForumParsedPermissions.forum_id,
+		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
 	thread_ids = get_thread_ids_from_search(
 		sqlalchemy.or_(
 			~(
-				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 				where(inner_conditions).
 				exists()
 			),
 			(
-				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 				where(
 					sqlalchemy.and_(
 						inner_conditions,
-						models.ForumParsedPermissions.thread_view.is_(True),
+						database.ForumParsedPermissions.thread_view.is_(True),
 						sqlalchemy.or_(
 							sqlalchemy.and_(
-								models.Thread.user_id == flask.g.user.id,
-								models.ForumParsedPermissions.thread_edit_own.is_(True)
+								database.Thread.user_id == flask.g.user.id,
+								database.ForumParsedPermissions.thread_edit_own.is_(True)
 							),
-							models.ForumParsedPermissions.thread_edit_any.is_(True)
+							database.ForumParsedPermissions.thread_edit_any.is_(True)
 						),
 						sqlalchemy.or_(
 							sqlalchemy.and_(
-								models.Thread.user_id == flask.g.user.id,
-								models.ForumParsedPermissions.thread_edit_lock_own.is_(True)
+								database.Thread.user_id == flask.g.user.id,
+								database.ForumParsedPermissions.thread_edit_lock_own.is_(True)
 							),
-							models.ForumParsedPermissions.thread_edit_lock_any.is_(True)
+							database.ForumParsedPermissions.thread_edit_lock_any.is_(True)
 						) if "is_locked" in flask.g.json else True,
 						(
-							models.ForumParsedPermissions.thread_edit_pin.is_(True)
+							database.ForumParsedPermissions.thread_edit_pin.is_(True)
 						) if "is_pinned" in flask.g.json else True
 					)
 				).
@@ -688,8 +688,8 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 	if len(thread_ids) != 0:
 		flask.g.sa_session.execute(
-			sqlalchemy.update(models.Thread).
-			where(models.Thread.id.in_(thread_ids)).
+			sqlalchemy.update(database.Thread).
+			where(database.Thread.id.in_(thread_ids)).
 			values(**flask.g.json["values"])
 		)
 
@@ -700,7 +700,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@requires_permission("delete", models.Thread)
+@requires_permission("delete", database.Thread)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the thread with the requested ``id_``."""
 
@@ -726,7 +726,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @thread_blueprint.route("/<uuid:id_>", methods=["PUT"])
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.Thread)
+@requires_permission("edit", database.Thread)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the thread with the requested ``id_`` with the requested values."""
 
@@ -792,7 +792,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Thread)
+@requires_permission("view", database.Thread)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the thread with the requested ``id_``."""
 
@@ -807,7 +807,7 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Thread)
+@requires_permission("view", database.Thread)
 def authorized_actions_thread(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -826,7 +826,7 @@ def authorized_actions_thread(
 
 @thread_blueprint.route("/<uuid:id_old>/merge/<uuid:id_new>", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@requires_permission("merge", models.Thread)
+@requires_permission("merge", database.Thread)
 def merge(
 	id_old: uuid.UUID,
 	id_new: uuid.UUID
@@ -855,21 +855,21 @@ def merge(
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.Post).
-		where(models.Post.id == old_thread.id).
+		sqlalchemy.update(database.Post).
+		where(database.Post.id == old_thread.id).
 		values(id=new_thread.id)
 	)
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.ThreadVote).
-		where(models.ThreadVote.thread_id == old_thread.id).
+		sqlalchemy.update(database.ThreadVote).
+		where(database.ThreadVote.thread_id == old_thread.id).
 		values(thread_id=new_thread.id)
 	)
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.Notification).
+		sqlalchemy.update(database.Notification).
 		where(
 			sqlalchemy.and_(
-				models.Notification.type.in_(models.Thread.NOTIFICATION_TYPES),
-				models.Notification.identifier == old_thread.id
+				database.Notification.type.in_(database.Thread.NOTIFICATION_TYPES),
+				database.Notification.identifier == old_thread.id
 			)
 		).
 		values(
@@ -887,7 +887,7 @@ def merge(
 
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_subscription", models.Thread)
+@requires_permission("edit_subscription", database.Thread)
 def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Creates a subscription for ``flask.g.user`` to the thread with the
 	requested ``id_``.
@@ -907,11 +907,11 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	if (
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.thread_subscribers).
+			sqlalchemy.select(database.thread_subscribers).
 			where(
 				sqlalchemy.and_(
-					models.thread_subscribers.c.thread_id == thread.id,
-					models.thread_subscribers.c.user_id == flask.g.user.id
+					database.thread_subscribers.c.thread_id == thread.id,
+					database.thread_subscribers.c.user_id == flask.g.user.id
 				)
 			)
 		).scalars().one_or_none()
@@ -919,7 +919,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		raise exceptions.APIThreadSubscriptionAlreadyExists
 
 	flask.g.sa_session.execute(
-		sqlalchemy.insert(models.thread_subscribers).
+		sqlalchemy.insert(database.thread_subscribers).
 		values(
 			thread_id=thread.id,
 			user_id=flask.g.user.id
@@ -933,7 +933,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_subscription", models.Thread)
+@requires_permission("edit_subscription", database.Thread)
 def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Removes ``flask.g.user``'s subscription to the thread with the requested
 	``id_``.
@@ -952,11 +952,11 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 
 	existing_subscription = flask.g.sa_session.execute(
-		sqlalchemy.select(models.thread_subscribers).
+		sqlalchemy.select(database.thread_subscribers).
 		where(
 			sqlalchemy.and_(
-				models.thread_subscribers.c.thread_id == thread.id,
-				models.thread_subscribers.c.user_id == flask.g.user.id
+				database.thread_subscribers.c.thread_id == thread.id,
+				database.thread_subscribers.c.user_id == flask.g.user.id
 			)
 		)
 	).scalars().one_or_none()
@@ -973,7 +973,7 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Thread)
+@requires_permission("view", database.Thread)
 def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns whether or not ``flask.g.user`` is subscribed to the thread with the
 	requested ``id_``.
@@ -987,11 +987,11 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.thread_subscribers.c.thread_id).
+			sqlalchemy.select(database.thread_subscribers.c.thread_id).
 			where(
 				sqlalchemy.and_(
-					models.thread_subscribers.c.thread_id == id_,
-					models.thread_subscribers.c.user_id == flask.g.user.id
+					database.thread_subscribers.c.thread_id == id_,
+					database.thread_subscribers.c.user_id == flask.g.user.id
 				)
 			).
 			exists().
@@ -1008,7 +1008,7 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	}
 })
 @authentication.authenticate_via_jwt
-@requires_permission("edit_vote", models.Thread)
+@requires_permission("edit_vote", database.Thread)
 def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Creates a vote from ``flask.g.user`` for the thread with the requested
 	``id_``, or updates the existing one. It can either be a downvote or an
@@ -1028,11 +1028,11 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 
 	vote = flask.g.sa_session.execute(
-		sqlalchemy.select(models.ThreadVote).
+		sqlalchemy.select(database.ThreadVote).
 		where(
 			sqlalchemy.and_(
-				models.ThreadVote.thread_id == thread.id,
-				models.ThreadVote.user_id == flask.g.user.id
+				database.ThreadVote.thread_id == thread.id,
+				database.ThreadVote.user_id == flask.g.user.id
 			)
 		)
 	).scalars().one_or_none()
@@ -1044,7 +1044,7 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		raise exceptions.APIThreadVoteUnchanged
 
 	if vote is None:
-		vote = models.ThreadVote.create(
+		vote = database.ThreadVote.create(
 			flask.g.sa_session,
 			thread_id=thread.id,
 			user_id=flask.g.user.id,
@@ -1066,7 +1066,7 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("/<uuid:id_>/vote", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_vote", models.Thread)
+@requires_permission("edit_vote", database.Thread)
 def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes ``flask.g.user``'s vote on the thread with the requested ``id_``,
 	if there is one.
@@ -1085,11 +1085,11 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 
 	existing_vote = flask.g.sa_session.execute(
-		sqlalchemy.select(models.ThreadVote).
+		sqlalchemy.select(database.ThreadVote).
 		where(
 			sqlalchemy.and_(
-				models.ThreadVote.thread_id == thread.id,
-				models.ThreadVote.user_id == flask.g.user.id
+				database.ThreadVote.thread_id == thread.id,
+				database.ThreadVote.user_id == flask.g.user.id
 			)
 		)
 	).scalars().one_or_none()
@@ -1106,7 +1106,7 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @thread_blueprint.route("/<uuid:id_>/vote", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view_vote", models.Thread)
+@requires_permission("view_vote", database.Thread)
 def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns ``flask.g.user``'s vote on the thread with the requested
 	``id_``.
@@ -1126,7 +1126,7 @@ def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		flask.g.sa_session.get(
-			models.ThreadVote,
+			database.ThreadVote,
 			(
 				thread.id,
 				flask.g.user.id
@@ -1143,5 +1143,5 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify(
-		models.Thread.get_allowed_class_actions(flask.g.user)
+		database.Thread.get_allowed_class_actions(flask.g.user)
 	), helpers.STATUS_OK

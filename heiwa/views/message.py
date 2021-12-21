@@ -6,18 +6,17 @@ import sqlalchemy
 
 from .. import (
 	authentication,
+	database,
 	encoders,
 	exceptions,
 	helpers,
-	models,
 	validators
 )
-
 from .helpers import (
 	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
-	validate_user_exists
+	validate_user_exists,
 )
 
 __all__ = ["message_blueprint"]
@@ -226,20 +225,20 @@ def find_message_by_id(
 	message_id: uuid.UUID,
 	session: sqlalchemy.orm.Session,
 	user_id: uuid.UUID
-) -> models.Message:
+) -> database.Message:
 	"""Finds the message with the given ``message_id``. If it exists, but hasn't
 	been sent or received by the user with the provided ``user_id``,
 	``APIMessageNotFound`` will be raised as if it didn't exist.
 	"""
 
 	message = session.execute(
-		sqlalchemy.select(models.Message).
+		sqlalchemy.select(database.Message).
 		where(
 			sqlalchemy.and_(
-				models.Message.id == message_id,
+				database.Message.id == message_id,
 				sqlalchemy.or_(
-					models.Message.sender_id == user_id,
-					models.Message.receiver_id == user_id
+					database.Message.sender_id == user_id,
+					database.Message.receiver_id == user_id
 				)
 			)
 		)
@@ -268,11 +267,11 @@ def create() -> typing.Tuple[flask.Response, int]:
 	)
 
 	if flask.g.sa_session.execute(
-		sqlalchemy.select(models.user_blocks.c.blockee_id).
+		sqlalchemy.select(database.user_blocks.c.blockee_id).
 		where(
 			sqlalchemy.and_(
-				models.user_blocks.c.blocker_id == flask.g.json["receiver_id"],
-				models.user_blocks.c.blockee_id == flask.g.user.id
+				database.user_blocks.c.blocker_id == flask.g.json["receiver_id"],
+				database.user_blocks.c.blockee_id == flask.g.user.id
 			)
 		).
 		exists().
@@ -280,7 +279,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 	).scalars().one():
 		raise exceptions.APIMessageReceiverBlockedSender
 
-	message = models.Message.create(
+	message = database.Message.create(
 		flask.g.sa_session,
 		sender_id=flask.g.user.id,
 		**flask.g.json
@@ -303,8 +302,8 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	conditions = sqlalchemy.or_(
-		models.Message.sender_id == flask.g.user.id,
-		models.Message.receiver_id == flask.g.user.id
+		database.Message.sender_id == flask.g.user.id,
+		database.Message.receiver_id == flask.g.user.id
 	)
 
 	if "filter" in flask.g.json:
@@ -312,17 +311,17 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Message
+				database.Message
 			)
 		)
 
 	order_column = getattr(
-		models.Message,
+		database.Message,
 		flask.g.json["order"]["by"]
 	)
 
 	messages = flask.g.sa_session.execute(
-		sqlalchemy.select(models.Message).
+		sqlalchemy.select(database.Message).
 		where(conditions).
 		order_by(
 			sqlalchemy.asc(order_column)
@@ -355,8 +354,8 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	conditions = sqlalchemy.or_(
-		models.Message.sender_id == flask.g.user.id,
-		models.Message.receiver_id == flask.g.user.id
+		database.Message.sender_id == flask.g.user.id,
+		database.Message.receiver_id == flask.g.user.id
 	)
 
 	if "filter" in flask.g.json:
@@ -364,20 +363,20 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Message
+				database.Message
 			)
 		)
 
 	order_column = getattr(
-		models.Message,
+		database.Message,
 		flask.g.json["order"]["by"]
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.Message).
+		sqlalchemy.delete(database.Message).
 		where(
-			models.Message.id.in_(
-				sqlalchemy.select(models.Message.id).
+			database.Message.id.in_(
+				sqlalchemy.select(database.Message.id).
 				where(conditions).
 				order_by(
 					sqlalchemy.asc(order_column)
@@ -445,7 +444,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 		it's now allowed.
 	"""
 
-	conditions = (models.Message.receiver_id == flask.g.user.id)
+	conditions = (database.Message.receiver_id == flask.g.user.id)
 
 	if "receiver_id" in flask.g.json["values"]:
 		validate_user_exists(
@@ -457,7 +456,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	if "is_read" not in flask.g.json["values"]:
 		conditions = sqlalchemy.or_(
 			conditions,
-			models.Message.sender_id == flask.g.user.id
+			database.Message.sender_id == flask.g.user.id
 		)
 
 	if "filter" in flask.g.json:
@@ -465,20 +464,20 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Message
+				database.Message
 			)
 		)
 
 	order_column = getattr(
-		models.Message,
+		database.Message,
 		flask.g.json["order"]["by"]
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.Message).
+		sqlalchemy.update(database.Message).
 		where(
-			models.Message.id.in_(
-				sqlalchemy.select(models.Message.id).
+			database.Message.id.in_(
+				sqlalchemy.select(database.Message.id).
 				where(conditions).
 				order_by(
 					sqlalchemy.asc(order_column)

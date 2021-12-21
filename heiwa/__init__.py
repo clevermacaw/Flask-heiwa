@@ -12,7 +12,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.14.8"
+__version__ = "0.15.0"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -148,7 +148,7 @@ def create_app() -> ConfiguredLockFlask:
 			openid_blueprint,
 			post_blueprint,
 			thread_blueprint,
-			user_blueprint
+			user_blueprint,
 		)
 
 		for blueprint in (
@@ -166,7 +166,7 @@ def create_app() -> ConfiguredLockFlask:
 			app.register_blueprint(blueprint)
 
 		if not app.configured:
-			from .models import Base, Group, GroupPermissions
+			from .database import Base, Group, GroupPermissions
 
 			Base.metadata.create_all(bind=sa_engine)
 

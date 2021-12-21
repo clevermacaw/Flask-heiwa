@@ -3,7 +3,7 @@ import typing
 import sqlalchemy
 import sqlalchemy.orm
 
-import heiwa.models
+import heiwa.database
 
 __all__ = ["parse_search"]
 
@@ -27,7 +27,7 @@ def parse_search(
 			typing.Any
 		]
 	],
-	model: heiwa.models.Base
+	model: heiwa.database.Base
 ) -> typing.Union[
 	sqlalchemy.sql.expression.BinaryExpression,
 	sqlalchemy.sql.expression.ClauseList

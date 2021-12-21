@@ -13,6 +13,7 @@ import sqlalchemy.orm
 from . import Base
 from .group import Group, GroupPermissions
 from .helpers import (
+	UUID,
 	BasePermissionMixin,
 	CDWMixin,
 	CreationTimestampMixin,
@@ -20,7 +21,6 @@ from .helpers import (
 	IdMixin,
 	PermissionControlMixin,
 	ReprMixin,
-	UUID
 )
 from .message import Message
 from .notification import Notification
@@ -120,14 +120,17 @@ class UserBan(
 	EditInfoMixin,
 	Base
 ):
-	"""``User`` ban helper model. Contains:
-		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		#. A ``user_id`` foreign key column, associating this instance with its
-		``User``.
-		#. An ``expiration_timestamp`` column, signifying the time of this ban's
-		expiry.
-		#. A nullable ``reason`` column.
+	"""``User`` ban helper model.
+
+	Contains:
+
+	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+	#. A ``user_id`` foreign key column, associating this instance with its
+	   ``User``.
+	#. An ``expiration_timestamp`` column, signifying the time of this ban's
+	   expiry.
+	#. A nullable ``reason`` column.
 	"""
 
 	__tablename__ = "user_bans"
@@ -161,12 +164,15 @@ class UserPermissions(
 	BasePermissionMixin,
 	Base
 ):
-	"""``User`` permission helper model. Contains:
-		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		#. All columns from the ``BasePermissionMixin``.
-		#. A ``user_id`` foreign key column, associating this instance with its
-		``User``.
+	"""``User`` permission helper model.
+
+	Contains:
+
+	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+	#. All columns from the ``BasePermissionMixin``.
+	#. A ``user_id`` foreign key column, associating this instance with its
+	   ``User``.
 	"""
 
 	__tablename__ = "user_permissions"
@@ -191,49 +197,52 @@ class User(
 	EditInfoMixin,
 	Base
 ):
-	"""User model. Contains:
-		#. An ``id`` column from the ``IdMixin``.
-		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		#. A nullable ``registered_by`` column that contains the service this user
-		was registered by. Groups whose ``default_for`` is at the start of it will
-		automatically be assigned to this user. By default, the only two services
-		that can register users are ``'/openid'`` and ``'/guest'`` APIs.
-		#. A nullable ``external_id`` column, the service this user was registered
-		by's identifier for them.
-		#. An ``avatar_type`` column, containing the MIME type of this user's
-		avatar, if there is one.
-		#. An ``is_banned`` column, specifying whether or not this user has been
-		banned.
-		#. A JSON ``parsed_permissions`` column, containing this user's parsed
-		permissions. This is a combination of this user's group's permissions
-		(where groups with the highest ``level`` take precedence), and this user's
-		specific permissions.
-		#. An ``encrypted_private_key`` column, optionally used to store an encrypted
-		#. A ``public_key`` column, containing this user's raw RSA public key.
-		version of this user's RSA private key. If desired, this can be left empty
-		with a public key still present.
-		#. Nullable ``name`` and ``status`` columns.
-		#. A dynamic, deferred ``followee_count`` column, corresponding to how many
-		users this user has followed.
-		#. A dynamic, deferred ``follower_count`` column, corresponding to how many
-		users have followed this user.
-		#. A dynamic, deferred ``forum_count`` column, corresponding to how many
-		forums with this user's ``id`` in their ``user_id`` column exist.
-		#. A dynamic, deferred ``message_received_count`` coulumn corresponding to
-		how many messages this user has received.
-		#. A dynamic, deferred ``message_received_unread_count`` column corresponding
-		to how many messages this user has received, and hasn't read yet.
-		#. A dynamic, deferred ``message_sent_count`` coulumn corresponding to
-		how many messages this user has sent.
-		#. A dynamic, deferred ``notification_count`` column corresponding to how
-		many notifications with this user's ``id`` in their ``user_id`` column exist.
-		#. A dynamic, deferred ``notification_unread_count`` column corresponding to
-		how many unread notifications this user has.
-		#. A dynamic, deferred ``post_count`` column, corresponding to how many
-		posts with this user's ``id`` in their ``user_id`` column exist.
-		#. A dynamic, deferred ``thread_count`` column, corresponding to how many
-		thread with this user's ``id`` in their ``user_id`` column exist.
+	"""User model.
+
+	Contains:
+
+	#. An ``id`` column from the ``IdMixin``.
+	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+	#. A nullable ``registered_by`` column that contains the service this user
+	   was registered by. Groups whose ``default_for`` is at the start of it will
+	   automatically be assigned to this user. By default, the only two services
+	   that can register users are ``'/openid'`` and ``'/guest'`` APIs.
+	#. A nullable ``external_id`` column, the service this user was registered
+	   by's identifier for them.
+	#. An ``avatar_type`` column, containing the MIME type of this user's
+	   avatar, if there is one.
+	#. An ``is_banned`` column, specifying whether or not this user has been
+	   banned.
+	#. A JSON ``parsed_permissions`` column, containing this user's parsed
+	   permissions. This is a combination of this user's group's permissions
+	   (where groups with the highest ``level`` take precedence), and this user's
+	   specific permissions.
+	#. An ``encrypted_private_key`` column, optionally used to store an encrypted
+	#. A ``public_key`` column, containing this user's raw RSA public key.
+	   version of this user's RSA private key. If desired, this can be left empty
+	   with a public key still present.
+	#. Nullable ``name`` and ``status`` columns.
+	#. A dynamic, deferred ``followee_count`` column, corresponding to how many
+	   users this user has followed.
+	#. A dynamic, deferred ``follower_count`` column, corresponding to how many
+	   users have followed this user.
+	#. A dynamic, deferred ``forum_count`` column, corresponding to how many
+	   forums with this user's ``id`` in their ``user_id`` column exist.
+	#. A dynamic, deferred ``message_received_count`` coulumn corresponding to
+	   how many messages this user has received.
+	#. A dynamic, deferred ``message_received_unread_count`` column corresponding
+	   to how many messages this user has received, and hasn't read yet.
+	#. A dynamic, deferred ``message_sent_count`` coulumn corresponding to
+	   how many messages this user has sent.
+	#. A dynamic, deferred ``notification_count`` column corresponding to how
+	   many notifications with this user's ``id`` in their ``user_id`` column exist.
+	#. A dynamic, deferred ``notification_unread_count`` column corresponding to
+	   how many unread notifications this user has.
+	#. A dynamic, deferred ``post_count`` column, corresponding to how many
+	   posts with this user's ``id`` in their ``user_id`` column exist.
+	#. A dynamic, deferred ``thread_count`` column, corresponding to how many
+	   thread with this user's ``id`` in their ``user_id`` column exist.
 	"""
 
 	__tablename__ = "users"
@@ -768,9 +777,11 @@ class User(
 		] = None
 	) -> None:
 		"""Sets this user's ``parsed_permissions`` column to the combination of:
-			#. This user's group permissions, where the group with the highest
-			``level`` is most important.
-			#. This user's permissions.
+
+		#. This user's group permissions, where the group with the highest
+		   ``level`` is most important.
+		#. This user's permissions.
+
 		Where the lower on the list an item is, the higher priority it has. The
 		``session`` argument is only meant to be used during the initial creation
 		of this user, but it doesn't have to be.

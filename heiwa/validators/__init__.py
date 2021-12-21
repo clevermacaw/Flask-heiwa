@@ -42,7 +42,9 @@ class APIValidator(cerberus.Validator):
 		field: str,
 		value: str
 	) -> None:
-		"""Checks that ``value`` is a valid URL, and corresponds to a public resource."""
+		"""Checks that ``value`` is a valid URL, and corresponds to a public
+		resource.
+		"""
 
 		try:
 			validators.url(value, public=True)

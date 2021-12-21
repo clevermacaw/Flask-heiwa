@@ -5,17 +5,17 @@ import typing
 import uuid
 
 import Crypto.PublicKey.RSA
-import PIL.Image
 import flask
+import PIL.Image
 import sqlalchemy
 import sqlalchemy.orm
 
 from .. import (
 	authentication,
+	database,
 	encoders,
 	exceptions,
 	helpers,
-	models,
 	validators
 )
 from .helpers import (
@@ -27,7 +27,7 @@ from .helpers import (
 	parse_search,
 	requires_permission,
 	validate_permission,
-	validate_user_exists
+	validate_user_exists,
 )
 
 __all__ = ["user_blueprint"]
@@ -329,7 +329,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 })
 
 
-def generate_avatar_response(user: models.User) -> flask.Response:
+def generate_avatar_response(user: database.User) -> flask.Response:
 	"""Returns the given ``user``'s avatar as an attachment contained within
 	a ``flask.Response``.
 	"""
@@ -346,7 +346,7 @@ def generate_avatar_response(user: models.User) -> flask.Response:
 def get_user_self_or_id(
 	id_: typing.Union[None, uuid.UUID],
 	session: sqlalchemy.orm.Session
-) -> models.User:
+) -> database.User:
 	"""If the provided ``id_`` is ``None``, ``flask.g.user`` will be returned.
 	Otherwise, the user with the given ``id_`` is returned.
 	"""
@@ -368,7 +368,7 @@ def get_user_self_or_id(
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.User)
+@requires_permission("view", database.User)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists all users that match the requested filter, if there is one."""
 
@@ -379,17 +379,17 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User
+				database.User
 			)
 		)
 
 	order_column = getattr(
-		models.User,
+		database.User,
 		flask.g.json["order"]["by"]
 	)
 
 	users = flask.g.sa_session.execute(
-		sqlalchemy.select(models.User).
+		sqlalchemy.select(database.User).
 		where(conditions).
 		order_by(
 			sqlalchemy.asc(order_column)
@@ -409,24 +409,24 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("delete", models.User)
+@requires_permission("delete", database.User)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all users that match the requested filter if there is one, and
 	``flask.g.user`` has permission to delete.
 	"""
 
 	conditions = sqlalchemy.or_(
-		models.User.id == flask.g.user.id,
+		database.User.id == flask.g.user.id,
 		(
-			sqlalchemy.select(models.Group.level).
+			sqlalchemy.select(database.Group.level).
 			where(
-				models.Group.id.in_(
-					sqlalchemy.select(models.user_groups.c.group_id).
-					where(models.user_groups.c.user_id == models.User.id)
+				database.Group.id.in_(
+					sqlalchemy.select(database.user_groups.c.group_id).
+					where(database.user_groups.c.user_id == database.User.id)
 				)
 			).
 			order_by(
-				sqlalchemy.desc(models.Group.level)
+				sqlalchemy.desc(database.Group.level)
 			).
 			limit(1)
 		) < flask.g.user.highest_group.level
@@ -437,20 +437,20 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User
+				database.User
 			)
 		)
 
 	order_column = getattr(
-		models.User,
+		database.User,
 		flask.g.json["order"]["by"]
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.User).
+		sqlalchemy.delete(database.User).
 		where(
-			models.User.id.in_(
-				sqlalchemy.select(models.User).
+			database.User.id.in_(
+				sqlalchemy.select(database.User).
 				where(conditions).
 				order_by(
 					sqlalchemy.asc(order_column)
@@ -503,24 +503,24 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.User)
+@requires_permission("edit", database.User)
 def mass_edit() -> typing.Tuple[flask.Response, int]:
 	"""Updates all users that match the requested filter if there is one, and
 	``flask.g.user`` has permission to edit.
 	"""
 
 	conditions = sqlalchemy.or_(
-		models.User.id == flask.g.user.id,
+		database.User.id == flask.g.user.id,
 		(
-			sqlalchemy.select(models.Group.level).
+			sqlalchemy.select(database.Group.level).
 			where(
-				models.Group.id.in_(
-					sqlalchemy.select(models.user_groups.c.group_id).
-					where(models.user_groups.c.user_id == models.User.id)
+				database.Group.id.in_(
+					sqlalchemy.select(database.user_groups.c.group_id).
+					where(database.user_groups.c.user_id == database.User.id)
 				)
 			).
 			order_by(
-				sqlalchemy.desc(models.Group.level)
+				sqlalchemy.desc(database.Group.level)
 			).
 			limit(1)
 		) < flask.g.user.highest_group.level
@@ -531,20 +531,20 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User
+				database.User
 			)
 		)
 
 	order_column = getattr(
-		models.User,
+		database.User,
 		flask.g.json["order"]["by"]
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.User).
+		sqlalchemy.update(database.User).
 		where(
-			models.User.id.in_(
-				sqlalchemy.select(models.User.id).
+			database.User.id.in_(
+				sqlalchemy.select(database.User.id).
 				where(conditions).
 				order_by(
 					sqlalchemy.asc(order_column)
@@ -580,7 +580,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 		if flask.request.view_args["id_"] is not None
 		else "delete_self"
 	),
-	models.User
+	database.User
 )
 def delete(
 	id_: typing.Union[None, uuid.UUID]
@@ -636,7 +636,7 @@ def delete(
 	}
 })
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.User)
+@requires_permission("edit", database.User)
 def edit(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -679,7 +679,7 @@ def edit(
 	methods=["GET"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.User)
+@requires_permission("view", database.User)
 def view(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -702,7 +702,7 @@ def view(
 	methods=["GET"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.User)
+@requires_permission("view", database.User)
 def authorized_actions_user(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -725,7 +725,7 @@ def authorized_actions_user(
 	methods=["DELETE"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.User)
+@requires_permission("edit", database.User)
 def delete_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -768,7 +768,7 @@ def delete_avatar(
 	}
 })
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.User)
+@requires_permission("edit", database.User)
 def edit_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -828,7 +828,7 @@ def edit_avatar(
 	methods=["GET"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.User)
+@requires_permission("view", database.User)
 def view_avatar(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -849,7 +849,7 @@ def view_avatar(
 
 @user_blueprint.route("/users/<uuid:id_>/ban", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_ban", models.User)
+@requires_permission("edit_ban", database.User)
 def delete_ban(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -890,7 +890,7 @@ def delete_ban(
 	}
 })
 @authentication.authenticate_via_jwt
-@requires_permission("edit_ban", models.User)
+@requires_permission("edit_ban", database.User)
 def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Bans the user with the requested ``id_``. The ``expiration_timestamp`` is
 	required, a ``reason``, while recommended, is not.
@@ -953,7 +953,7 @@ def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	methods=["GET"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view_ban", models.User)
+@requires_permission("view_ban", database.User)
 def view_ban(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -983,7 +983,7 @@ def view_ban(
 
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_block", models.User)
+@requires_permission("edit_block", database.User)
 def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Creates a block from ``flask.g.user`` for the user with the requested
 	``id_``. If ``flask.g.user`` follows them, that follow is automatically
@@ -1003,11 +1003,11 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	if (
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.user_blocks).
+			sqlalchemy.select(database.user_blocks).
 			where(
 				sqlalchemy.and_(
-					models.user_blocks.c.blocker_id == flask.g.user.id,
-					models.user_blocks.c.blockee_id == user.id
+					database.user_blocks.c.blocker_id == flask.g.user.id,
+					database.user_blocks.c.blockee_id == user.id
 				)
 			)
 		).scalars().one_or_none()
@@ -1015,17 +1015,17 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		raise exceptions.APIUserBlockAlreadyExists
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.user_follows).
+		sqlalchemy.delete(database.user_follows).
 		where(
 			sqlalchemy.and_(
-				models.user_follows.c.follower_id == flask.g.user.id,
-				models.user_follows.c.followee_id == user.id
+				database.user_follows.c.follower_id == flask.g.user.id,
+				database.user_follows.c.followee_id == user.id
 			)
 		)
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.insert(models.user_blocks).
+		sqlalchemy.insert(database.user_blocks).
 		values(
 			blocker_id=flask.g.user.id,
 			blockee_id=user.id
@@ -1039,7 +1039,7 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_block", models.User)
+@requires_permission("edit_block", database.User)
 def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Removes ``flask.g.user``'s block for the user with the requested
 	``id_``.
@@ -1057,11 +1057,11 @@ def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 
 	existing_block = flask.g.sa_session.execute(
-		sqlalchemy.select(models.user_blocks).
+		sqlalchemy.select(database.user_blocks).
 		where(
 			sqlalchemy.and_(
-				models.user_blocks.c.blocker_id == flask.g.user.id,
-				models.user_blocks.c.blockee_id == user.id
+				database.user_blocks.c.blocker_id == flask.g.user.id,
+				database.user_blocks.c.blockee_id == user.id
 			)
 		)
 	).scalars().one_or_none()
@@ -1077,7 +1077,7 @@ def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.User)
+@requires_permission("view", database.User)
 def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns whether or not ``flask.g.user`` has blocked the user with the
 	requested ``id_``.
@@ -1090,11 +1090,11 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.user_blocks.c.blocker_id).
+			sqlalchemy.select(database.user_blocks.c.blocker_id).
 			where(
 				sqlalchemy.and_(
-					models.user_blocks.c.blocker_id == flask.g.user.id,
-					models.user_blocks.c.blockee_id == id_
+					database.user_blocks.c.blocker_id == flask.g.user.id,
+					database.user_blocks.c.blockee_id == id_
 				)
 			).
 			exists().
@@ -1114,7 +1114,7 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.User)
+@requires_permission("view", database.User)
 def list_followers(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1129,10 +1129,10 @@ def list_followers(
 	)
 
 	conditions = (
-		models.User.id.in_(
-			sqlalchemy.select(models.user_follows.c.followee_id).
+		database.User.id.in_(
+			sqlalchemy.select(database.user_follows.c.followee_id).
 			where(
-				models.user_follows.c.follower_id == user.id
+				database.user_follows.c.follower_id == user.id
 			)
 		)
 	)
@@ -1142,17 +1142,17 @@ def list_followers(
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User
+				database.User
 			)
 		)
 
 	order_column = getattr(
-		models.User,
+		database.User,
 		flask.g.json["order"]["by"]
 	)
 
 	followers = flask.g.sa_session.execute(
-		sqlalchemy.select(models.User).
+		sqlalchemy.select(database.User).
 		where(conditions).
 		order_by(
 			sqlalchemy.asc(order_column)
@@ -1177,7 +1177,7 @@ def list_followers(
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.User)
+@requires_permission("view", database.User)
 def list_followees(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1192,10 +1192,10 @@ def list_followees(
 	)
 
 	conditions = (
-		models.User.id.in_(
-			sqlalchemy.select(models.user_follows.c.follower_id).
+		database.User.id.in_(
+			sqlalchemy.select(database.user_follows.c.follower_id).
 			where(
-				models.user_follows.c.followee_id == user.id
+				database.user_follows.c.followee_id == user.id
 			)
 		)
 	)
@@ -1205,17 +1205,17 @@ def list_followees(
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.User
+				database.User
 			)
 		)
 
 	order_column = getattr(
-		models.User,
+		database.User,
 		flask.g.json["order"]["by"]
 	)
 
 	followees = flask.g.sa_session.execute(
-		sqlalchemy.select(models.User).
+		sqlalchemy.select(database.User).
 		where(conditions).
 		order_by(
 			sqlalchemy.asc(order_column)
@@ -1231,7 +1231,7 @@ def list_followees(
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_follow", models.User)
+@requires_permission("edit_follow", database.User)
 def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Creates a follow from ``flask.g.user`` for the user with the requested
 	``id_``.
@@ -1250,11 +1250,11 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	if (
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.user_follows).
+			sqlalchemy.select(database.user_follows).
 			where(
 				sqlalchemy.and_(
-					models.user_follows.c.follower_id == flask.g.user.id,
-					models.user_follows.c.followee_id == user.id
+					database.user_follows.c.follower_id == flask.g.user.id,
+					database.user_follows.c.followee_id == user.id
 				)
 			)
 		).scalars().one_or_none()
@@ -1262,7 +1262,7 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		raise exceptions.APIUserFollowAlreadyExists
 
 	flask.g.sa_session.execute(
-		sqlalchemy.insert(models.user_follows).
+		sqlalchemy.insert(database.user_follows).
 		values(
 			follower_id=flask.g.user.id,
 			followee_id=user.id
@@ -1276,7 +1276,7 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_follow", models.User)
+@requires_permission("edit_follow", database.User)
 def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Removes ``flask.g.user``'s follow for the user with the requested
 	``id_``.
@@ -1294,11 +1294,11 @@ def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 
 	existing_follow = flask.g.sa_session.execute(
-		sqlalchemy.select(models.user_follows).
+		sqlalchemy.select(database.user_follows).
 		where(
 			sqlalchemy.and_(
-				models.user_follows.c.follower_id == flask.g.user.id,
-				models.user_follows.c.followee_id == user.id
+				database.user_follows.c.follower_id == flask.g.user.id,
+				database.user_follows.c.followee_id == user.id
 			)
 		)
 	).scalars().one_or_none()
@@ -1315,7 +1315,7 @@ def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.User)
+@requires_permission("view", database.User)
 def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns whether or not ``flask.g.user`` has followed the user with the
 	requested ``id_``.
@@ -1328,11 +1328,11 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.user_follows.c.follower_id).
+			sqlalchemy.select(database.user_follows.c.follower_id).
 			where(
 				sqlalchemy.and_(
-					models.user_follows.c.follower_id == flask.g.user.id,
-					models.user_follows.c.followee_id == id_
+					database.user_follows.c.follower_id == flask.g.user.id,
+					database.user_follows.c.followee_id == id_
 				)
 			).
 			exists().
@@ -1348,7 +1348,7 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	methods=["GET"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view_groups", models.User)
+@requires_permission("view_groups", database.User)
 def list_groups(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1362,15 +1362,15 @@ def list_groups(
 	)
 
 	group_ids = flask.g.sa_session.execute(
-		sqlalchemy.select(models.Group.id).
+		sqlalchemy.select(database.Group.id).
 		where(
-			models.Group.id.in_(
-				sqlalchemy.select(models.user_groups.c.group_id).
-				where(models.user_groups.c.user_id == user.id)
+			database.Group.id.in_(
+				sqlalchemy.select(database.user_groups.c.group_id).
+				where(database.user_groups.c.user_id == user.id)
 			)
 		).
 		order_by(
-			sqlalchemy.asc(models.Group.level)
+			sqlalchemy.asc(database.Group.level)
 		)
 	).scalars().all()
 
@@ -1387,7 +1387,7 @@ def list_groups(
 	methods=["PUT"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("edit_group", models.User)
+@requires_permission("edit_group", database.User)
 def add_group(
 	user_id: typing.Union[None, uuid.UUID],
 	group_id: uuid.UUID
@@ -1415,11 +1415,11 @@ def add_group(
 	)
 
 	if not flask.g.sa_session.execute(
-		sqlalchemy.select(models.user_groups.c.user_id).
+		sqlalchemy.select(database.user_groups.c.user_id).
 		where(
 			sqlalchemy.and_(
-				models.user_groups.c.user_id == user.id,
-				models.user_groups.c.group_id == group.id
+				database.user_groups.c.user_id == user.id,
+				database.user_groups.c.group_id == group.id
 			)
 		).
 		exists().
@@ -1428,7 +1428,7 @@ def add_group(
 		raise exceptions.APIUserGroupAlreadyAdded
 
 	flask.g.sa_session.execute(
-		sqlalchemy.insert(models.user_groups).
+		sqlalchemy.insert(database.user_groups).
 		values(
 			user_id=user.id,
 			group_id=group.id
@@ -1452,7 +1452,7 @@ def add_group(
 	methods=["DELETE"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("edit_group", models.User)
+@requires_permission("edit_group", database.User)
 def delete_group(
 	user_id: typing.Union[None, uuid.UUID],
 	group_id: uuid.UUID
@@ -1480,11 +1480,11 @@ def delete_group(
 	)
 
 	existing_group_association = flask.g.sa_session.execute(
-		sqlalchemy.select(models.user_groups.c.user_id).
+		sqlalchemy.select(database.user_groups.c.user_id).
 		where(
 			sqlalchemy.and_(
-				models.user_groups.c.user_id == user.id,
-				models.user_groups.c.group_id == group.id
+				database.user_groups.c.user_id == user.id,
+				database.user_groups.c.group_id == group.id
 			)
 		)
 	).scalars().one_or_none()
@@ -1523,7 +1523,7 @@ def delete_group(
 	methods=["PUT"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("edit_permissions", models.User)
+@requires_permission("edit_permissions", database.User)
 def delete_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1601,7 +1601,7 @@ def delete_permissions(
 	"user_edit_permissions": PERMISSION_KEY_SCHEMA
 })
 @authentication.authenticate_via_jwt
-@requires_permission("edit_permissions", models.User)
+@requires_permission("edit_permissions", database.User)
 def edit_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1621,7 +1621,7 @@ def edit_permissions(
 	)
 
 	if user.permissions is None:
-		models.UserPermissions.create(
+		database.UserPermissions.create(
 			flask.g.sa_session,
 			user_id=user.id,
 			**flask.g.json
@@ -1655,7 +1655,7 @@ def edit_permissions(
 	methods=["GET"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view_permissions", models.User)
+@requires_permission("view_permissions", database.User)
 def view_permissions(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -1685,5 +1685,5 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify(
-		models.User.get_allowed_class_actions(flask.g.user)
+		database.User.get_allowed_class_actions(flask.g.user)
 	), helpers.STATUS_OK

@@ -328,18 +328,21 @@ class CreationTimestampMixin:
 @sqlalchemy.orm.declarative_mixin
 class EditInfoMixin:
 	"""A helper mixin which contains information about the mixed-in object's
-	edits. Contains:
-		#. A timezone-aware timestamp column named ``edit_timestamp``, which will
-		be set to the current time whenever the ``edited`` method is called.
-		The ``onupdate`` property will unfortunately not work here, since some
-		columns aren't changed explicitly by users, and updates on those columns
-		shouldn't be counted as "real".
-		#. A nullable ``edit_count`` column, which signals how many times the
-		mixed-in object has been edited, and increments by 1 every time the
-		``edited`` method is called. The default value is ``0``. This is primarily
-		for detecting database collisions, but is also useful for other things.
-		When a row is first inserted, this column will remain NULL unless
-		specified otherwise.
+	edits.
+
+	Contains:
+
+	#. A timezone-aware timestamp column named ``edit_timestamp``, which will
+	   be set to the current time whenever the ``edited`` method is called.
+	   The ``onupdate`` property will unfortunately not work here, since some
+	   columns aren't changed explicitly by users, and updates on those columns
+	   shouldn't be counted as "real".
+	#. A nullable ``edit_count`` column, which signals how many times the
+	   mixed-in object has been edited, and increments by 1 every time the
+	   ``edited`` method is called. The default value is ``0``. This is primarily
+	   for detecting database collisions, but is also useful for other things.
+	   When a row is first inserted, this column will remain NULL unless
+	   specified otherwise.
 	"""
 
 	edit_timestamp = sqlalchemy.Column(

@@ -8,10 +8,10 @@ import sqlalchemy.orm
 
 from .. import (
 	authentication,
+	database,
 	encoders,
 	exceptions,
 	helpers,
-	models,
 	validators
 )
 from .helpers import (
@@ -21,7 +21,7 @@ from .helpers import (
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
-	validate_permission
+	validate_permission,
 )
 
 __all__ = ["group_blueprint"]
@@ -251,11 +251,11 @@ def check_if_last_default_group(group_id: uuid.UUID) -> bool:
 	"""
 
 	return flask.g.sa_session.execute(
-		sqlalchemy.select(models.Group.id).
+		sqlalchemy.select(database.Group.id).
 		where(
 			sqlalchemy.and_(
-				models.Group.id != group_id,
-				models.Group.default_for.any(
+				database.Group.id != group_id,
+				database.Group.default_for.any(
 					"*",
 					operator=operator.eq
 				)
@@ -269,13 +269,13 @@ def check_if_last_default_group(group_id: uuid.UUID) -> bool:
 @group_blueprint.route("", methods=["POST"])
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("create", models.Group)
+@requires_permission("create", database.Group)
 def create() -> typing.Tuple[flask.Response, int]:
 	"""Creates a group with the requested ``name``, ``description``,
 	``default_for`` and ``level``.
 	"""
 
-	group = models.Group.create(
+	group = database.Group.create(
 		flask.g.sa_session,
 		**flask.g.json
 	)
@@ -291,7 +291,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Group)
+@requires_permission("view", database.Group)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists all groups that match the requested filter, if there is one."""
 
@@ -302,17 +302,17 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Group
+				database.Group
 			)
 		)
 
 	order_column = getattr(
-		models.Group,
+		database.Group,
 		flask.g.json["order"]["by"]
 	)
 
 	groups = flask.g.sa_session.execute(
-		sqlalchemy.select(models.Group).
+		sqlalchemy.select(database.Group).
 		where(conditions).
 		order_by(
 			sqlalchemy.asc(order_column)
@@ -332,23 +332,23 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("delete", models.Group)
+@requires_permission("delete", database.Group)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all groups that match the requested filter if there is one,
 	and ``flask.g.user`` has permission to both view and delete.
 	"""
 
 	order_column = getattr(
-		models.Group,
+		database.Group,
 		flask.g.json["order"]["by"]
 	)
 
 	# Don't delete the last default group
 	conditions = (
-		models.Group.id != (
-			sqlalchemy.select(models.Group.id).
+		database.Group.id != (
+			sqlalchemy.select(database.Group.id).
 			where(
-				models.Group.default_for.any(
+				database.Group.default_for.any(
 					"*",
 					operator=operator.eq
 				)
@@ -373,15 +373,15 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Group
+				database.Group
 			)
 		)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.Group).
+		sqlalchemy.delete(database.Group).
 		where(
-			models.Group.id.in_(
-				sqlalchemy.select(models.Group.id).
+			database.Group.id.in_(
+				sqlalchemy.select(database.Group.id).
 				where(conditions).
 				order_by(
 					sqlalchemy.asc(order_column)
@@ -431,7 +431,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.Group)
+@requires_permission("edit", database.Group)
 def mass_edit() -> typing.Tuple[flask.Response, int]:
 	"""Updates all groups that match the requested filter if there is one,
 	and ``flask.g.user`` has permission to both view and edit.
@@ -444,20 +444,20 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Group
+				database.Group
 			)
 		)
 
 	order_column = getattr(
-		models.Group,
+		database.Group,
 		flask.g.json["order"]["by"]
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.Group).
+		sqlalchemy.update(database.Group).
 		where(
-			models.Group.id.in_(
-				sqlalchemy.select(models.Group.id).
+			database.Group.id.in_(
+				sqlalchemy.select(database.Group.id).
 				where(conditions).
 				order_by(
 					sqlalchemy.asc(order_column)
@@ -479,7 +479,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 @group_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@requires_permission("delete", models.Group)
+@requires_permission("delete", database.Group)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the group with the requested ``id_``."""
 
@@ -507,7 +507,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @group_blueprint.route("/<uuid:id_>", methods=["PUT"])
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.Group)
+@requires_permission("edit", database.Group)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the group with the requested ``id_`` with the requested values."""
 
@@ -541,7 +541,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @group_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Group)
+@requires_permission("view", database.Group)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the group with the requested ``id_``."""
 
@@ -555,7 +555,7 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @group_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Group)
+@requires_permission("view", database.Group)
 def authorized_actions_group(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -573,7 +573,7 @@ def authorized_actions_group(
 
 @group_blueprint.route("/<uuid:id_>/permissions", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_permissions", models.Group)
+@requires_permission("edit_permissions", database.Group)
 def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the group with the requested ``id_``'s permissions."""
 
@@ -604,7 +604,7 @@ def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 @group_blueprint.route("/<uuid:id_>/permissions", methods=["PUT"])
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("edit_permissions", models.Group)
+@requires_permission("edit_permissions", database.Group)
 def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the group with the requested ``id_``'s permissions.
 	Automatically creates them if they don't exist.
@@ -627,7 +627,7 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				raise exceptions.APIGroupCannotLeavePermissionNullForLastDefault
 
 	if group.permissions is None:
-		models.GroupPermissions.create(
+		database.GroupPermissions.create(
 			flask.g.sa_session,
 			group_id=group.id,
 			**flask.g.json
@@ -656,7 +656,7 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @group_blueprint.route("/<uuid:id_>/permissions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view_permissions", models.Group)
+@requires_permission("view_permissions", database.Group)
 def view_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the group with the requested ``id_``'s permissions."""
 
@@ -682,5 +682,5 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify(
-		models.Group.get_allowed_class_actions(flask.g.user)
+		database.Group.get_allowed_class_actions(flask.g.user)
 	), helpers.STATUS_OK

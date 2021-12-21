@@ -7,16 +7,16 @@ import sqlalchemy.orm
 
 from .. import (
 	authentication,
+	database,
 	encoders,
 	exceptions,
 	helpers,
-	models,
 	validators
 )
 from .helpers import (
 	generate_search_schema,
 	generate_search_schema_registry,
-	parse_search
+	parse_search,
 )
 
 __all__ = ["notification_blueprint"]
@@ -140,18 +140,18 @@ def find_notification_by_id(
 	notification_id: uuid.UUID,
 	session: sqlalchemy.orm.Session,
 	user_id: uuid.UUID
-) -> models.Notification:
+) -> database.Notification:
 	"""Finds the notification with the given ``notification_id``. If it exists,
 	but doesn't belong to the user with the provided ``user_id``,
 	``APINotificationNotFound`` will be raised as if it didn't exist.
 	"""
 
 	notification = session.execute(
-		sqlalchemy.select(models.Notification).
+		sqlalchemy.select(database.Notification).
 		where(
 			sqlalchemy.and_(
-				models.Notification.id == notification_id,
-				models.Notification.user_id == user_id
+				database.Notification.id == notification_id,
+				database.Notification.user_id == user_id
 			)
 		)
 	).scalars().one_or_none()
@@ -173,24 +173,24 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	requested filter, if there is one.
 	"""
 
-	conditions = (models.Notification.user_id == flask.g.user.id)
+	conditions = (database.Notification.user_id == flask.g.user.id)
 
 	if "filter" in flask.g.json:
 		conditions = sqlalchemy.and_(
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Notification
+				database.Notification
 			)
 		)
 
 	order_column = getattr(
-		models.Notification,
+		database.Notification,
 		flask.g.json["order"]["by"]
 	)
 
 	notifications = flask.g.sa_session.execute(
-		sqlalchemy.select(models.Notification).
+		sqlalchemy.select(database.Notification).
 		where(conditions).
 		order_by(
 			sqlalchemy.asc(order_column)
@@ -215,27 +215,27 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	requested filter, if there is one.
 	"""
 
-	conditions = (models.Notification.user_id == flask.g.user.id)
+	conditions = (database.Notification.user_id == flask.g.user.id)
 
 	if "filter" in flask.g.json:
 		conditions = sqlalchemy.and_(
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Notification
+				database.Notification
 			)
 		)
 
 	order_column = getattr(
-		models.Notification,
+		database.Notification,
 		flask.g.json["order"]["by"]
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.Notification).
+		sqlalchemy.delete(database.Notification).
 		where(
-			models.Notification.id.in_(
-				sqlalchemy.select(models.Notification.id).
+			database.Notification.id.in_(
+				sqlalchemy.select(database.Notification.id).
 				where(conditions).
 				order_by(
 					sqlalchemy.asc(order_column)
@@ -266,8 +266,8 @@ def mass_confirm_read() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	conditions = sqlalchemy.and_(
-		models.Notification.user_id == flask.g.user.id,
-		models.Notification.is_read.is_(False)
+		database.Notification.user_id == flask.g.user.id,
+		database.Notification.is_read.is_(False)
 	)
 
 	if "filter" in flask.g.json:
@@ -275,17 +275,17 @@ def mass_confirm_read() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Notification
+				database.Notification
 			)
 		)
 
 	order_column = getattr(
-		models.Notification,
+		database.Notification,
 		flask.g.json["order"]["by"]
 	)
 
 	notifications = flask.g.sa_session.execute(
-		sqlalchemy.select(models.Notification).
+		sqlalchemy.select(database.Notification).
 		where(conditions).
 		order_by(
 			sqlalchemy.asc(order_column)

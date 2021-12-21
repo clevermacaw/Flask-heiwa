@@ -8,13 +8,13 @@ import sqlalchemy.orm
 from .. import enums
 from . import Base
 from .helpers import (
+	UUID,
 	CDWMixin,
 	CreationTimestampMixin,
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
 	ReprMixin,
-	UUID
 )
 from .notification import Notification
 from .user import user_follows
@@ -32,12 +32,15 @@ class PostVote(
 	EditInfoMixin,
 	Base
 ):
-	"""A ``Post`` helper model for storing votes. Contains:
-		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		#. A ``post_id`` column, associating the instance with a ``Post``.
-		#. A ``user_id`` column, associating the instance with a ``User``.
-		#. An ``upvote`` column, signifying whether this is a downvote or an upvote.
+	"""A ``Post`` helper model for storing votes.
+
+	Contains:
+
+	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+	#. A ``post_id`` column, associating the instance with a ``Post``.
+	#. A ``user_id`` column, associating the instance with a ``User``.
+	#. An ``upvote`` column, signifying whether this is a downvote or an upvote.
 	"""
 
 	__tablename__ = "post_votes"
@@ -77,17 +80,20 @@ class Post(
 	EditInfoMixin,
 	Base
 ):
-	"""Post model. Contains:
-		#. An ``id`` column from the ``IdMixin``.
-		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		#. A ``thread_id`` foreign key column, associating this post with its
-		``Thread``.
-		#. A ``user_id`` foreign key column, associating this post with its author,
-		a ``User``.
-		#. A ``content`` column.
-		#. A dynamic ``vote_value`` column, corresponding to the total count of this
-		post's upvotes, with the downvotes' count subtracted.
+	"""Post model.
+
+	Contains:
+
+	#. An ``id`` column from the ``IdMixin``.
+	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+	#. A ``thread_id`` foreign key column, associating this post with its
+	   ``Thread``.
+	#. A ``user_id`` foreign key column, associating this post with its author,
+	   a ``User``.
+	#. A ``content`` column.
+	#. A dynamic ``vote_value`` column, corresponding to the total count of this
+	   post's upvotes, with the downvotes' count subtracted.
 	"""
 
 	__tablename__ = "posts"
@@ -291,8 +297,9 @@ class Post(
 		session: sqlalchemy.orm.Session
 	) -> None:
 		"""Creates a notification about this post for:
-			#. Users subscribed to the parent thread.
-			#. The author's followers. (Who aren't subscribed to the thread)
+
+		#. Users subscribed to the parent thread.
+		#. The author's followers. (Who aren't subscribed to the thread)
 		"""
 
 		# Premature session add and flush. We have to access the ID later.

@@ -4,7 +4,7 @@ import typing
 import flask
 import sqlalchemy
 
-from .. import encoders, exceptions, helpers, models
+from .. import database, encoders, exceptions, helpers
 from .helpers import create_jwt
 
 __all__ = ["guest_blueprint"]
@@ -35,12 +35,12 @@ def token() -> typing.Tuple[flask.Response, int]:
 
 	# Delete all expired sessions with no content
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.User).
+		sqlalchemy.delete(database.User).
 		where(
 			sqlalchemy.and_(
-				models.User.creation_timestamp <= max_creation_timestamp,
-				models.User.registered_by == "guest",
-				~models.User.has_content
+				database.User.creation_timestamp <= max_creation_timestamp,
+				database.User.registered_by == "guest",
+				~database.User.has_content
 			)
 		).
 		execution_options(synchronize_session="fetch")
@@ -53,14 +53,14 @@ def token() -> typing.Tuple[flask.Response, int]:
 	existing_session_count = flask.g.sa_session.execute(
 		sqlalchemy.select(
 			sqlalchemy.func.count(
-				models.User.id
+				database.User.id
 			)
 		).
 		where(
 			sqlalchemy.and_(
-				models.User.creation_timestamp <= max_creation_timestamp,
-				models.User.registered_by == "guest",
-				models.User.external_id == flask.g.identifier
+				database.User.creation_timestamp <= max_creation_timestamp,
+				database.User.registered_by == "guest",
+				database.User.external_id == flask.g.identifier
 			)
 		)
 	).scalars().one()
@@ -74,7 +74,7 @@ def token() -> typing.Tuple[flask.Response, int]:
 		# information could also be obtained.
 		raise exceptions.APIGuestSessionLimitReached
 
-	user = models.User(
+	user = database.User(
 		registered_by="guest",
 		external_id=flask.g.identifier
 	)

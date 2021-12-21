@@ -6,12 +6,12 @@ import sqlalchemy
 
 from .. import (
 	authentication,
+	database,
 	encoders,
 	enums,
 	exceptions,
 	helpers,
-	models,
-	validators
+	validators,
 )
 from .helpers import (
 	BASE_PERMISSION_SCHEMA,
@@ -22,9 +22,9 @@ from .helpers import (
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
-	validate_permission,
 	validate_forum_exists,
-	validate_user_exists
+	validate_permission,
+	validate_user_exists,
 )
 
 __all__ = ["forum_blueprint"]
@@ -312,12 +312,12 @@ def get_forum_ids_from_search(
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Forum
+				database.Forum
 			)
 		)
 
 	order_column = getattr(
-		models.Forum,
+		database.Forum,
 		flask.g.json["order"]["by"]
 	)
 
@@ -330,9 +330,9 @@ def get_forum_ids_from_search(
 
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
-				models.Forum.id,
+				database.Forum.id,
 				(
-					sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 					where(inner_conditions).
 					exists()
 				)
@@ -368,13 +368,13 @@ def get_forum_ids_from_search(
 @forum_blueprint.route("", methods=["POST"])
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("create", models.Forum)
+@requires_permission("create", database.Forum)
 def create() -> typing.Tuple[flask.Response, int]:
 	"""Creates a forum with the requested ``parent_forum_id``, ``name``,
 	``description`` and default order position (``order``).
 	"""
 
-	forum = models.Forum(
+	forum = database.Forum(
 		user_id=flask.g.user.id,
 		**flask.g.json
 	)
@@ -417,7 +417,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Forum)
+@requires_permission("view", database.Forum)
 def list_() -> typing.Tuple[flask.Response, int]:
 	"""Lists all forums that match the requested filter if there is one, and
 	``flask.g.user`` has permission to view. If parsed permissions don't exist
@@ -425,22 +425,22 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	inner_conditions = sqlalchemy.and_(
-		models.Forum.id == models.ForumParsedPermissions.forum_id,
-		models.ForumParsedPermissions.user_id == flask.g.user.id
+		database.Forum.id == database.ForumParsedPermissions.forum_id,
+		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
 	conditions = sqlalchemy.or_(
 		~(
-			sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+			sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 			where(inner_conditions).
 			exists()
 		),
 		(
-			sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+			sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 			where(
 				sqlalchemy.and_(
 					inner_conditions,
-					models.ForumParsedPermissions.forum_view.is_(True)
+					database.ForumParsedPermissions.forum_view.is_(True)
 				)
 			).
 			exists()
@@ -452,12 +452,12 @@ def list_() -> typing.Tuple[flask.Response, int]:
 			conditions,
 			parse_search(
 				flask.g.json["filter"],
-				models.Forum
+				database.Forum
 			)
 		)
 
 	order_column = getattr(
-		models.Forum,
+		database.Forum,
 		flask.g.json["order"]["by"]
 	)
 
@@ -470,9 +470,9 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
-				models.Forum,
+				database.Forum,
 				(
-					sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 					where(inner_conditions).
 					exists()
 				)
@@ -511,7 +511,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("delete", models.Forum)
+@requires_permission("delete", database.Forum)
 def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all forums that match the requested filter if there is one, and
 	``flask.g.user`` has permission to both view and delete. If parsed permissions
@@ -519,29 +519,29 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	inner_conditions = sqlalchemy.and_(
-		models.Forum.id == models.ForumParsedPermissions.forum_id,
-		models.ForumParsedPermissions.user_id == flask.g.user.id
+		database.Forum.id == database.ForumParsedPermissions.forum_id,
+		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
 	forum_ids = get_forum_ids_from_search(
 		sqlalchemy.or_(
 			~(
-				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 				where(inner_conditions).
 				exists()
 			),
 			(
-				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 				where(
 					sqlalchemy.and_(
 						inner_conditions,
-						models.ForumParsedPermissions.forum_view.is_(True),
+						database.ForumParsedPermissions.forum_view.is_(True),
 						sqlalchemy.or_(
 							sqlalchemy.and_(
-								models.Forum.user_id == flask.g.user.id,
-								models.ForumParsedPermissions.forum_delete_own.is_(True)
+								database.Forum.user_id == flask.g.user.id,
+								database.ForumParsedPermissions.forum_delete_own.is_(True)
 							),
-							models.ForumParsedPermissions.forum_delete_any.is_(True)
+							database.ForumParsedPermissions.forum_delete_any.is_(True)
 						)
 					)
 				).
@@ -553,28 +553,28 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 	if len(forum_ids) != 0:
 		thread_ids = flask.g.sa_session.execute(
-			sqlalchemy.select(models.Thread.id).
-			where(models.Thread.forum_id.in_(forum_ids))
+			sqlalchemy.select(database.Thread.id).
+			where(database.Thread.forum_id.in_(forum_ids))
 		).scalars().all()
 
 		flask.g.sa_session.execute(
-			sqlalchemy.delete(models.Notification).
+			sqlalchemy.delete(database.Notification).
 			where(
 				sqlalchemy.or_(
 					sqlalchemy.and_(
-						models.Notification.type.in_(models.Thread.NOTIFICATION_TYPES),
-						models.Notification.identifier.in_(thread_ids)
+						database.Notification.type.in_(database.Thread.NOTIFICATION_TYPES),
+						database.Notification.identifier.in_(thread_ids)
 					),
 					sqlalchemy.and_(
-						models.Notification.type.in_(models.Post.NOTIFICATION_TYPES),
-						models.Notification.identifier.in_(
-							sqlalchemy.select(models.Post.id).
-							where(models.Post.thread_id.in_(thread_ids))
+						database.Notification.type.in_(database.Post.NOTIFICATION_TYPES),
+						database.Notification.identifier.in_(
+							sqlalchemy.select(database.Post.id).
+							where(database.Post.thread_id.in_(thread_ids))
 						)
 					),
 					sqlalchemy.and_(
-						models.Notification.type.in_(models.Forum.NOTIFICATION_TYPES),
-						models.Notification.identifier.in_(forum_ids)
+						database.Notification.type.in_(database.Forum.NOTIFICATION_TYPES),
+						database.Notification.identifier.in_(forum_ids)
 					)
 				)
 			).
@@ -582,8 +582,8 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		)
 
 		flask.g.sa_session.execute(
-			sqlalchemy.delete(models.Forum).
-			where(models.Forum.id.in_(forum_ids))
+			sqlalchemy.delete(database.Forum).
+			where(database.Forum.id.in_(forum_ids))
 		)
 
 		flask.g.sa_session.commit()
@@ -627,7 +627,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	schema_registry=SEARCH_SCHEMA_REGISTRY
 )
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.Thread)
+@requires_permission("edit", database.Thread)
 def mass_edit() -> typing.Tuple[flask.Response, int]:
 	"""Updates all forums that match the requested filter if there is one, and
 	``flask.g.user`` has permission to both view and edit. If parsed permissions
@@ -635,8 +635,8 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	inner_conditions = sqlalchemy.and_(
-		models.Forum.id == models.ForumParsedPermissions.forum_id,
-		models.ForumParsedPermissions.user_id == flask.g.user.id
+		database.Forum.id == database.ForumParsedPermissions.forum_id,
+		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
 	if "parent_forum_id" in flask.g.json["values"]:
@@ -669,35 +669,35 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	forum_ids = get_forum_ids_from_search(
 		sqlalchemy.or_(
 			~(
-				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 				where(inner_conditions).
 				exists()
 			),
 			(
-				sqlalchemy.select(models.ForumParsedPermissions.forum_id).
+				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 				where(
 					sqlalchemy.and_(
 						inner_conditions,
-						models.ForumParsedPermissions.forum_view.is_(True),
+						database.ForumParsedPermissions.forum_view.is_(True),
 						sqlalchemy.or_(
 							sqlalchemy.and_(
-								models.Forum.user_id == flask.g.user.id,
-								models.ForumParsedPermissions.forum_edit_own.is_(True)
+								database.Forum.user_id == flask.g.user.id,
+								database.ForumParsedPermissions.forum_edit_own.is_(True)
 							),
-							models.ForumParsedPermissions.forum_edit_any.is_(True)
+							database.ForumParsedPermissions.forum_edit_any.is_(True)
 						),
 						sqlalchemy.and_(
-							models.Forum.id != parent_forum.id,
+							database.Forum.id != parent_forum.id,
 							sqlalchemy.or_(
 								sqlalchemy.and_(
-									models.Forum.user_id == flask.g.user.id,
-									models.ForumParsedPermissions.forum_move_own.is_(True)
+									database.Forum.user_id == flask.g.user.id,
+									database.ForumParsedPermissions.forum_move_own.is_(True)
 								),
-								models.ForumParsedPermissions.forum_move_any.is_(True)
+								database.ForumParsedPermissions.forum_move_any.is_(True)
 							)
 						) if "parent_forum_id" in flask.g.json["values"] else True,
 						(
-							models.Forum.user_id != flask.g.json["values"]["user_id"]
+							database.Forum.user_id != flask.g.json["values"]["user_id"]
 						) if "user_id" in flask.g.json["values"] else True
 					)
 				).
@@ -709,14 +709,14 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 	if len(forum_ids) != 0:
 		flask.g.sa_session.execute(
-			sqlalchemy.update(models.Forum).
-			where(models.Forum.id.in_(forum_ids)).
+			sqlalchemy.update(database.Forum).
+			where(database.Forum.id.in_(forum_ids)).
 			values(**flask.g.json["values"])
 		)
 
 		if "user_id" in flask.g.json["values"]:
 			for forum_id in forum_ids:
-				models.Notification.create(
+				database.Notification.create(
 					flask.g.sa_session,
 					user_id=flask.g.json["values"]["user_id"],
 					type=enums.NotificationTypes.FORUM_CHANGED_OWNERSHIP,
@@ -730,7 +730,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 @forum_blueprint.route("/<uuid:id_>", methods=["DELETE"])
 @authentication.authenticate_via_jwt
-@requires_permission("delete", models.Forum)
+@requires_permission("delete", database.Forum)
 def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Deletes the forum with the requested ``id_``."""
 
@@ -762,7 +762,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	**ATTR_SCHEMAS
 })
 @authentication.authenticate_via_jwt
-@requires_permission("edit", models.Forum)
+@requires_permission("edit", database.Forum)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Updates the forum with the requested ``id_`` with the requested values."""
 
@@ -824,7 +824,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			flask.g.sa_session
 		)
 
-		models.Notification.create(
+		database.Notification.create(
 			flask.g.sa_session,
 			user_id=flask.g.json["user_id"],
 			type=enums.NotificationTypes.FORUM_CHANGED_OWNERSHIP,
@@ -840,7 +840,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @forum_blueprint.route("/<uuid:id_>", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Forum)
+@requires_permission("view", database.Forum)
 def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns the forum with the requested ``id_``."""
 
@@ -855,7 +855,7 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @forum_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Forum)
+@requires_permission("view", database.Forum)
 def authorized_actions_forum(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -874,7 +874,7 @@ def authorized_actions_forum(
 
 @forum_blueprint.route("/<uuid:id_old>/merge/<uuid:id_new>", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@requires_permission("merge", models.Forum)
+@requires_permission("merge", database.Forum)
 def merge(
 	id_old: uuid.UUID,
 	id_new: uuid.UUID
@@ -903,26 +903,26 @@ def merge(
 	)
 
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.Thread).
-		where(models.Thread.id == old_forum.id).
+		sqlalchemy.update(database.Thread).
+		where(database.Thread.id == old_forum.id).
 		values(id=new_forum.id)
 	)
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.Forum).
-		where(models.Forum.parent_forum_id == old_forum.id).
+		sqlalchemy.update(database.Forum).
+		where(database.Forum.parent_forum_id == old_forum.id).
 		values(parent_forum_id=new_forum.id)
 	)
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.forum_subscribers).
-		where(models.forum_subscribers.c.forum_id == old_forum.id).
+		sqlalchemy.update(database.forum_subscribers).
+		where(database.forum_subscribers.c.forum_id == old_forum.id).
 		values(parent_forum_id=new_forum.id)
 	)
 	flask.g.sa_session.execute(
-		sqlalchemy.update(models.Notification).
+		sqlalchemy.update(database.Notification).
 		where(
 			sqlalchemy.and_(
-				models.Notification.type.in_(models.Forum.NOTIFICATION_TYPES),
-				models.Notification.identifier == old_forum.id
+				database.Notification.type.in_(database.Forum.NOTIFICATION_TYPES),
+				database.Notification.identifier == old_forum.id
 			)
 		).
 		values(
@@ -942,7 +942,7 @@ def merge(
 
 @forum_blueprint.route("/<uuid:id_>/parsed-permissions", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Forum)
+@requires_permission("view", database.Forum)
 def view_parsed_permissions(
 	id_: uuid.UUID
 ) -> typing.Tuple[flask.Response, int]:
@@ -973,7 +973,7 @@ def view_parsed_permissions(
 )
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("edit_permissions_group", models.Forum)
+@requires_permission("edit_permissions_group", database.Forum)
 def delete_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
@@ -1002,11 +1002,11 @@ def delete_permissions_group(
 	)
 
 	permissions = flask.g.sa_session.execute(
-		sqlalchemy.select(models.ForumPermissionsGroup).
+		sqlalchemy.select(database.ForumPermissionsGroup).
 		where(
 			sqlalchemy.and_(
-				models.ForumPermissionsGroup.forum_id == forum.id,
-				models.ForumPermissionsGroup.group_id == group.id
+				database.ForumPermissionsGroup.forum_id == forum.id,
+				database.ForumPermissionsGroup.group_id == group.id
 			)
 		)
 	).scalars().one_or_none()
@@ -1015,8 +1015,8 @@ def delete_permissions_group(
 		raise exceptions.APIForumPermissionsGroupNotFound
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.ForumParsedPermissions).
-		where(models.ForumParsedPermissions.forum_id == forum.id)
+		sqlalchemy.delete(database.ForumParsedPermissions).
+		where(database.ForumParsedPermissions.forum_id == forum.id)
 	)
 
 	permissions.delete()
@@ -1032,7 +1032,7 @@ def delete_permissions_group(
 )
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("edit_permissions_group", models.Forum)
+@requires_permission("edit_permissions_group", database.Forum)
 def edit_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
@@ -1061,17 +1061,17 @@ def edit_permissions_group(
 	)
 
 	permissions = flask.g.sa_session.execute(
-		sqlalchemy.select(models.ForumPermissionsGroup).
+		sqlalchemy.select(database.ForumPermissionsGroup).
 		where(
 			sqlalchemy.and_(
-				models.ForumPermissionsGroup.forum_id == forum.id,
-				models.ForumPermissionsGroup.group_id == group.id
+				database.ForumPermissionsGroup.forum_id == forum.id,
+				database.ForumPermissionsGroup.group_id == group.id
 			)
 		)
 	).scalars().one_or_none()
 
 	if permissions is None:
-		permissions = models.ForumPermissionsGroup.create(
+		permissions = database.ForumPermissionsGroup.create(
 			flask.g.sa_session,
 			forum_id=forum.id,
 			group_id=group.id,
@@ -1095,8 +1095,8 @@ def edit_permissions_group(
 		status = helpers.STATUS_OK
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.ForumParsedPermissions).
-		where(models.ForumParsedPermissions.forum_id == forum.id)
+		sqlalchemy.delete(database.ForumParsedPermissions).
+		where(database.ForumParsedPermissions.forum_id == forum.id)
 	)
 
 	flask.g.sa_session.commit()
@@ -1109,7 +1109,7 @@ def edit_permissions_group(
 	methods=["GET"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view_permissions_group", models.Forum)
+@requires_permission("view_permissions_group", database.Forum)
 def view_permissions_group(
 	forum_id: uuid.UUID,
 	group_id: uuid.UUID
@@ -1136,11 +1136,11 @@ def view_permissions_group(
 	)
 
 	permissions = flask.g.sa_session.execute(
-		sqlalchemy.select(models.ForumPermissionsGroup).
+		sqlalchemy.select(database.ForumPermissionsGroup).
 		where(
 			sqlalchemy.and_(
-				models.ForumPermissionsGroup.forum_id == forum.id,
-				models.ForumPermissionsGroup.group_id == group.id
+				database.ForumPermissionsGroup.forum_id == forum.id,
+				database.ForumPermissionsGroup.group_id == group.id
 			)
 		)
 	).scalars().one_or_none()
@@ -1154,7 +1154,7 @@ def view_permissions_group(
 )
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("edit_permissions_user", models.Forum)
+@requires_permission("edit_permissions_user", database.Forum)
 def delete_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
@@ -1183,10 +1183,10 @@ def delete_permissions_user(
 	)
 
 	permissions = flask.g.sa_session.execute(
-		sqlalchemy.select(models.ForumPermissionsUser).
+		sqlalchemy.select(database.ForumPermissionsUser).
 		where(
-			models.ForumPermissionsUser.forum_id == forum.id,
-			models.ForumPermissionsUser.user_id == user.id
+			database.ForumPermissionsUser.forum_id == forum.id,
+			database.ForumPermissionsUser.user_id == user.id
 		)
 	).scalars().one_or_none()
 
@@ -1194,8 +1194,8 @@ def delete_permissions_user(
 		raise exceptions.APIForumPermissionsUserNotFound
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.ForumParsedPermissions).
-		where(models.ForumParsedPermissions.forum_id == forum.id)
+		sqlalchemy.delete(database.ForumParsedPermissions).
+		where(database.ForumParsedPermissions.forum_id == forum.id)
 	)
 
 	permissions.delete()
@@ -1211,7 +1211,7 @@ def delete_permissions_user(
 )
 @validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
-@requires_permission("edit_permissions_user", models.Forum)
+@requires_permission("edit_permissions_user", database.Forum)
 def edit_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
@@ -1240,15 +1240,15 @@ def edit_permissions_user(
 	)
 
 	permissions = flask.g.sa_session.execute(
-		sqlalchemy.select(models.ForumPermissionsUser).
+		sqlalchemy.select(database.ForumPermissionsUser).
 		where(
-			models.ForumPermissionsUser.forum_id == forum.id,
-			models.ForumPermissionsUser.user_id == user.id
+			database.ForumPermissionsUser.forum_id == forum.id,
+			database.ForumPermissionsUser.user_id == user.id
 		)
 	).scalars().one_or_none()
 
 	if permissions is None:
-		permissions = models.ForumPermissionsUser.create(
+		permissions = database.ForumPermissionsUser.create(
 			flask.g.sa_session,
 			forum_id=forum.id,
 			user_id=user.id,
@@ -1272,8 +1272,8 @@ def edit_permissions_user(
 		status = helpers.STATUS_OK
 
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.ForumParsedPermissions).
-		where(models.ForumParsedPermissions.forum_id == forum.id)
+		sqlalchemy.delete(database.ForumParsedPermissions).
+		where(database.ForumParsedPermissions.forum_id == forum.id)
 	)
 
 	flask.g.sa_session.commit()
@@ -1286,7 +1286,7 @@ def edit_permissions_user(
 	methods=["GET"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission("view_permissions_user", models.Forum)
+@requires_permission("view_permissions_user", database.Forum)
 def view_permissions_user(
 	forum_id: uuid.UUID,
 	user_id: uuid.UUID
@@ -1313,10 +1313,10 @@ def view_permissions_user(
 	)
 
 	permissions = flask.g.sa_session.execute(
-		sqlalchemy.select(models.ForumPermissionsUser).
+		sqlalchemy.select(database.ForumPermissionsUser).
 		where(
-			models.ForumPermissionsUser.forum_id == forum.id,
-			models.ForumPermissionsUser.user_id == user_id
+			database.ForumPermissionsUser.forum_id == forum.id,
+			database.ForumPermissionsUser.user_id == user_id
 		)
 	).scalars().one_or_none()
 
@@ -1325,7 +1325,7 @@ def view_permissions_user(
 
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_subscription", models.Forum)
+@requires_permission("edit_subscription", database.Forum)
 def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Creates a subscription for ``flask.g.user`` to the forum with the
 	requested ``id_``.
@@ -1345,11 +1345,11 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	if (
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.forum_subscribers).
+			sqlalchemy.select(database.forum_subscribers).
 			where(
 				sqlalchemy.and_(
-					models.forum_subscribers.c.forum_id == forum.id,
-					models.forum_subscribers.c.user_id == flask.g.user.id
+					database.forum_subscribers.c.forum_id == forum.id,
+					database.forum_subscribers.c.user_id == flask.g.user.id
 				)
 			)
 		).scalars().one_or_none()
@@ -1357,7 +1357,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		raise exceptions.APIForumSubscriptionAlreadyExists
 
 	flask.g.sa_session.execute(
-		sqlalchemy.insert(models.forum_subscribers).
+		sqlalchemy.insert(database.forum_subscribers).
 		values(
 			forum_id=forum.id,
 			user_id=flask.g.user.id
@@ -1371,7 +1371,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
 @authentication.authenticate_via_jwt
-@requires_permission("edit_subscription", models.Forum)
+@requires_permission("edit_subscription", database.Forum)
 def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Removes ``flask.g.user``'s subscription to the forum with the requested
 	``id_``.
@@ -1390,11 +1390,11 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	)
 
 	existing_subscription = flask.g.sa_session.execute(
-		sqlalchemy.select(models.forum_subscribers).
+		sqlalchemy.select(database.forum_subscribers).
 		where(
 			sqlalchemy.and_(
-				models.forum_subscribers.c.forum_id == forum.id,
-				models.forum_subscribers.c.user_id == flask.g.user.id
+				database.forum_subscribers.c.forum_id == forum.id,
+				database.forum_subscribers.c.user_id == flask.g.user.id
 			)
 		)
 	).scalars().one_or_none()
@@ -1411,7 +1411,7 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["GET"])
 @authentication.authenticate_via_jwt
-@requires_permission("view", models.Forum)
+@requires_permission("view", database.Forum)
 def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	"""Returns whether or not ``flask.g.user`` is subscribed to the forum with the
 	requested ``id_``.
@@ -1425,11 +1425,11 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		flask.g.sa_session.execute(
-			sqlalchemy.select(models.forum_subscribers.c.forum_id).
+			sqlalchemy.select(database.forum_subscribers.c.forum_id).
 			where(
 				sqlalchemy.and_(
 					id_,
-					models.forum_subscribers.c.user_id == flask.g.user.id
+					database.forum_subscribers.c.user_id == flask.g.user.id
 				)
 			).
 			exists().
@@ -1446,5 +1446,5 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify(
-		models.Forum.get_allowed_class_actions(flask.g.user)
+		database.Forum.get_allowed_class_actions(flask.g.user)
 	), helpers.STATUS_OK

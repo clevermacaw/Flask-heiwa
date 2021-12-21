@@ -11,13 +11,13 @@ from .. import enums
 from . import Base
 from .group import Group
 from .helpers import (
+	UUID,
 	CDWMixin,
 	CreationTimestampMixin,
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
 	ReprMixin,
-	UUID
 )
 from .notification import Notification
 from .post import Post
@@ -260,12 +260,15 @@ class ForumParsedPermissions(
 	Base
 ):
 	"""A ``Forum`` helper model to store cached parsed permissions for specific
-	users. Not meant to be exposed directly. Contains:
-		#. A ``forum_id`` foreign key column, associating the instance with a
-		``Forum``.
-		#. A ``user_id`` foreign key column, associating the instance with a
-		``User``.
-		#. All columns from the ``ForumPermissionMixin``, but non-nullable.
+	users. Not meant to be exposed directly.
+
+	Contains:
+
+	#. A ``forum_id`` foreign key column, associating the instance with a
+	   ``Forum``.
+	#. A ``user_id`` foreign key column, associating the instance with a
+	   ``User``.
+	#. All columns from the ``ForumPermissionMixin``, but non-nullable.
 	"""
 
 	__tablename__ = "forum_parsed_permissions"
@@ -432,14 +435,16 @@ class ForumPermissionsGroup(
 	Base
 ):
 	r"""A ``Forum`` helper mixin to store permissions for specific ``Group``\ s.
+
 	Contains:
-		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		#. A ``forum_id`` foreign key column, associating the instance with a
-		``Forum``.
-		#. A ``group_id`` foreign key column, associating the instance with a
-		``Group``.
-		#. All columns from the ``ForumPemrissionMixin``.
+
+	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+	#. A ``forum_id`` foreign key column, associating the instance with a
+	   ``Forum``.
+	#. A ``group_id`` foreign key column, associating the instance with a
+	   ``Group``.
+	#. All columns from the ``ForumPemrissionMixin``.
 	"""
 
 	__tablename__ = "forum_permissions_group"
@@ -496,14 +501,16 @@ class ForumPermissionsUser(
 	Base
 ):
 	r"""A ``Forum`` helper mixin to store permissions for specific ``User``\ s.
+
 	Contains:
-		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		#. A ``forum_id`` foreign key column, associating the instance with a
-		``Forum``.
-		#. A ``user_id`` foreign key column, associating the instance with a
-		``User``.
-		#. All columns from the ``ForumPemrissionMixin``.
+
+	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+	#. A ``forum_id`` foreign key column, associating the instance with a
+	   ``Forum``.
+	#. A ``user_id`` foreign key column, associating the instance with a
+	   ``User``.
+	#. All columns from the ``ForumPemrissionMixin``.
 	"""
 
 	__tablename__ = "forum_permissions_user"
@@ -557,23 +564,26 @@ class Forum(
 	EditInfoMixin,
 	Base
 ):
-	"""Forum model. Contains:
-		#. An ``id`` column from the ``IdMixin``.
-		#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-		#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-		#. A nullable ``parent_forum_id`` foreign key column that corresponds to
-		this forum's parent. This can later be used for nested permissions, as
-		well as subforums.
-		#. A ``user_id`` foreign key column, associating this forum with its author,
-		a ``User``.
-		#. ``name`` and ``description`` columns. ``description`` is nullable.
-		#. An ``order`` column, used for default ordering.
-		#. A dynamic ``subscriber_count`` column, corresponding to how many users
-		have subscribed to this forum.
-		#. A dynamic ``thread_count`` column, corresponding to how many threads exist
-		with this forum's ``id`` defined as their ``forum_id``.
-		#. A dynamic ``last_thread_timestamp`` column, corresponding to the latest
-		thread in this forum's ``creation_timestamp``.
+	"""Forum model.
+
+	Contains:
+
+	#. An ``id`` column from the ``IdMixin``.
+	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
+	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
+	#. A nullable ``parent_forum_id`` foreign key column that corresponds to
+	   this forum's parent. This can later be used for nested permissions, as
+	   well as subforums.
+	#. A ``user_id`` foreign key column, associating this forum with its author,
+	   a ``User``.
+	#. ``name`` and ``description`` columns. ``description`` is nullable.
+	#. An ``order`` column, used for default ordering.
+	#. A dynamic ``subscriber_count`` column, corresponding to how many users
+	   have subscribed to this forum.
+	#. A dynamic ``thread_count`` column, corresponding to how many threads exist
+	   with this forum's ``id`` defined as their ``forum_id``.
+	#. A dynamic ``last_thread_timestamp`` column, corresponding to the latest
+	   thread in this forum's ``creation_timestamp``.
 	"""
 
 	__tablename__ = "forums"
@@ -1171,12 +1181,14 @@ class Forum(
 		] = None
 	) -> ForumParsedPermissions:
 		"""Sets the given user's ``ForumParsedPermissions`` to:
-			#. The given ``user``'s ``parsed_permissions``.
-			#. Any defined permissions for groups that this ``user`` is part of for
-			this forum, as well as the parent forum(s),
-			where the group with the highest level is most important.
-			#. Any permissions specific to the given ``user`` defined for this forum,
-			as well as the parent forum(s).
+
+		#. The given ``user``'s ``parsed_permissions``.
+		#. Any defined permissions for groups that this ``user`` is part of for
+		   this forum, as well as the parent forum(s),
+		   where the group with the highest level is most important.
+		#. Any permissions specific to the given ``user`` defined for this forum,
+		   as well as the parent forum(s).
+
 		Where the lower on the list an item is, the higher priority it has. This
 		instance of ``ForumParsedPermissions`` is created if inexistent, then filled
 		with the calculated values.

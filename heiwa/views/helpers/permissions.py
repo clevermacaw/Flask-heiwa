@@ -5,8 +5,8 @@ import typing
 import flask
 import sqlalchemy.orm
 
+import heiwa.database
 import heiwa.exceptions
-import heiwa.models
 
 __all__ = [
 	"requires_permission",
@@ -21,7 +21,7 @@ def requires_permission(
 	],
 	resource: typing.Union[
 		sqlalchemy.orm.DeclarativeMeta,
-		heiwa.models.Base
+		heiwa.database.Base
 	]
 ) -> collections.abc.Callable[
 	collections.abc.Callable[
@@ -61,11 +61,11 @@ def requires_permission(
 
 
 def validate_permission(
-	user: heiwa.models.User,
+	user: heiwa.database.User,
 	action: str,
 	resource: typing.Union[
 		sqlalchemy.orm.DeclarativeMeta,
-		heiwa.models.Base
+		heiwa.database.Base
 	]
 ) -> None:
 	"""Checks whether or not ``user`` has permission to perform ``action`` on

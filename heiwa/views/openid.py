@@ -2,16 +2,16 @@ import datetime
 import io
 import typing
 
-import PIL
 import authlib.common.security
 import authlib.integrations.requests_client
 import authlib.jose
 import authlib.oidc.core
 import flask
+import PIL
 import requests
 import sqlalchemy
 
-from .. import encoders, exceptions, helpers, models, validators
+from .. import database, encoders, exceptions, helpers, validators
 from .helpers import create_jwt
 
 __all__ = ["openid_blueprint"]
@@ -87,9 +87,9 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 
 	# Delete all expired entries
 	flask.g.sa_session.execute(
-		sqlalchemy.delete(models.OpenIDAuthentication).
+		sqlalchemy.delete(database.OpenIDAuthentication).
 		where(
-			models.OpenIDAuthentication.creation_timestamp
+			database.OpenIDAuthentication.creation_timestamp
 			> (
 				datetime.datetime.now(tz=datetime.timezone.utc)
 				+ datetime.timedelta(seconds=flask.current_app.config[
@@ -100,11 +100,11 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 	)
 
 	authentication = flask.g.sa_session.execute(
-		sqlalchemy.select(models.OpenIDAuthentication).
+		sqlalchemy.select(database.OpenIDAuthentication).
 		where(
 			sqlalchemy.and_(
-				models.OpenIDAuthentication.identifier == flask.g.identifier,
-				models.OpenIDAuthentication.state == flask.g.json["state"]
+				database.OpenIDAuthentication.identifier == flask.g.identifier,
+				database.OpenIDAuthentication.state == flask.g.json["state"]
 			)
 		)
 	).scalars().one_or_none()
@@ -142,11 +142,11 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 		registered_by = f"openid.{client_name}"
 
 		user = flask.g.sa_session.execute(
-			sqlalchemy.select(models.User).
+			sqlalchemy.select(database.User).
 			where(
 				sqlalchemy.and_(
-					models.User.registered_by == registered_by,
-					models.User.external_id == userinfo["sub"]
+					database.User.registered_by == registered_by,
+					database.User.external_id == userinfo["sub"]
 				)
 			)
 		).scalars().one_or_none()
@@ -168,7 +168,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 				avatar_type = PIL.Image.MIME[image.format]
 
 		if user is None:
-			user = models.User.create(
+			user = database.User.create(
 				flask.g.sa_session,
 				registered_by=registered_by,
 				external_id=userinfo["sub"],
@@ -208,7 +208,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 })
 def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 	"""Creates a URI for a user to log in through. The login attempt is recorded
-	using ``models.OpenIDAuthentication``, to secure against replay and other
+	using ``database.OpenIDAuthentication``, to secure against replay and other
 	similar attacks.
 	"""
 
@@ -227,14 +227,14 @@ def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 		)
 
 		existing_authentication = flask.g.sa_session.get(
-			models.OpenIDAuthentication,
+			database.OpenIDAuthentication,
 			flask.g.identifier
 		)
 
 		if existing_authentication is not None:
 			existing_authentication.delete()
 
-		models.OpenIDAuthentication.create(
+		database.OpenIDAuthentication.create(
 			flask.g.sa_session,
 			identifier=flask.g.identifier,
 			nonce=nonce,

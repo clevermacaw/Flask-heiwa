@@ -8,7 +8,7 @@ import typing
 import authlib.jose
 import flask
 
-from .. import exceptions, models
+from .. import database, exceptions
 
 __all__ = ["authenticate_via_jwt"]
 __version__ = "3.2.3"
@@ -50,7 +50,7 @@ def authenticate_via_jwt(
 		except authlib.jose.JoseError:
 			raise exceptions.APIJWTInvalidClaims
 
-		user = flask.g.sa_session.get(models.User, claims["sub"])
+		user = flask.g.sa_session.get(database.User, claims["sub"])
 
 		if user is None:
 			raise exceptions.APIJWTUserNotFound(claims["sub"])
