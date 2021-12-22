@@ -11,7 +11,7 @@ import flask
 from .. import database, exceptions
 
 __all__ = ["authenticate_via_jwt"]
-__version__ = "3.2.3"
+__version__ = "3.2.4"
 
 
 def authenticate_via_jwt(
@@ -23,10 +23,10 @@ def authenticate_via_jwt(
 	typing.Any,
 	typing.Any
 ]:
-	"""If the "Authorization" header is present, derives the current user
-	from it (if possible) using JWT and assigns them to ``flask.g.user``.
-	If the user is banned, it's checked if their ban has expired. If not,
-	access is denied.
+	"""If the HTTP ``'Authorization'`` header is present, derives the current user
+	from it (if possible) using JWT and assigns them to ``flask.g.user``. If the
+	user is banned, it's checked if their ban has expired. If not, access is
+	denied.
 	"""
 
 	@functools.wraps(function)

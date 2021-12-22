@@ -208,7 +208,8 @@ RATELIMIT_SPECIFIC = {
 }
 
 # Flask config
-SECRET_KEY = "incredibly_secretive_secret"   # Replace in production!
+# SECURITY WARNING: Replace in production!
+SECRET_KEY = "incredibly_secretive_secret"
 
 # User config
 USER_MAX_AVATAR_SIZE = 5242880  # 5 Mebibytes

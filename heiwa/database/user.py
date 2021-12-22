@@ -236,7 +236,8 @@ class User(
 	#. A dynamic, deferred ``message_sent_count`` coulumn corresponding to
 	   how many messages this user has sent.
 	#. A dynamic, deferred ``notification_count`` column corresponding to how
-	   many notifications with this user's ``id`` in their ``user_id`` column exist.
+	   many notifications with this user's ``id`` in their ``user_id`` column
+	   exist.
 	#. A dynamic, deferred ``notification_unread_count`` column corresponding to
 	   how many unread notifications this user has.
 	#. A dynamic, deferred ``post_count`` column, corresponding to how many

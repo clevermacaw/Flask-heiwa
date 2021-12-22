@@ -9,11 +9,11 @@ import limits.storage
 import limits.strategies
 
 __all__ = ["Limiter"]
-__version__ = "2.2.2"
+__version__ = "2.2.3"
 
 
 class Limiter:
-	"""Rate limiter, mainly compatible with Flask applications."""
+	"""Rate limiter, primarily compatible with Flask applications."""
 
 	def __init__(
 		self: Limiter,
@@ -147,10 +147,9 @@ class Limiter:
 					soonest_expiration_limit = limit
 					passed_limit = False
 
-		# If there are no rate limits specified, we can assume
-		# this endpoint has none. For example, a rate limit
-		# specific to this endpoint is ``[]``, overrides the default,
-		# and that endpoint then has no rate limit.
+		# If there are no rate limits specified, we can assume this endpoint has
+		# none. For example, a rate limit specific to this endpoint is ``[]``,
+		# overrides the default, and that endpoint then has no rate limit.
 
 		if add_expires:
 			return (

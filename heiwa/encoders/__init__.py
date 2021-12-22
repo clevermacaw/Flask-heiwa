@@ -14,7 +14,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 __all__ = ["JSONEncoder"]
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 
 # Flask does have a custom encoder already that would take care of UUID
@@ -29,15 +29,18 @@ class JSONEncoder(json.JSONEncoder):
 
 	.. _JSONEncoder conversion table:
 
-		========================================= =======================================
+		========================================= ===================================
 		From                                      To
-		========================================= =======================================
-		SQLAlchemy ORM models                     Dictionaries with all (allowed) columns
+		========================================= ===================================
+		SQLAlchemy ORM models                     Dictionaries with all columns that
+		                                          are allowed, or don't start with
+		                                          ``'_'`` if there are no permissions
+		                                          set up.
 		``bytes``                                 Base64 encoded strings
 		``date``\ s, ``time``\ s, ``datetime``\ s ISO-8601 strings
 		``Enum``\ s                               Their values
 		``UUID``\ s                               Their string equivalents
-		========================================= =======================================
+		========================================= ===================================
 
 	.. note::
 		Flask's default JSON encoder converts dates and times using the format
