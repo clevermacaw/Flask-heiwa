@@ -325,7 +325,9 @@ class User(
 	)
 
 	message_received_count = sqlalchemy.orm.column_property(
-		sqlalchemy.select(Message.id).
+		sqlalchemy.select(
+			sqlalchemy.func.count(Message.id)
+		).
 		where(
 			Message.receiver_id == sqlalchemy.text("users.id")
 		).
@@ -333,7 +335,9 @@ class User(
 		deferred=True
 	)
 	message_received_unread_count = sqlalchemy.orm.column_property(
-		sqlalchemy.select(Message.id).
+		sqlalchemy.select(
+			sqlalchemy.func.count(Message.id)
+		).
 		where(
 			sqlalchemy.and_(
 				sqlalchemy.text("messages.receiver_id = users.id"),
@@ -344,7 +348,9 @@ class User(
 		deferred=True
 	)
 	message_sent_count = sqlalchemy.orm.column_property(
-		sqlalchemy.select(Message.id).
+		sqlalchemy.select(
+			sqlalchemy.func.count(Message.id)
+		).
 		where(
 			sqlalchemy.text("messages.sender_id = users.id")
 		).
