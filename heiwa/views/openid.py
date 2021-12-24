@@ -11,7 +11,7 @@ import PIL
 import requests
 import sqlalchemy
 
-from .. import database, encoders, exceptions, helpers, validators
+from .. import database, encoders, exceptions, statuses, validators
 from .helpers import create_jwt
 
 __all__ = ["openid_blueprint"]
@@ -52,7 +52,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		list(flask.current_app.config["OPENID_SERVICES"])
-	), helpers.STATUS_OK
+	), statuses.OK
 
 
 @openid_blueprint.route("/<string:client_name>/authorize", methods=["POST"])
@@ -180,9 +180,9 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 			# Is this necessary?
 			user.avatar = avatar
 
-			status = helpers.STATUS_CREATED
+			status = statuses.CREATED
 		else:
-			status = helpers.STATUS_OK
+			status = statuses.OK
 
 		flask.g.sa_session.commit()
 
@@ -247,4 +247,4 @@ def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 			"uri": uri,
 			"state": state,
 			"nonce": nonce
-		}), helpers.STATUS_OK
+		}), statuses.OK

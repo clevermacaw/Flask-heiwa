@@ -13,8 +13,8 @@ Subpackages
    heiwa.enums
    heiwa.errorhandlers
    heiwa.exceptions
-   heiwa.helpers
    heiwa.limiter
+   heiwa.statuses
    heiwa.types
    heiwa.validators
    heiwa.views

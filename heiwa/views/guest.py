@@ -4,7 +4,7 @@ import typing
 import flask
 import sqlalchemy
 
-from .. import database, encoders, exceptions, helpers
+from .. import database, encoders, exceptions, statuses
 from .helpers import create_jwt
 
 __all__ = ["guest_blueprint"]
@@ -90,4 +90,4 @@ def token() -> typing.Tuple[flask.Response, int]:
 			user.id,
 			expires_after=flask.current_app.config["GUEST_SESSION_EXPIRES_AFTER"]
 		)
-	}), helpers.STATUS_CREATED
+	}), statuses.CREATED

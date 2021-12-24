@@ -10,7 +10,7 @@ from .. import (
 	database,
 	encoders,
 	exceptions,
-	helpers,
+	statuses,
 	validators
 )
 from .helpers import (
@@ -424,7 +424,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(thread), helpers.STATUS_CREATED
+	return flask.jsonify(thread), statuses.CREATED
 
 
 @thread_blueprint.route("", methods=["GET"])
@@ -518,7 +518,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		if thread_without_parsed_forum_permissions_exists:
 			flask.g.sa_session.commit()
 
-	return flask.jsonify(threads), helpers.STATUS_OK
+	return flask.jsonify(threads), statuses.OK
 
 
 @thread_blueprint.route("", methods=["DELETE"])
@@ -595,7 +595,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 		flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @thread_blueprint.route("", methods=["PUT"])
@@ -695,7 +695,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 		flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @thread_blueprint.route("/<uuid:id_>", methods=["DELETE"])
@@ -720,7 +720,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @thread_blueprint.route("/<uuid:id_>", methods=["PUT"])
@@ -787,7 +787,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(thread), helpers.STATUS_OK
+	return flask.jsonify(thread), statuses.OK
 
 
 @thread_blueprint.route("/<uuid:id_>", methods=["GET"])
@@ -802,7 +802,7 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		flask.g.user
 	)
 
-	return flask.jsonify(thread), helpers.STATUS_OK
+	return flask.jsonify(thread), statuses.OK
 
 
 @thread_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
@@ -882,7 +882,7 @@ def merge(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(new_thread), helpers.STATUS_OK
+	return flask.jsonify(new_thread), statuses.OK
 
 
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
@@ -928,7 +928,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
@@ -968,7 +968,7 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @thread_blueprint.route("/<uuid:id_>/subscription", methods=["GET"])
@@ -1051,13 +1051,13 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			upvote=flask.g.json["upvote"]
 		)
 
-		status = helpers.STATUS_CREATED
+		status = statuses.CREATED
 	else:
 		vote.upvote = flask.g.json["upvote"]
 
 		vote.edited()
 
-		status = helpers.STATUS_OK
+		status = statuses.OK
 
 	flask.g.sa_session.commit()
 
@@ -1101,7 +1101,7 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @thread_blueprint.route("/<uuid:id_>/vote", methods=["GET"])
@@ -1132,7 +1132,7 @@ def view_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 				flask.g.user.id
 			)
 		)
-	), helpers.STATUS_OK
+	), statuses.OK
 
 
 @thread_blueprint.route("/authorized-actions", methods=["GET"])
@@ -1144,4 +1144,4 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		database.Thread.get_allowed_class_actions(flask.g.user)
-	), helpers.STATUS_OK
+	), statuses.OK

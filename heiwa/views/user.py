@@ -15,7 +15,7 @@ from .. import (
 	database,
 	encoders,
 	exceptions,
-	helpers,
+	statuses,
 	validators
 )
 from .helpers import (
@@ -400,7 +400,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		offset(flask.g.json["offset"])
 	).scalars().all()
 
-	return flask.jsonify(users), helpers.STATUS_OK
+	return flask.jsonify(users), statuses.OK
 
 
 @user_blueprint.route("/users", methods=["DELETE"])
@@ -466,7 +466,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users", methods=["PUT"])
@@ -561,7 +561,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route(
@@ -604,7 +604,7 @@ def delete(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>", methods=["PUT"])
@@ -669,7 +669,7 @@ def edit(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(user), helpers.STATUS_OK
+	return flask.jsonify(user), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>", methods=["GET"])
@@ -692,7 +692,7 @@ def view(
 		flask.g.sa_session
 	)
 
-	return flask.jsonify(user), helpers.STATUS_OK
+	return flask.jsonify(user), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/authorized-actions", methods=["GET"])
@@ -751,7 +751,7 @@ def delete_avatar(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/avatar", methods=["PUT"])
@@ -808,9 +808,9 @@ def edit_avatar(
 		raise exceptions.APIUserAvatarNotAllowedType(avatar_type)
 
 	if user.avatar is None:
-		status = helpers.STATUS_CREATED
+		status = statuses.CREATED
 	else:
-		status = helpers.STATUS_OK
+		status = statuses.OK
 
 	user.avatar_type = avatar_type
 	user.avatar = flask.g.json["avatar"]
@@ -842,9 +842,9 @@ def view_avatar(
 	)
 
 	if user.avatar is None:
-		return flask.jsonify(None), helpers.STATUS_OK
+		return flask.jsonify(None), statuses.OK
 
-	return generate_avatar_response(user), helpers.STATUS_OK
+	return generate_avatar_response(user), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/ban", methods=["DELETE"])
@@ -871,7 +871,7 @@ def delete_ban(
 
 	user.remove_ban()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/ban", methods=["PUT"])
@@ -932,14 +932,14 @@ def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 		user.ban.edited()
 
-		status = helpers.STATUS_OK
+		status = statuses.OK
 	else:
 		user.create_ban(
 			expiration_timestamp=flask.g.json["expiration_timestamp"],
 			reason=flask.g.json["reason"]
 		)
 
-		status = helpers.STATUS_CREATED
+		status = statuses.CREATED
 
 	flask.g.sa_session.commit()
 
@@ -978,7 +978,7 @@ def view_ban(
 	):
 		user.remove_ban()
 
-	return flask.jsonify(user.ban), helpers.STATUS_OK
+	return flask.jsonify(user.ban), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["PUT"])
@@ -1034,7 +1034,7 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["DELETE"])
@@ -1072,7 +1072,7 @@ def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	flask.g.sa_session.delete(existing_block)
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/block", methods=["GET"])
@@ -1100,7 +1100,7 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			exists().
 			select()
 		).scalars().one()
-	), helpers.STATUS_OK
+	), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/followers", methods=["GET"])
@@ -1163,7 +1163,7 @@ def list_followers(
 		offset(flask.g.json["offset"])
 	).scalars().all()
 
-	return flask.jsonify(followers), helpers.STATUS_OK
+	return flask.jsonify(followers), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/followees", methods=["GET"])
@@ -1226,7 +1226,7 @@ def list_followees(
 		offset(flask.g.json["offset"])
 	).scalars().all()
 
-	return flask.jsonify(followees), helpers.STATUS_OK
+	return flask.jsonify(followees), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["PUT"])
@@ -1271,7 +1271,7 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["DELETE"])
@@ -1310,7 +1310,7 @@ def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["GET"])
@@ -1338,7 +1338,7 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			exists().
 			select()
 		).scalars().one()
-	), helpers.STATUS_OK
+	), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/groups", methods=["GET"])
@@ -1374,7 +1374,7 @@ def list_groups(
 		)
 	).scalars().all()
 
-	return flask.jsonify(group_ids), helpers.STATUS_OK
+	return flask.jsonify(group_ids), statuses.OK
 
 
 @user_blueprint.route(
@@ -1439,7 +1439,7 @@ def add_group(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route(
@@ -1513,7 +1513,7 @@ def delete_group(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/permissions", methods=["PUT"])
@@ -1547,7 +1547,7 @@ def delete_permissions(
 
 	user.permissions.delete()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @user_blueprint.route("/users/<uuid:id_>/permissions", methods=["PUT"])
@@ -1627,7 +1627,7 @@ def edit_permissions(
 			**flask.g.json
 		)
 
-		status = helpers.STATUS_CREATED
+		status = statuses.CREATED
 	else:
 		unchanged = True
 
@@ -1641,7 +1641,7 @@ def edit_permissions(
 
 		user.permissions.edited()
 
-		status = helpers.STATUS_OK
+		status = statuses.OK
 
 	flask.g.sa_session.commit()
 
@@ -1674,7 +1674,7 @@ def view_permissions(
 		user
 	)
 
-	return flask.jsonify(user.permissions), helpers.STATUS_OK
+	return flask.jsonify(user.permissions), statuses.OK
 
 
 @user_blueprint.route("/users/authorized-actions", methods=["GET"])
@@ -1686,4 +1686,4 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		database.User.get_allowed_class_actions(flask.g.user)
-	), helpers.STATUS_OK
+	), statuses.OK

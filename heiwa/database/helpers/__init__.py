@@ -1,4 +1,4 @@
-"""Helpers for Heiwa's SQLAlchemy ORM models."""
+"""Helpers for SQLAlchemy ORM models."""
 
 from .generators import generate_uuid
 from .mixins import (
@@ -23,4 +23,4 @@ __all__ = [
 	"ReprMixin",
 	"UUID"
 ]
-__version__ = "1.11.3"
+__version__ = "1.11.4"

@@ -3,7 +3,7 @@ import typing
 
 import flask
 
-from .. import encoders, helpers
+from .. import encoders, statuses
 
 __all__ = ["meta_blueprint"]
 
@@ -24,7 +24,7 @@ def view_config() -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify({
 		value.lower(): flask.current_app.config[value]
 		for value in flask.current_app.config["PUBLIC_CONFIG_KEYS"]
-	}), helpers.STATUS_OK
+	}), statuses.OK
 
 
 @meta_blueprint.route("/icon", methods=["GET"])
@@ -51,7 +51,7 @@ def view_icon() -> typing.Tuple[flask.Response, int]:
 			last_modified=os.path.getmtime(path)
 		)
 
-	return response, helpers.STATUS_OK
+	return response, statuses.OK
 
 
 @meta_blueprint.route("/info", methods=["GET"])
@@ -64,4 +64,4 @@ def view_info() -> typing.Tuple[flask.Response, int]:
 		key[5:].lower(): value
 		for key, value in flask.current_app.config.items()
 		if key.startswith("META_")
-	}), helpers.STATUS_OK
+	}), statuses.OK

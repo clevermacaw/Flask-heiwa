@@ -10,7 +10,7 @@ from .. import (
 	database,
 	encoders,
 	exceptions,
-	helpers,
+	statuses,
 	validators
 )
 from .helpers import (
@@ -201,7 +201,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		offset(flask.g.json["offset"])
 	).scalars().all()
 
-	return flask.jsonify(notifications), helpers.STATUS_OK
+	return flask.jsonify(notifications), statuses.OK
 
 
 @notification_blueprint.route("", methods=["DELETE"])
@@ -251,7 +251,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @notification_blueprint.route("/confirm-read", methods=["PUT"])
@@ -301,7 +301,7 @@ def mass_confirm_read() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @notification_blueprint.route("/<uuid:id_>", methods=["DELETE"])
@@ -319,7 +319,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @notification_blueprint.route("/<uuid:id_>", methods=["GET"])
@@ -333,7 +333,7 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			flask.g.sa_session,
 			flask.g.user.id
 		)
-	), helpers.STATUS_OK
+	), statuses.OK
 
 
 @notification_blueprint.route("/<uuid:id_>/confirm-read", methods=["PUT"])
@@ -349,4 +349,4 @@ def confirm_read(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	notification.is_read = True
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT

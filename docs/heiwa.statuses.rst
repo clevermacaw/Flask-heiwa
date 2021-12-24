@@ -1,10 +1,10 @@
-heiwa.helpers package
-=====================
+heiwa.statuses package
+======================
 
 Module contents
 ---------------
 
-.. automodule:: heiwa.helpers
+.. automodule:: heiwa.statuses
    :members:
    :undoc-members:
    :show-inheritance:

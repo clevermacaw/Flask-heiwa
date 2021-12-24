@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import typing
 
-from .. import helpers
+from .. import statuses
 
 __all__ = [
 	"APIException",
@@ -73,7 +73,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.31.0"
+__version__ = "1.31.1"
 
 
 class APIException(Exception):
@@ -83,7 +83,7 @@ class APIException(Exception):
 	* ``details``: ``None``
 	"""
 
-	code = helpers.STATUS_INTERNAL_SERVER_ERROR
+	code = statuses.INTERNAL_SERVER_ERROR
 	details = None
 
 	def __init__(
@@ -118,7 +118,7 @@ class APIAuthorizationHeaderInvalid(APIException):
 	is supported)
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIAuthorizationHeaderMissing(APIException):
@@ -126,7 +126,7 @@ class APIAuthorizationHeaderMissing(APIException):
 	but not present.
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIForumChildLevelLimitReached(APIException):
@@ -134,7 +134,7 @@ class APIForumChildLevelLimitReached(APIException):
 	child level is above the config's `` 'FORUM_MAX_CHILD_LEVEL'`` key.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIForumNotFound(APIException):
@@ -142,7 +142,7 @@ class APIForumNotFound(APIException):
 	(e.g. ``'/forums/inexistent-id'``) does not exist.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIForumParentIsChild(APIException):
@@ -150,7 +150,7 @@ class APIForumParentIsChild(APIException):
 	but its ID is the same as the child forum's.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIForumPermissionsGroupNotFound(APIException):
@@ -158,7 +158,7 @@ class APIForumPermissionsGroupNotFound(APIException):
 	permissions for a certain forum, but there are none.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIForumPermissionsGroupUnchanged(APIException):
@@ -167,7 +167,7 @@ class APIForumPermissionsGroupUnchanged(APIException):
 	the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIForumPermissionsUserNotFound(APIException):
@@ -175,7 +175,7 @@ class APIForumPermissionsUserNotFound(APIException):
 	permissions permissions for a certain forum, but there are none.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIForumPermissionsUserUnchanged(APIException):
@@ -183,7 +183,7 @@ class APIForumPermissionsUserUnchanged(APIException):
 	for a certain forum, but all values are the exact same as the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIForumSubscriptionAlreadyExists(APIException):
@@ -191,7 +191,7 @@ class APIForumSubscriptionAlreadyExists(APIException):
 	but has already done so before.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIForumSubscriptionNotFound(APIException):
@@ -199,7 +199,7 @@ class APIForumSubscriptionNotFound(APIException):
 	but there is no subscription in the first place.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIForumUnchanged(APIException):
@@ -207,7 +207,7 @@ class APIForumUnchanged(APIException):
 	but all values are the exact same as the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIGroupCannotDeleteLastDefault(APIException):
@@ -215,7 +215,7 @@ class APIGroupCannotDeleteLastDefault(APIException):
 	which is default for ``*``.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIGroupCannotDeletePermissionsForLastDefault(APIException):
@@ -223,7 +223,7 @@ class APIGroupCannotDeletePermissionsForLastDefault(APIException):
 	for the last group whose ``default_for`` column contains ``'*'``.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIGroupCannotLeavePermissionNullForLastDefault(APIException):
@@ -231,7 +231,7 @@ class APIGroupCannotLeavePermissionNullForLastDefault(APIException):
 	value is ``None`` for the last group whose ``default_for`` column is ``'*'``.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIGroupNotFound(APIException):
@@ -239,7 +239,7 @@ class APIGroupNotFound(APIException):
 	(e.g. ``'/groups/inexistent-id'``) does not exist.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIGroupPermissionsNotFound(APIException):
@@ -247,7 +247,7 @@ class APIGroupPermissionsNotFound(APIException):
 	but there are none.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIGroupPermissionsUnchanged(APIException):
@@ -255,7 +255,7 @@ class APIGroupPermissionsUnchanged(APIException):
 	but all values are the exact same as the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIGroupUnchanged(APIException):
@@ -263,7 +263,7 @@ class APIGroupUnchanged(APIException):
 	but all values are the exact same as the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIGuestSessionLimitReached(APIException):
@@ -272,7 +272,7 @@ class APIGuestSessionLimitReached(APIException):
 	(``external_id``) which haven't yet expired.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIJSONInvalid(APIException):
@@ -280,7 +280,7 @@ class APIJSONInvalid(APIException):
 	as per the predefined Cerberus schema.
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIJSONMissing(APIException):
@@ -288,7 +288,7 @@ class APIJSONMissing(APIException):
 	but there is none.
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIJWTInvalid(APIException):
@@ -296,7 +296,7 @@ class APIJWTInvalid(APIException):
 	cannot be decoded. (e.g. missing a character, corrupted)
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIJWTInvalidClaims(APIException):
@@ -304,7 +304,7 @@ class APIJWTInvalidClaims(APIException):
 	but its claims are not. (e.g. it is expired)
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIJWTUserNotFound(APIException):
@@ -312,7 +312,7 @@ class APIJWTUserNotFound(APIException):
 	but its specified user has since been deleted.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIMessageCannotSendToSelf(APIException):
@@ -320,7 +320,7 @@ class APIMessageCannotSendToSelf(APIException):
 	themselves.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIMessageCannotChangeIsReadOfSent(APIException):
@@ -328,7 +328,7 @@ class APIMessageCannotChangeIsReadOfSent(APIException):
 	but they're also its sender.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIMessageNotFound(APIException):
@@ -336,7 +336,7 @@ class APIMessageNotFound(APIException):
 	(e.g. ``'/messages/inexistent-id'``) does not exist.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIMessageReceiverBlockedSender(APIException):
@@ -344,7 +344,7 @@ class APIMessageReceiverBlockedSender(APIException):
 	but they've blocked them.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIMessageUnchanged(APIException):
@@ -358,7 +358,7 @@ class APINoPermission(APIException):
 	have permission to.
 	"""
 
-	code = helpers.STATUS_UNAUTHORIZED
+	code = statuses.UNAUTHORIZED
 
 
 class APINotificationNotFound(APIException):
@@ -366,7 +366,7 @@ class APINotificationNotFound(APIException):
 	(e.g. ``'/notifications/inexistent-id``') does not exist.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIOpenIDAuthenticationFailed(APIException):
@@ -374,7 +374,7 @@ class APIOpenIDAuthenticationFailed(APIException):
 	(for example, requests sent to the authentication server failing)
 	"""
 
-	code = helpers.STATUS_UNAUTHORIZED
+	code = statuses.UNAUTHORIZED
 
 
 class APIOpenIDNonceInvalid(APIException):
@@ -382,7 +382,7 @@ class APIOpenIDNonceInvalid(APIException):
 	presents a correct state, but the retrieved nonce does not match.
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIOpenIDServiceNotFound(APIException):
@@ -390,7 +390,7 @@ class APIOpenIDServiceNotFound(APIException):
 	(e.g. ``'/openid/login/inexistent-service'``) does not exist.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIOpenIDStateInvalid(APIException):
@@ -398,7 +398,7 @@ class APIOpenIDStateInvalid(APIException):
 	but presents an invalid state.
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIPostNotFound(APIException):
@@ -406,7 +406,7 @@ class APIPostNotFound(APIException):
 	(e.g. ``'/posts/inexistent-id'``) does not exist.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIPostUnchanged(APIException):
@@ -414,7 +414,7 @@ class APIPostUnchanged(APIException):
 	but all values are the exact same as the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIPostVoteNotFound(APIException):
@@ -422,7 +422,7 @@ class APIPostVoteNotFound(APIException):
 	but there is none.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIPostVoteUnchanged(APIException):
@@ -430,7 +430,7 @@ class APIPostVoteUnchanged(APIException):
 	but has already done so before and hasn't changed their vote.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIRateLimitExceeded(APIException):
@@ -444,7 +444,7 @@ class APIRateLimitExceeded(APIException):
 class APIThreadLocked(APIException):
 	"""Exception for when a user attempts to make posts in a locked thread."""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIThreadNotFound(APIException):
@@ -452,7 +452,7 @@ class APIThreadNotFound(APIException):
 	(e.g. ``'/threads/inexistent-id'``) does not exist.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIThreadSubscriptionAlreadyExists(APIException):
@@ -460,7 +460,7 @@ class APIThreadSubscriptionAlreadyExists(APIException):
 	but has already done so before.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIThreadSubscriptionNotFound(APIException):
@@ -468,7 +468,7 @@ class APIThreadSubscriptionNotFound(APIException):
 	but there is no subscription in the first place.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIThreadUnchanged(APIException):
@@ -476,7 +476,7 @@ class APIThreadUnchanged(APIException):
 	but all values are the exact same as the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIThreadVoteNotFound(APIException):
@@ -484,7 +484,7 @@ class APIThreadVoteNotFound(APIException):
 	but there is none.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIThreadVoteUnchanged(APIException):
@@ -492,7 +492,7 @@ class APIThreadVoteUnchanged(APIException):
 	but has already done so before and hasn't changed their vote.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserAvatarInvalid(APIException):
@@ -500,7 +500,7 @@ class APIUserAvatarInvalid(APIException):
 	but the data contained within it is invalid or corrupted.
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIUserAvatarNotFound(APIException):
@@ -508,7 +508,7 @@ class APIUserAvatarNotFound(APIException):
 	but there is none.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIUserAvatarNotAllowedType(APIException):
@@ -516,7 +516,7 @@ class APIUserAvatarNotAllowedType(APIException):
 	but its MIME type does not equal any of those allowed in the config.
 	"""
 
-	code = helpers.STATUS_BAD_REQUEST
+	code = statuses.BAD_REQUEST
 
 
 class APIUserAvatarTooLarge(APIException):
@@ -524,7 +524,7 @@ class APIUserAvatarTooLarge(APIException):
 	but its size is greater than what is allowed in the config.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserBanAlreadyExpired(APIException):
@@ -532,7 +532,7 @@ class APIUserBanAlreadyExpired(APIException):
 	but the expiration timestamp is in the past.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserBanNotFound(APIException):
@@ -540,7 +540,7 @@ class APIUserBanNotFound(APIException):
 	but there is none.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIUserBanUnchanged(APIException):
@@ -548,7 +548,7 @@ class APIUserBanUnchanged(APIException):
 	but has already done so with the same reason & expiration timestamp.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserBanned(APIException):
@@ -556,7 +556,7 @@ class APIUserBanned(APIException):
 	but has been banned in the past and the ban hasn't expired yet.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserBlockAlreadyExists(APIException):
@@ -564,7 +564,7 @@ class APIUserBlockAlreadyExists(APIException):
 	but has already done so before.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserBlockNotFound(APIException):
@@ -572,7 +572,7 @@ class APIUserBlockNotFound(APIException):
 	but has never blocked them in the first place.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIUserCannotRemoveLastDefaultGroup(APIException):
@@ -580,7 +580,7 @@ class APIUserCannotRemoveLastDefaultGroup(APIException):
 	``default_for`` column contains ``'*'`` from another user.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserFollowAlreadyExists(APIException):
@@ -588,7 +588,7 @@ class APIUserFollowAlreadyExists(APIException):
 	but has already done so before.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserFollowNotFound(APIException):
@@ -596,7 +596,7 @@ class APIUserFollowNotFound(APIException):
 	but has never followed them in the first place.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIUserGroupAlreadyAdded(APIException):
@@ -604,7 +604,7 @@ class APIUserGroupAlreadyAdded(APIException):
 	but it's already been added before.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserGroupNotAdded(APIException):
@@ -612,7 +612,7 @@ class APIUserGroupNotAdded(APIException):
 	user, but it's been removed before or never added in the first place.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserNotFound(APIException):
@@ -620,7 +620,7 @@ class APIUserNotFound(APIException):
 	(e.g. ``'/users/inexistent-id'``) does not exist.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIUserPermissionsNotFound(APIException):
@@ -628,7 +628,7 @@ class APIUserPermissionsNotFound(APIException):
 	permissions (specific to them), but there are none.
 	"""
 
-	code = helpers.STATUS_NOT_FOUND
+	code = statuses.NOT_FOUND
 
 
 class APIUserPermissionsUnchanged(APIException):
@@ -636,7 +636,7 @@ class APIUserPermissionsUnchanged(APIException):
 	permissions, but all values are the exact same as the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN
 
 
 class APIUserUnchanged(APIException):
@@ -644,4 +644,4 @@ class APIUserUnchanged(APIException):
 	but all values are the exact same as the existing ones.
 	"""
 
-	code = helpers.STATUS_FORBIDDEN
+	code = statuses.FORBIDDEN

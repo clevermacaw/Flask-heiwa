@@ -10,7 +10,7 @@ from .. import (
 	encoders,
 	enums,
 	exceptions,
-	helpers,
+	statuses,
 	validators,
 )
 from .helpers import (
@@ -408,7 +408,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(forum), helpers.STATUS_CREATED
+	return flask.jsonify(forum), statuses.CREATED
 
 
 @forum_blueprint.route("", methods=["GET"])
@@ -502,7 +502,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		if forum_without_permissions_exists:
 			flask.g.sa_session.commit()
 
-	return flask.jsonify(forums), helpers.STATUS_OK
+	return flask.jsonify(forums), statuses.OK
 
 
 @forum_blueprint.route("", methods=["DELETE"])
@@ -588,7 +588,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 		flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @forum_blueprint.route("", methods=["PUT"])
@@ -725,7 +725,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 		flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @forum_blueprint.route("/<uuid:id_>", methods=["DELETE"])
@@ -750,7 +750,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @forum_blueprint.route("/<uuid:id_>", methods=["PUT"])
@@ -835,7 +835,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(forum), helpers.STATUS_OK
+	return flask.jsonify(forum), statuses.OK
 
 
 @forum_blueprint.route("/<uuid:id_>", methods=["GET"])
@@ -850,7 +850,7 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			flask.g.sa_session,
 			flask.g.user
 		)
-	), helpers.STATUS_OK
+	), statuses.OK
 
 
 @forum_blueprint.route("/<uuid:id_>/authorized-actions", methods=["GET"])
@@ -937,7 +937,7 @@ def merge(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(new_forum), helpers.STATUS_OK
+	return flask.jsonify(new_forum), statuses.OK
 
 
 @forum_blueprint.route("/<uuid:id_>/parsed-permissions", methods=["GET"])
@@ -961,7 +961,7 @@ def view_parsed_permissions(
 	if parsed_permissions is None:
 		parsed_permissions = forum.reparse_permissions(flask.g.user)
 
-	return flask.jsonify(parsed_permissions), helpers.STATUS_OK
+	return flask.jsonify(parsed_permissions), statuses.OK
 
 
 # TODO: List and mass delete permissions for groups and users
@@ -1023,7 +1023,7 @@ def delete_permissions_group(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_OK
+	return flask.jsonify({}), statuses.OK
 
 
 @forum_blueprint.route(
@@ -1078,7 +1078,7 @@ def edit_permissions_group(
 			**flask.g.json
 		)
 
-		status = helpers.STATUS_CREATED
+		status = statuses.CREATED
 	else:
 		unchanged = True
 
@@ -1092,7 +1092,7 @@ def edit_permissions_group(
 
 		permissions.edited()
 
-		status = helpers.STATUS_OK
+		status = statuses.OK
 
 	flask.g.sa_session.execute(
 		sqlalchemy.delete(database.ForumParsedPermissions).
@@ -1145,7 +1145,7 @@ def view_permissions_group(
 		)
 	).scalars().one_or_none()
 
-	return flask.jsonify(permissions), helpers.STATUS_OK
+	return flask.jsonify(permissions), statuses.OK
 
 
 @forum_blueprint.route(
@@ -1202,7 +1202,7 @@ def delete_permissions_user(
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_OK
+	return flask.jsonify({}), statuses.OK
 
 
 @forum_blueprint.route(
@@ -1255,7 +1255,7 @@ def edit_permissions_user(
 			**flask.g.json
 		)
 
-		status = helpers.STATUS_CREATED
+		status = statuses.CREATED
 	else:
 		unchanged = True
 
@@ -1269,7 +1269,7 @@ def edit_permissions_user(
 
 		permissions.edited()
 
-		status = helpers.STATUS_OK
+		status = statuses.OK
 
 	flask.g.sa_session.execute(
 		sqlalchemy.delete(database.ForumParsedPermissions).
@@ -1320,7 +1320,7 @@ def view_permissions_user(
 		)
 	).scalars().one_or_none()
 
-	return flask.jsonify(permissions), helpers.STATUS_OK
+	return flask.jsonify(permissions), statuses.OK
 
 
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
@@ -1366,7 +1366,7 @@ def create_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["PUT"])
@@ -1406,7 +1406,7 @@ def delete_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @forum_blueprint.route("/<uuid:id_>/subscription", methods=["GET"])
@@ -1435,7 +1435,7 @@ def view_subscription(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			exists().
 			select()
 		).scalars().one()
-	), helpers.STATUS_OK
+	), statuses.OK
 
 
 @forum_blueprint.route("/authorized-actions", methods=["GET"])
@@ -1447,4 +1447,4 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 
 	return flask.jsonify(
 		database.Forum.get_allowed_class_actions(flask.g.user)
-	), helpers.STATUS_OK
+	), statuses.OK

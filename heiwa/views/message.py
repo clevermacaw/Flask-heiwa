@@ -9,7 +9,7 @@ from .. import (
 	database,
 	encoders,
 	exceptions,
-	helpers,
+	statuses,
 	validators
 )
 from .helpers import (
@@ -287,7 +287,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(message), helpers.STATUS_CREATED
+	return flask.jsonify(message), statuses.CREATED
 
 
 @message_blueprint.route("", methods=["GET"])
@@ -332,7 +332,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		offset(flask.g.json["offset"])
 	).scalars().all()
 
-	return flask.jsonify(messages), helpers.STATUS_OK
+	return flask.jsonify(messages), statuses.OK
 
 
 @message_blueprint.route("", methods=["DELETE"])
@@ -392,7 +392,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @message_blueprint.route("", methods=["PUT"])
@@ -494,7 +494,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @message_blueprint.route("/<uuid:id_>", methods=["DELETE"])
@@ -516,7 +516,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify({}), helpers.STATUS_NO_CONTENT
+	return flask.jsonify({}), statuses.NO_CONTENT
 
 
 @message_blueprint.route("/<uuid:id_>", methods=["PUT"])
@@ -562,7 +562,7 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	return flask.jsonify(message), helpers.STATUS_OK
+	return flask.jsonify(message), statuses.OK
 
 
 @message_blueprint.route("/<uuid:id_>", methods=["GET"])
@@ -576,4 +576,4 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 			flask.g.sa_session,
 			flask.g.user.id
 		)
-	), helpers.STATUS_OK
+	), statuses.OK
