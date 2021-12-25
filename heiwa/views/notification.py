@@ -13,7 +13,7 @@ from .. import (
 	statuses,
 	validators
 )
-from .helpers import (
+from .utils import (
 	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,

@@ -1,16 +1,16 @@
-"""SQLAlchemy ORM database, tables and helpers."""
+"""SQLAlchemy ORM database, tables and utilities."""
 
 import sqlalchemy.orm
 
 Base = sqlalchemy.orm.declarative_base()
 
-from . import helpers
+from . import utils
 from .forum import (
 	Forum,
 	ForumParsedPermissions,
 	ForumPermissionsGroup,
 	ForumPermissionsUser,
-	forum_subscribers,
+	forum_subscribers
 )
 from .group import Group, GroupPermissions
 from .message import Message
@@ -46,10 +46,10 @@ __all__ = [
 	"UserBan",
 	"UserPermissions",
 	"forum_subscribers",
-	"helpers",
 	"thread_subscribers",
 	"user_blocks",
 	"user_follows",
-	"user_groups"
+	"user_groups",
+	"utils"
 ]
-__version__ = "0.33.2"
+__version__ = "0.34.0"

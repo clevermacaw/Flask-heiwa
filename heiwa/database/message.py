@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlalchemy
 
 from . import Base
-from .helpers import (
+from .utils import (
 	UUID,
 	CDWMixin,
 	CreationTimestampMixin,

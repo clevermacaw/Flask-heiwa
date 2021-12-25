@@ -1,53 +1,53 @@
-heiwa.views.helpers package
+heiwa.views.utils package
 ===========================
 
 Submodules
 ----------
 
-heiwa.views.helpers.find\_and\_validate module
+heiwa.views.utils.find\_and\_validate module
 ----------------------------------------------
 
-.. automodule:: heiwa.views.helpers.find_and_validate
+.. automodule:: heiwa.views.utils.find_and_validate
    :members:
    :undoc-members:
    :show-inheritance:
 
-heiwa.views.helpers.jwt module
+heiwa.views.utils.jwt module
 ------------------------------
 
-.. automodule:: heiwa.views.helpers.jwt
+.. automodule:: heiwa.views.utils.jwt
    :members:
    :undoc-members:
    :show-inheritance:
 
-heiwa.views.helpers.permissions module
+heiwa.views.utils.permissions module
 --------------------------------------
 
-.. automodule:: heiwa.views.helpers.permissions
+.. automodule:: heiwa.views.utils.permissions
    :members:
    :undoc-members:
    :show-inheritance:
 
-heiwa.views.helpers.schema module
+heiwa.views.utils.schema module
 ---------------------------------
 
-.. automodule:: heiwa.views.helpers.schema
+.. automodule:: heiwa.views.utils.schema
    :members:
    :undoc-members:
    :show-inheritance:
 
-heiwa.views.helpers.search module
+heiwa.views.utils.search module
 ---------------------------------
 
-.. automodule:: heiwa.views.helpers.search
+.. automodule:: heiwa.views.utils.search
    :members:
    :undoc-members:
    :show-inheritance:
 
-heiwa.views.helpers.static module
+heiwa.views.utils.static module
 ---------------------------------
 
-.. automodule:: heiwa.views.helpers.static
+.. automodule:: heiwa.views.utils.static
    :members:
    :undoc-members:
    :show-inheritance:
@@ -55,7 +55,7 @@ heiwa.views.helpers.static module
 Module contents
 ---------------
 
-.. automodule:: heiwa.views.helpers
+.. automodule:: heiwa.views.utils
    :members:
    :undoc-members:
    :show-inheritance:

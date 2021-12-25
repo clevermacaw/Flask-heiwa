@@ -12,7 +12,7 @@ import sqlalchemy.orm
 
 from . import Base
 from .group import Group, GroupPermissions
-from .helpers import (
+from .utils import (
 	UUID,
 	BasePermissionMixin,
 	CDWMixin,

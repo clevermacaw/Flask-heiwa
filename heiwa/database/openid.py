@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlalchemy
 
 from . import Base
-from .helpers import CDWMixin, CreationTimestampMixin, ReprMixin
+from .utils import CDWMixin, CreationTimestampMixin, ReprMixin
 
 __all__ = ["OpenIDAuthentication"]
 

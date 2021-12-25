@@ -4,7 +4,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 from . import Base
-from .helpers import (
+from .utils import (
 	UUID,
 	BasePermissionMixin,
 	CDWMixin,

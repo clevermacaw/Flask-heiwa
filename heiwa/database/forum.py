@@ -10,7 +10,7 @@ import sqlalchemy.orm
 from .. import enums
 from . import Base
 from .group import Group
-from .helpers import (
+from .utils import (
 	UUID,
 	CDWMixin,
 	CreationTimestampMixin,

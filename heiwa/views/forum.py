@@ -13,7 +13,7 @@ from .. import (
 	statuses,
 	validators,
 )
-from .helpers import (
+from .utils import (
 	BASE_PERMISSION_SCHEMA,
 	find_forum_by_id,
 	find_group_by_id,

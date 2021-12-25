@@ -5,7 +5,7 @@ import flask
 import sqlalchemy
 
 from .. import database, encoders, exceptions, statuses
-from .helpers import create_jwt
+from .utils import create_jwt
 
 __all__ = ["guest_blueprint"]
 

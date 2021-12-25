@@ -18,7 +18,7 @@ from .. import (
 	statuses,
 	validators
 )
-from .helpers import (
+from .utils import (
 	PERMISSION_KEY_SCHEMA,
 	find_group_by_id,
 	find_user_by_id,

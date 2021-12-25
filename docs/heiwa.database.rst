@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   heiwa.database.helpers
+   heiwa.database.utils
 
 Submodules
 ----------

@@ -8,7 +8,7 @@ import sqlalchemy.orm
 
 from .. import enums
 from . import Base
-from .helpers import (
+from .utils import (
 	UUID,
 	CDWMixin,
 	CreationTimestampMixin,

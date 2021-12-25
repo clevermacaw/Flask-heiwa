@@ -12,7 +12,7 @@ import requests
 import sqlalchemy
 
 from .. import database, encoders, exceptions, statuses, validators
-from .helpers import create_jwt
+from .utils import create_jwt
 
 __all__ = ["openid_blueprint"]
 

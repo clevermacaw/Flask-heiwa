@@ -14,7 +14,7 @@ from .. import (
 	statuses,
 	validators
 )
-from .helpers import (
+from .utils import (
 	BASE_PERMISSION_SCHEMA,
 	find_group_by_id,
 	generate_search_schema,

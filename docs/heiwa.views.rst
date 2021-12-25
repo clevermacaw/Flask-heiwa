@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   heiwa.views.helpers
+   heiwa.views.utils
 
 Submodules
 ----------

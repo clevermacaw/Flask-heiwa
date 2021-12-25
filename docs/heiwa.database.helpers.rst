@@ -1,29 +1,29 @@
-heiwa.database.helpers package
+heiwa.database.utils package
 ==============================
 
 Submodules
 ----------
 
-heiwa.database.helpers.generators module
+heiwa.database.utils.generators module
 ----------------------------------------
 
-.. automodule:: heiwa.database.helpers.generators
+.. automodule:: heiwa.database.utils.generators
    :members:
    :undoc-members:
    :show-inheritance:
 
-heiwa.database.helpers.mixins module
+heiwa.database.utils.mixins module
 ------------------------------------
 
-.. automodule:: heiwa.database.helpers.mixins
+.. automodule:: heiwa.database.utils.mixins
    :members:
    :undoc-members:
    :show-inheritance:
 
-heiwa.database.helpers.types module
+heiwa.database.utils.types module
 -----------------------------------
 
-.. automodule:: heiwa.database.helpers.types
+.. automodule:: heiwa.database.utils.types
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ heiwa.database.helpers.types module
 Module contents
 ---------------
 
-.. automodule:: heiwa.database.helpers
+.. automodule:: heiwa.database.utils
    :members:
    :undoc-members:
    :show-inheritance:

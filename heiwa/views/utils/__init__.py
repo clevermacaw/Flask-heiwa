@@ -1,4 +1,4 @@
-"""Helpers for the API views."""
+"""Utilities for the API views."""
 
 from .find_and_validate import (
 	find_forum_by_id,
@@ -32,4 +32,4 @@ __all__ = [
 	"validate_thread_exists",
 	"validate_user_exists"
 ]
-__version__ = "1.28.1"
+__version__ = "1.28.2"

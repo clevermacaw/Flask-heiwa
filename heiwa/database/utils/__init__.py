@@ -1,4 +1,4 @@
-"""Helpers for SQLAlchemy ORM models."""
+"""Utilities for SQLAlchemy ORM models."""
 
 from .generators import generate_uuid
 from .mixins import (
@@ -23,4 +23,4 @@ __all__ = [
 	"ReprMixin",
 	"UUID"
 ]
-__version__ = "1.11.4"
+__version__ = "1.11.5"

@@ -5,7 +5,7 @@ import sqlalchemy.orm
 
 from .. import enums
 from . import Base
-from .helpers import UUID, CDWMixin, CreationTimestampMixin, IdMixin, ReprMixin
+from .utils import UUID, CDWMixin, CreationTimestampMixin, IdMixin, ReprMixin
 
 __all__ = ["Notification"]
 
