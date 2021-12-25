@@ -2,6 +2,7 @@ __pycache__/
 .directory
 config.py
 test.py
+icon.png
 avatars/*.jpg
 avatars/*.jpeg
 avatars/*.png
