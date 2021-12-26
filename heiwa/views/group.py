@@ -355,11 +355,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			).
 			order_by(
 				# Order the opposite way
-
-				# TODO: Check if this always works. I think it does, but I can't quite
-				# get my head around what this does when presented with offsets in the
-				# deletion query.
-
 				sqlalchemy.asc(order_column)
 				if not flask.g.json["order"]["asc"]
 				else sqlalchemy.desc(order_column)

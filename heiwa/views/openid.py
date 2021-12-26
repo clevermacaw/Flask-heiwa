@@ -78,8 +78,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 	an OAuth session, and creates a token for the associated user. The ``'sub'``
 	key has to be defined, ``'preferred_username'`` and ``'picture'`` are optional
 	but highly recommended. If there is no user associated, the user is
-	automatically created. The ``registered_by`` column will be
-	``'openid.$the_name_of_the_current_service'``.
+	automatically created. The ``registered_by`` column will be  ``'openid'``.
 	"""
 
 	if client_name not in flask.current_app.config["OPENID_SERVICES"]:
@@ -139,7 +138,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 
 		userinfo = oa2_session.get(oa2_session.metadata["userinfo_endpoint"]).json()
 
-		registered_by = f"openid.{client_name}"
+		registered_by = "openid"
 
 		user = flask.g.sa_session.execute(
 			sqlalchemy.select(database.User).

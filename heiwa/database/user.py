@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import operator
 import os
 import typing
 
@@ -583,14 +582,11 @@ class User(
 			select()
 		).scalars().one():
 			group_conditions = sqlalchemy.or_(
-				Group.default_for.any(
-					"*",
-					operator=operator.eq
-				),
-				Group.default_for.any(
-					self.registered_by,
-					operator=sqlalchemy.sql.expression.ColumnOperators.startswith
-				)
+				Group.default_for.any("*"),  # ``eq`` by default
+				# NOTE: Is there any way to properly do ``startswith`` here?
+				# This works too, and might even be better in some cases, but
+				# I'm not completely happy with it.
+				Group.default_for.any(self.registered_by)
 			)
 
 			if not flask.current_app.configured and not bypass_first_user_check:
