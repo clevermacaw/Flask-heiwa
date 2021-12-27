@@ -196,53 +196,193 @@ class User(
 	EditInfoMixin,
 	Base
 ):
-	"""User model.
+	r"""User model.
 
-	Contains:
+	**Database columns**:
 
-	#. An ``id`` column from the ``IdMixin``.
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-	#. A nullable ``registered_by`` column that contains the service this user
-	   was registered by. Groups whose ``default_for`` is at the start of it will
-	   automatically be assigned to this user. By default, the only two services
-	   that can register users are ``'/openid'`` and ``'/guest'`` APIs.
-	#. A nullable ``external_id`` column, the service this user was registered
-	   by's identifier for them.
-	#. An ``avatar_type`` column, containing the MIME type of this user's
-	   avatar, if there is one.
-	#. An ``is_banned`` column, specifying whether or not this user has been
-	   banned.
-	#. A JSON ``parsed_permissions`` column, containing this user's parsed
-	   permissions. This is a combination of this user's group's permissions
-	   (where groups with the highest ``level`` take precedence), and this user's
-	   specific permissions.
-	#. An ``encrypted_private_key`` column, optionally used to store an encrypted
-	#. A ``public_key`` column, containing this user's raw RSA public key.
-	   version of this user's RSA private key. If desired, this can be left empty
-	   with a public key still present.
-	#. Nullable ``name`` and ``status`` columns.
-	#. A dynamic, deferred ``followee_count`` column, corresponding to how many
-	   users this user has followed.
-	#. A dynamic, deferred ``follower_count`` column, corresponding to how many
-	   users have followed this user.
-	#. A dynamic, deferred ``forum_count`` column, corresponding to how many
-	   forums with this user's ``id`` in their ``user_id`` column exist.
-	#. A dynamic, deferred ``message_received_count`` coulumn corresponding to
-	   how many messages this user has received.
-	#. A dynamic, deferred ``message_received_unread_count`` column corresponding
-	   to how many messages this user has received, and hasn't read yet.
-	#. A dynamic, deferred ``message_sent_count`` coulumn corresponding to
-	   how many messages this user has sent.
-	#. A dynamic, deferred ``notification_count`` column corresponding to how
-	   many notifications with this user's ``id`` in their ``user_id`` column
-	   exist.
-	#. A dynamic, deferred ``notification_unread_count`` column corresponding to
-	   how many unread notifications this user has.
-	#. A dynamic, deferred ``post_count`` column, corresponding to how many
-	   posts with this user's ``id`` in their ``user_id`` column exist.
-	#. A dynamic, deferred ``thread_count`` column, corresponding to how many
-	   thread with this user's ``id`` in their ``user_id`` column exist.
+		``id``:
+
+			A user's UUID, always guaranteed to be unique within the table, but
+			not necessarily the database.
+
+			.. seealso::
+				:class:`IdMixin <heiwa.database.utils.mixins.IdMixin>`
+
+		``creation_timestamp``:
+
+			The time a user was created, in the UTC time zone.
+
+			.. seealso::
+				:class:`CreationTimestampMixin <heiwa.database.utils.mixins.Cre\
+				ationTimestampMixin>`
+
+		``edit_timestamp``:
+
+			The last time a user was edited, in the UTC time zone.
+
+			.. seealso::
+				:class:`EditInfoMixin <heiwa.database.utils.mixins.EditInfoMixin>`
+
+		``edit_count``:
+
+			The amount of times a user was edited. To increment this value, use
+			the :meth:`edited() <heiwa.database.utils.mixins.EditInfoMixin.edited>`
+			method.
+
+			.. seealso::
+				:class:`EditInfoMixin <heiwa.database.utils.mixins.EditInfoMixin>`
+
+		:attr:`registered_by <heiwa.database.user.User.registered_by>`:
+
+			The service a user was registered by. By default, this can be one of
+			2 values: ``guest``, for those who registered using the
+			:func:`guest.token <heiwa.views.guest.token>` endpoint, and ``openid``,
+			for those who signed up using :mod:`OpenID <heiwa.views.openid>`.
+			:class:`Group <heiwa.database.group.Group>`\ s who have this value in
+			their :attr:`default_for <heiwa.database.group.Group.default_for>`
+			column will automatically be assigned to the user.
+
+		:attr:`external_id <heiwa.database.user.User.external_id>`:
+
+			The service a user was registered by's identifier for them. For guests,
+			this will be a version of their IP address hashed using SCrypt. For users
+			registered using OpenID, it will be the ``sub`` key in ``userinfo``.
+
+			.. note::
+				Generally, guests will not have permission to create new content
+				like threads and posts, but some administrators may allow them to
+				do so. In those cases, once their sessions have expired, these
+				accounts won't be deleted, but since there is no longer any use
+				for it, their IP address stored in this column will be erased.
+
+			.. seealso::
+				The OpenID `specification <https://openid.net/specs/openid-conn\
+				ect-core-1_0.html#UserInfoResponse>`_ for a successful UserInfo
+				response.
+
+				The :attr:`has_content <heiwa.database.user.User.has_content>`
+				property.
+
+		:attr:`avatar_type <heiwa.database.user.User.avatar_type>`:
+
+			The media type of a user's avatar. If there is no avatar, it will remain
+			`None`.
+
+			.. seealso::
+				IANA's `list <https://www.iana.org/assignments/media-types/medi\
+				a-types.xhtml>`_ of officially recognized media types.
+
+			.. note::
+				Media times were formerly recognized as MIME types, and are still
+				commonly referred to as such.
+
+		:attr:`is_banned <heiwa.database.user.User.is_banned>`:
+
+			Whether or not a user has been banned. Defaults to ``False``.
+
+			.. seealso::
+
+				:class:`UserBan <heiwa.database.user.UserBan>`
+
+				:meth:`ban() <heiwa.database.user.User.ban>`
+
+		:attr:`parsed_permissions <heiwa.database.user.User.parsed_permissions>`:
+
+			A user's parsed permissions. This is a combination of the user's group's
+			permissions (where groups with the highest
+			:attr:`level <heiwa.database.group.Group.level>` attribute take
+			precedence), and permissions specific to this user.
+
+			.. seealso::
+				:class:`GroupPermissions <heiwa.database.group.GroupPermissions>`
+
+				:class:`UserPermissions <heiwa.database.user.UserPermissions>`
+
+				:meth:`reparse_permissions <heiwa.database.user.User.reparse_permissions>`
+
+			.. note::
+				Parsed permissions don't necessarily need to be stored, but doing
+				so will make their usage much faster.
+
+		:attr:`encrypted_private_key <heiwa.database.user.User.encrypted_privat\
+		e_key>`:
+
+			A user's RSA private key, encrypted using AES-CBC with a padding size
+			of 16. If they choose not to supply one and eneter it manually upon
+			decryption of the :class:`Message <heiwa.database.message.Message>`\ s
+			they have received, they can still set a
+			:attr:`public_key <heiwa.database.user.User.public_key>`.
+
+		:attr:`public_key <heiwa.database.user.User.public_key>`:
+
+			A user's RSA public key. This must be set for them to be able to receive
+			:class:`Message <heiwa.database.message.Message>`\ s, which are always
+			encrypted.
+
+		:attr:`name <heiwa.database.user.User.name>`:
+
+			A user's name.
+
+		:attr:`status <heiwa.database.User.status>`:
+
+			A user's status. In general, the usage of this should be similar to
+			status messages on GitLab and social media.
+
+	**Dynamic columns**:
+
+		:attr:`followee_count <heiwa.database.User.followee_count>`:
+
+			The number of users a user is following.
+
+
+		:attr:`follower_count <heiwa.database.User.follower_count>`:
+
+			The number of users following a user.
+
+		:attr:`forum_count <heiwa.database.User.forum_count>`:
+
+			The number of :class:`Forum <heiwa.database.forum.Forum>`\ s a user
+			owns.
+
+		:attr:`message_received_count <heiwa.database.user.User.message_receive\
+		d_count>`:
+
+			The number of :class:`Message <heiwa.database.message.Message>`\ s a
+			user has received.
+
+		:attr:`message_received_unread_count <heiwa.database.user.User.message_\
+		received_unread_count>`:
+
+			The number of :class:`Message <heiwa.database.message.Message>`\ s a
+			user has received and not yet read.
+
+		:attr:`message_sent_count <heiwa.database.user.User.message_sent_count>`:
+
+			The number of :class:`Message <heiwa.database.message.Message>`\ s a
+			user has sent.
+
+		:attr:`notification_count <heiwa.database.user.User.notification_count>`:
+
+			The number of
+			:class:`Notification <heiwa.database.message.Notification>`\ s a user
+			has.
+
+		:attr:`notification_unread_count <heiwa.database.user.User.notification\
+		_unread_count>`:
+
+			The number of unread
+			:class:`Notification <heiwa.database.message.Notification>`\ s a user
+			has.
+
+		:attr:`post_count <heiwa.database.user.User.post_count>`:
+
+			The number of :class:`Post <heiwa.database.post.Post>`\ s this user
+			has made.
+
+		:attr:`thread_count <heiwa.database.user.User.thread_count>`:
+
+			The number of :class:`Thread <heiwa.database.thread.Thread>`\ s this
+			user has made.
 	"""
 
 	__tablename__ = "users"

@@ -23,6 +23,8 @@ openid_blueprint = flask.Blueprint(
 )
 openid_blueprint.json_encoder = encoders.JSONEncoder
 
+REGISTERED_BY = "openid"
+
 
 def get_config(client_name: str) -> typing.Dict[
 		str,
@@ -138,13 +140,11 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 
 		userinfo = oa2_session.get(oa2_session.metadata["userinfo_endpoint"]).json()
 
-		registered_by = "openid"
-
 		user = flask.g.sa_session.execute(
 			sqlalchemy.select(database.User).
 			where(
 				sqlalchemy.and_(
-					database.User.registered_by == registered_by,
+					database.User.registered_by == REGISTERED_BY,
 					database.User.external_id == userinfo["sub"]
 				)
 			)
@@ -169,7 +169,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 		if user is None:
 			user = database.User.create(
 				flask.g.sa_session,
-				registered_by=registered_by,
+				registered_by=REGISTERED_BY,
 				external_id=userinfo["sub"],
 				avatar_type=avatar_type,
 				name=userinfo.get("preferred_username"),

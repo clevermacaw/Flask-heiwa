@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import typing
 
 import flask
@@ -16,6 +17,8 @@ guest_blueprint = flask.Blueprint(
 )
 guest_blueprint.json_encoder = encoders.JSONEncoder
 
+REGISTERED_BY = "guest"
+
 
 @guest_blueprint.route("/token", methods=["GET"])
 def token() -> typing.Tuple[flask.Response, int]:
@@ -28,27 +31,62 @@ def token() -> typing.Tuple[flask.Response, int]:
 
 	max_creation_timestamp = (
 		datetime.datetime.now(tz=datetime.timezone.utc)
-		- datetime.timedelta(seconds=flask.current_app.config[
-			"GUEST_SESSION_EXPIRES_AFTER"
-		])
+		- datetime.timedelta(
+			seconds=flask.current_app.config[
+				"GUEST_SESSION_EXPIRES_AFTER"
+			]
+		)
 	)
 
 	# Delete all expired sessions with no content
+
 	flask.g.sa_session.execute(
 		sqlalchemy.delete(database.User).
 		where(
 			sqlalchemy.and_(
 				database.User.creation_timestamp <= max_creation_timestamp,
-				database.User.registered_by == "guest",
+				database.User.registered_by == REGISTERED_BY,
 				~database.User.has_content
 			)
 		).
 		execution_options(synchronize_session="fetch")
 	)
 
-	# Commit just in case there is something wrong with user input,
+	# Remove external identifier for guests with content that would have been
+	# deleted otherwise
+
+	flask.g.sa_session.execute(
+		sqlalchemy.update(database.User).
+		where(
+			sqlalchemy.and_(
+				database.User.creation_timestamp <= max_creation_timestamp,
+				database.User.registered_by == REGISTERED_BY,
+				database.User.has_content
+			)
+		).
+		values(external_id=None).
+		execution_options(synchronize_session="fetch")
+	)
+
+	# Commit here just in case there is something wrong with user input,
 	# and an exception is raised
+
 	flask.g.sa_session.commit()
+
+	# NOTE: The app's secret key isn't the greatest salt ever, but the best
+	# we can afford to use here, since we're searching for users based on its
+	# value. Unfortunately, this means using a random string is out of the
+	# question.
+
+	hashed_identifier = hashlib.scrypt(
+		flask.g.identifier.encode("utf-8"),
+		salt=flask.current_app.config["SECRET_KEY"].encode("utf-8"),
+		n=flask.current_app.config["GUEST_SCRYPT_N"],
+		r=flask.current_app.config["GUEST_SCRYPT_R"],
+		p=flask.current_app.config["GUEST_SCRYPT_P"],
+		maxmem=flask.current_app.config["GUEST_SCRYPT_MAXMEM"],
+		dklen=32
+	).hex()
 
 	existing_session_count = flask.g.sa_session.execute(
 		sqlalchemy.select(
@@ -58,12 +96,14 @@ def token() -> typing.Tuple[flask.Response, int]:
 		).
 		where(
 			sqlalchemy.and_(
-				database.User.creation_timestamp <= max_creation_timestamp,
-				database.User.registered_by == "guest",
-				database.User.external_id == flask.g.identifier
+				database.User.creation_timestamp >= max_creation_timestamp,
+				database.User.registered_by == REGISTERED_BY,
+				database.User.external_id == hashed_identifier
 			)
 		)
 	).scalars().one()
+
+	print(existing_session_count)
 
 	if (
 		existing_session_count
@@ -72,11 +112,12 @@ def token() -> typing.Tuple[flask.Response, int]:
 		# Don't share max session limit, it could theoretically be used to obtain
 		# basic information about other users. Potentially sensitive config
 		# information could also be obtained.
+
 		raise exceptions.APIGuestSessionLimitReached
 
 	user = database.User(
-		registered_by="guest",
-		external_id=flask.g.identifier
+		registered_by=REGISTERED_BY,
+		external_id=hashed_identifier
 	)
 	user.write(
 		flask.g.sa_session,
