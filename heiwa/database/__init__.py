@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM database, tables and utilities."""
+"""SQLAlchemy ORM models, tables and utilities."""
 
 import sqlalchemy.orm
 
@@ -52,4 +52,4 @@ __all__ = [
 	"user_groups",
 	"utils"
 ]
-__version__ = "0.34.3"
+__version__ = "0.34.5"
