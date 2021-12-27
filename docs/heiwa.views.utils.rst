@@ -1,11 +1,11 @@
 heiwa.views.utils package
-===========================
+=========================
 
 Submodules
 ----------
 
 heiwa.views.utils.find\_and\_validate module
-----------------------------------------------
+--------------------------------------------
 
 .. automodule:: heiwa.views.utils.find_and_validate
    :members:
@@ -13,7 +13,7 @@ heiwa.views.utils.find\_and\_validate module
    :show-inheritance:
 
 heiwa.views.utils.jwt module
-------------------------------
+----------------------------
 
 .. automodule:: heiwa.views.utils.jwt
    :members:
@@ -21,7 +21,7 @@ heiwa.views.utils.jwt module
    :show-inheritance:
 
 heiwa.views.utils.permissions module
---------------------------------------
+------------------------------------
 
 .. automodule:: heiwa.views.utils.permissions
    :members:
@@ -29,7 +29,7 @@ heiwa.views.utils.permissions module
    :show-inheritance:
 
 heiwa.views.utils.schema module
----------------------------------
+-------------------------------
 
 .. automodule:: heiwa.views.utils.schema
    :members:
@@ -37,7 +37,7 @@ heiwa.views.utils.schema module
    :show-inheritance:
 
 heiwa.views.utils.search module
----------------------------------
+-------------------------------
 
 .. automodule:: heiwa.views.utils.search
    :members:
@@ -45,7 +45,7 @@ heiwa.views.utils.search module
    :show-inheritance:
 
 heiwa.views.utils.static module
----------------------------------
+-------------------------------
 
 .. automodule:: heiwa.views.utils.static
    :members:

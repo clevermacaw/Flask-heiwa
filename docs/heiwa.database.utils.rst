@@ -1,11 +1,11 @@
 heiwa.database.utils package
-==============================
+============================
 
 Submodules
 ----------
 
 heiwa.database.utils.generators module
-----------------------------------------
+--------------------------------------
 
 .. automodule:: heiwa.database.utils.generators
    :members:
@@ -13,7 +13,7 @@ heiwa.database.utils.generators module
    :show-inheritance:
 
 heiwa.database.utils.mixins module
-------------------------------------
+----------------------------------
 
 .. automodule:: heiwa.database.utils.mixins
    :members:
@@ -21,7 +21,7 @@ heiwa.database.utils.mixins module
    :show-inheritance:
 
 heiwa.database.utils.types module
------------------------------------
+---------------------------------
 
 .. automodule:: heiwa.database.utils.types
    :members:
