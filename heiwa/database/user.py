@@ -121,16 +121,15 @@ class UserBan(
 	EditInfoMixin,
 	Base
 ):
-	""":class:`User <heiwa.database.User>` ban model. Can be created manually,
-	but in general, the :meth:`create_ban() <heiwa.database.User.create_ban>`
-	method will be easier and faster.
+	""":class:`.User` ban model. Can be created manually, but in general, the
+	:meth:`.User.create_ban` method will be easier and faster.
 
 	.. seealso::
-		:attr:`is_banned <heiwa.database.User.is_banned>`
+		:attr:`.User.is_banned`
 
-		:meth:`create_ban() <heiwa.database.User.create_ban>`
+		:meth:`.User.create_ban()`
 
-		:meth:`remove_ban() <heiwa.database.User.remove_ban>`
+		:meth:`.User.remove_ban()`
 	"""
 
 	__tablename__ = "user_bans"
@@ -144,17 +143,15 @@ class UserBan(
 		),
 		primary_key=True
 	)
-	"""The ID of the :class:`User <heiwa.database.User>` who a ban was
-	issued to.
-	"""
+	"""The ID of the :class:`.User` who a ban was issued to."""
 
 	expiration_timestamp = sqlalchemy.Column(
 		sqlalchemy.DateTime(timezone=True),
 		nullable=False
 	)
 	"""The time a ban expires. When it does, it's not removed immediately, but
-	when the :class:`User <heiwa.database.User>` this ban concerns makes
-	any request where they've successfully authorized.
+	when the :class:`.User` this ban concerns makes any request where they've
+	successfully authorized.
 	"""
 
 	reason = sqlalchemy.Column(
@@ -172,9 +169,8 @@ class UserPermissions(
 	BasePermissionMixin,
 	Base
 ):
-	r""":class:`User <heiwa.database.User>` permission model. This can be used
-	to set permissions for one specific user, instead of only a
-	:class:`Group <heiwa.database.Group>`.
+	""":class:`.User` permission model. This can be used to set permissions for
+	one specific user, instead of only a :class:`.Group`.
 	"""
 
 	__tablename__ = "user_permissions"
@@ -188,9 +184,7 @@ class UserPermissions(
 		),
 		primary_key=True
 	)
-	"""The ID of the :class:`User <heiwa.database.User>` these permissions
-	belong to.
-	"""
+	"""The ID of the :class:`.User` these permissions belong to."""
 
 class User(
 	CDWMixin,
@@ -214,9 +208,8 @@ class User(
 	2 values: ``guest``, for those who registered using the
 	:func:`guest.token <heiwa.views.guest.token>` endpoint, and ``openid``,
 	for those who signed up using :mod:`OpenID <heiwa.views.openid>`.
-	:class:`Group <heiwa.database.Group>`\ s who have this value in their
-	:attr:`default_for <heiwa.database.group.Group.default_for>` column
-	will automatically be assigned to the user.
+	:class:`.Group`\ s who have this value in their :attr:`.Group.default_for`
+	column will automatically be assigned to the user.
 	"""
 
 	external_id = sqlalchemy.Column(
@@ -240,8 +233,7 @@ class User(
 		ect-core-1_0.html#UserInfoResponse>`_ for a successful UserInfo
 		response.
 
-		The :attr:`has_content <heiwa.database.User.has_content>`
-		property.
+		The :attr`.User.has_content` property.
 	"""
 
 	# ^ Can't make a unique constraint on ``registered_by`` and ``external_id``
@@ -276,11 +268,11 @@ class User(
 
 	.. seealso::
 
-		:class:`UserBan <heiwa.database.UserBan>`
+		:class:`.UserBan`
 
-		:meth:`create_ban() <heiwa.database.User.create_ban>`
+		:meth:`.User.create_ban()`
 
-		:meth:`remove_ban() <heiwa.database.User.remove_ban>`
+		:meth:`.User.remove_ban()`
 	"""
 
 	parsed_permissions = sqlalchemy.Column(
@@ -288,16 +280,15 @@ class User(
 		nullable=False
 	)
 	"""A user's parsed permissions. This is a combination of the user's groups'
-	permissions (where groups with the highest
-	:attr:`level <heiwa.database.Group.level>` attribute take precedence),
-	and permissions specific to this user.
+	permissions (where groups with the highest :attr:`.Group.level` attribute
+	take precedence), and permissions specific to this user.
 
 	.. seealso::
-		:class:`GroupPermissions <heiwa.database.GroupPermissions>`
+		:class:`.GroupPermissions`
 
-		:class:`UserPermissions <heiwa.database.UserPermissions>`
+		:class:`.UserPermissions`
 
-		:meth:`reparse_permissions <heiwa.database.User.reparse_permissions>`
+		:meth:`.User.reparse_permissions`
 
 	.. note::
 		Parsed permissions don't necessarily need to be stored, but doing
@@ -309,10 +300,9 @@ class User(
 		nullable=True
 	)
 	r"""A user's RSA private key, encrypted using AES-CBC with a padding size
-	of 16. If they choose not to supply one and eneter it manually upon
-	decryption of the :class:`Message <heiwa.database.Message>`\ s they have
-	received, they can still set a
-	:attr:`public_key <heiwa.database.User.public_key>`.
+	of 16. If they choose not to supply one and eneter it manually upon decryption
+	of the :class:`.Message`\ s they have received, they can still set a
+	:attr:`.User.public_key`.
 	"""
 
 	public_key = sqlalchemy.Column(
@@ -320,7 +310,7 @@ class User(
 		nullable=True
 	)
 	r"""A user's RSA public key. This must be set for them to be able to receive
-	:class:`Message <heiwa.database.Message>`\ s, which are always encrypted.
+	:class:`.Message`\ s, which are always encrypted.
 
 	.. note::
 		No set length here, since users can have different key sizes. Though the
@@ -371,7 +361,7 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of :class:`Forum <heiwa.database.Forum>`\ s a user owns."""
+	r"""The number of :class:`.Forum`\ s a user owns."""
 
 	message_received_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -383,9 +373,7 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of :class:`Message <heiwa.database.Message>`\ s a user has
-	received.
-	"""
+	r"""The number of :class:`.Message`\ s a user has received."""
 
 	message_received_unread_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -400,9 +388,7 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of :class:`Message <heiwa.database.Message>`\ s a user has
-	received and not yet read.
-	"""
+	r"""The number of :class:`.Message`\ s a user has received and not yet read."""
 
 	message_sent_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -414,8 +400,7 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of :class:`Message <heiwa.database.Message>`\ s a user has sent.
-	"""
+	r"""The number of :class:`.Message`\ s a user has sent."""
 
 	notification_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -425,9 +410,7 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of :class:`Notification <heiwa.database.Notification>`\ s a user
-	has.
-	"""
+	r"""The number of :class:`.Notification`\ s a user has."""
 
 	notification_unread_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -442,9 +425,7 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of unread :class:`Notification <heiwa.database.Notification>`\ s
-	a user has.
-	"""
+	r"""The number of unread :class:`.Notification`\ s a user has."""
 
 	thread_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -457,9 +438,7 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of :class:`Thread <heiwa.database.Thread>`\ s this user has
-	made.
-	"""
+	r"""The number of :class:`.Thread`\ s this user has made."""
 
 	post_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -472,7 +451,7 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of :class:`Post <heiwa.database.Post>`\ s this user has made."""
+	r"""The number of :class:`.Post`\ s this user has made."""
 
 	blockees = sqlalchemy.orm.relationship(
 		lambda: User,
@@ -626,15 +605,14 @@ class User(
 		session: sqlalchemy.orm.Session,
 		bypass_first_user_check: bool = False
 	) -> None:
-		r"""If no :class:`Group <heiwa.database.Group>`\ s have already been assigned
-		to this user, they're set to all groups where the
-		:attr:`default_for <heiwa.database.Group.default_for>` column contains
-		the service this user was registered by or `*`.
+		r"""If no :class:`.Group`\ s have already been assigned to this user,
+		they're set to all groups where the :attr:`.Group.default_for` column
+		contains the service this user was registered by or `*`.
 
 		.. seealso::
-			:data:`user_groups <heiwa.database.user.user_groups>`
+			:data:`.User.user_groups`
 
-			:attr:`User.registered_by <heiwa.database.User.registered_by>`
+			:attr:`.User.registered_by`
 
 		If the current Flask app has not yet been configured and
 		``bypass_first_user_check`` is :data:`False`, all groups specified in the
@@ -642,11 +620,11 @@ class User(
 		permissions have been given, they're automatically parsed.
 
 		.. seealso::
-			:attr:`User.parsed_permissions <heiwa.database.User.parsed_permissions>`
+			:attr:`.User.parsed_permissions`
 
-			:attr:`ConfiguredLockFlask.configured <heiwa.ConfiguredLockFlask>`
+			:attr:`.ConfiguredLockFlask.configured`
 
-			:meth:`reparse_permissions <heiwa.database.User.reparse_permissions>`
+			:meth:`.User.reparse_permissions`
 		"""
 
 		if self.parsed_permissions is None:
@@ -709,13 +687,13 @@ class User(
 		or posts, or sent any messages.
 
 		.. seealso::
-			:attr:`User.forum_count <heiwa.database.User.forum_count>`
+			:attr:`.User.forum_count`
 
-			:attr:`User.thread_count <heiwa.database.User.thread_count>`
+			:attr:`.User.thread_count`
 
-			:attr:`User.post_count <heiwa.database.User.post_count>`
+			:attr:`.User.post_count`
 
-			:attr:`User.message_sent_count <heiwa.database.User.message_sent_count>`
+			:attr:`.User.message_sent_count`
 		"""
 
 		return (
@@ -731,13 +709,13 @@ class User(
 		owns any forums, has made any threads or posts, or sent any messages.
 
 		.. seealso::
-			:attr:`User.forum_count <heiwa.database.User.forum_count>`
+			:attr:`.User.forum_count`
 
-			:attr:`User.thread_count <heiwa.database.User.thread_count>`
+			:attr:`.User.thread_count`
 
-			:attr:`User.post_count <heiwa.database.User.post_count>`
+			:attr:`.User.post_count`
 
-			:attr:`User.message_sent_count <heiwa.database.User.message_sent_count>`
+			:attr:`.User.message_sent_count`
 		"""
 
 		return sqlalchemy.or_(
@@ -749,8 +727,8 @@ class User(
 
 	@sqlalchemy.ext.hybrid.hybrid_property
 	def highest_group(self: User) -> Group:
-		r"""Returns the :class:`Group <heiwa.database.Group>` with the highest
-		:attr:`level <heiwa.database.Group.level>` this user has.
+		r"""Returns the :class:`.Group` with the highest :attr:`.Group.level`
+		this user has.
 		"""
 
 		# Can't add an optional ``session`` here, this is a property
@@ -770,9 +748,8 @@ class User(
 
 	@highest_group.expression
 	def highest_group(cls: User) -> sqlalchemy.sql.Select:
-		r"""Returns a selection query that represents the
-		:class:`Group <heiwa.database.Group>` with the highest
-		:attr:`level <heiwa.database.Group.level>` this user has.
+		r"""Returns a selection query that represents the :class:`.Group` with
+		the highest :attr:`.Group.level` this user has.
 		"""
 
 		return (
@@ -871,7 +848,7 @@ class User(
 		optionally a ``reason``.
 
 		.. seealso::
-			:class:`UserBan <heiwa.database.UserBan>`
+			:class:`.UserBan`
 		"""
 
 		self.is_banned = True
@@ -897,22 +874,19 @@ class User(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		r"""Sets this user's
-		:attr:`parsed_permissions <heiwa.database.User.parsed_permissions>`
-		column to the combination of:
+		r"""Sets this user's :attr:`.User.parsed_permissions` column to the
+		combination of:
 
-			#. This user's :class:`Group <heiwa.database.Group>`\ s' permissions,
-			   where the group with the highest
-			   :attr:`level <heiwa.database.Group.level>` attribute is the most
-			   important.
+			#. This user's :class:`.Group`\ s' permissions, where the group with
+			   the highest :attr:`.Group.level` attribute is the most important.
 			#. This user's permissions.
 
 		The lower on the list an item is, the higher priority it has.
 
 		.. seealso::
-			:class:`GroupPermissions <heiwa.database.GroupPermissions>`
+			:class:`.GroupPermissions`
 
-			:class:`UserPermissions <heiwa.database.UserPermissions>`
+			:class:`.UserPermissions`
 		"""
 
 		if session is None:
