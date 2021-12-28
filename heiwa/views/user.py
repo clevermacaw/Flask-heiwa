@@ -574,14 +574,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	methods=["DELETE"]
 )
 @authentication.authenticate_via_jwt
-@requires_permission(
-	lambda: (
-		"delete"
-		if flask.request.view_args["id_"] is not None
-		else "delete_self"
-	),
-	database.User
-)
+@requires_permission("delete", database.User)
 def delete(
 	id_: typing.Union[None, uuid.UUID]
 ) -> typing.Tuple[flask.Response, int]:
@@ -596,7 +589,7 @@ def delete(
 
 	validate_permission(
 		flask.g.user,
-		"delete" if id_ is not None else "delete_self",
+		"delete",
 		user
 	)
 

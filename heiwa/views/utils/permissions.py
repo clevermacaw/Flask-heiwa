@@ -15,10 +15,7 @@ __all__ = [
 
 
 def requires_permission(
-	action: typing.Union[
-		str,
-		typing.Callable
-	],
+	action: str,
 	resource: typing.Union[
 		sqlalchemy.orm.DeclarativeMeta,
 		heiwa.database.Base
@@ -34,8 +31,8 @@ def requires_permission(
 	]
 ]:
 	"""Checks whether or not ``flask.g.user`` has permission to perform ``action``
-	(string, or callable that returns a string) on the given ``resource``.
-	Raises ``heiwa.exceptions.APINoPermission`` if that's not the case.
+	on the given ``resource``. Raises ``heiwa.exceptions.APINoPermission`` if
+	that's not the case.
 	"""
 
 	def wrapper(
@@ -51,7 +48,7 @@ def requires_permission(
 		def wrapped_function(*w_args, **w_kwargs) -> typing.Any:
 			validate_permission(
 				flask.g.user,
-				action if isinstance(action, str) else action(),
+				action,
 				resource
 			)
 

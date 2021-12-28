@@ -186,6 +186,7 @@ class UserPermissions(
 	)
 	"""The ID of the :class:`.User` these permissions belong to."""
 
+
 class User(
 	CDWMixin,
 	PermissionControlMixin,
@@ -208,8 +209,9 @@ class User(
 	2 values: ``guest``, for those who registered using the
 	:func:`guest.token <heiwa.views.guest.token>` endpoint, and ``openid``,
 	for those who signed up using :mod:`OpenID <heiwa.views.openid>`.
-	:class:`.Group`\ s who have this value in their :attr:`.Group.default_for`
-	column will automatically be assigned to the user.
+	:class:`.Group`\ s who have this value in their
+	:attr:`default_for <.Group.default_for>` column will automatically be assigned
+	to the user.
 	"""
 
 	external_id = sqlalchemy.Column(
@@ -226,14 +228,14 @@ class User(
 		like threads and posts, but some administrators may allow them to
 		do so. In those cases, once their sessions have expired, these
 		accounts won't be deleted, but since there is no longer any use
-		for it, their IP address stored in this column will be erased.
+		for it, the hashed IP address stored in this column will be erased.
 
 	.. seealso::
 		The OpenID `specification <https://openid.net/specs/openid-conn\
 		ect-core-1_0.html#UserInfoResponse>`_ for a successful UserInfo
 		response.
 
-		The :attr`.User.has_content` property.
+		:attr:`.User.has_content`
 	"""
 
 	# ^ Can't make a unique constraint on ``registered_by`` and ``external_id``
@@ -280,8 +282,8 @@ class User(
 		nullable=False
 	)
 	"""A user's parsed permissions. This is a combination of the user's groups'
-	permissions (where groups with the highest :attr:`.Group.level` attribute
-	take precedence), and permissions specific to this user.
+	permissions (where groups with the highest :attr:`level <.Group.level>`
+	attribute take precedence), and permissions specific to this user.
 
 	.. seealso::
 		:class:`.GroupPermissions`
@@ -300,9 +302,9 @@ class User(
 		nullable=True
 	)
 	r"""A user's RSA private key, encrypted using AES-CBC with a padding size
-	of 16. If they choose not to supply one and eneter it manually upon decryption
+	of 16. If they choose not to supply one and enter it manually upon decryption
 	of the :class:`.Message`\ s they have received, they can still set a
-	:attr:`.User.public_key`.
+	:attr:`public_key <.User.public_key>`.
 	"""
 
 	public_key = sqlalchemy.Column(
@@ -388,7 +390,9 @@ class User(
 		scalar_subquery(),
 		deferred=True
 	)
-	r"""The number of :class:`.Message`\ s a user has received and not yet read."""
+	r"""The number of :class:`.Message`\ s a user has received and not yet
+	read.
+	"""
 
 	message_sent_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -496,11 +500,7 @@ class User(
 	)
 
 	class_actions = {
-		"delete": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
-			user.parsed_permissions["user_delete"]
-		),
-		"delete_self": lambda cls, user: True,
+		"delete": lambda cls, user: True,
 		"edit": lambda cls, user: cls.get_class_permission(user, "view"),
 		"edit_ban": lambda cls, user: (
 			cls.get_class_permission(user, "view") and
@@ -521,6 +521,60 @@ class User(
 		"view_groups": lambda cls, user: cls.get_class_permission(user, "view"),
 		"view_permissions": lambda cls, user: cls.get_class_permission(user, "view")
 	}
+	r"""Actions a given user is allowed to perform on any user, without any indication
+	of which one it is.
+
+	``delete``:
+		Whether or not a user can delete another user, or themselves. Since we
+		don't know which one it is, and a user can always delete themselves,
+		this will default to :data:`True` here.
+
+	``edit``:
+		Whether or not a user can edit another user. Just like with ``delete``,
+		this will default to :data:`True` in this case.
+
+	``edit_ban``:
+		Whether or not a user can edit another user's ban - including its deletion.
+		This depends on the ``user_edit_ban`` value in the performing user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``edit_block``:
+		Whether or not a user can block / unblock another user. By default, this
+		will always be :data:`True`.
+
+	``edit_follow``:
+		Whether or not a user can follow / unfollow another user. By default, this
+		will always be :data:`True`.
+
+	``edit_group``:
+		Whether or not a user can edit the :class:`.Group`\ s assigned to another
+		user. This depends on the ``user_edit_groups`` value in the performing
+		user's :attr:`parsed_permissions <.User.parsed_permissions>`.
+
+		.. seealso::
+			:data:`.user_groups` (TODO)
+
+	``edit_permissions``:
+		Whether or not a user can edit another user's permissions. This depends on
+		the ``user_edit_permissions`` value in the performing user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``view``:
+		Whether or not a user can view another user. By default, this will always
+		be :data:`True`.
+
+	``view_ban``:
+		Whether or not a user can view another user's ban. By default, this will
+		always be :data:`True`.
+
+	``view_groups``:
+		Whether or not a user can view another user's groups. By default, this
+		will always be :data:`True`.
+
+	``view_permissions``:
+		Whether or not a user can view another user's permissions. By default,
+		this will always be :data:`True`.
+	"""
 
 	instance_actions = {
 		"delete": lambda self, user: (
@@ -530,7 +584,6 @@ class User(
 				user.highest_group.level > self.highest_group.level
 			)
 		),
-		"delete_self": lambda self, user: True,
 		"edit": lambda self, user: (
 			self.id == user.id or (
 				self.get_instance_permission(user, "view") and
@@ -574,6 +627,78 @@ class User(
 			self.get_instance_permission(user, "view")
 		)
 	}
+	r"""Actions a given user is allowed to perform on another given user. Unlike
+	:attr:`class_actions <.User.class_actions>`, their identities are known and
+	results may vary for each set of users.
+
+	``delete``:
+		Whether or not a user can delete another user. If the user is deleting
+		themselves, always :data:`True` by  default. Otherwise, this depends on
+		the ``user_delete`` value in the performing user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as the
+		performing user's highest group's :attr:`level <.Group.level>` being
+		higher than the receiving user's.
+
+	``edit``:
+		Whether or not a user can edit another user. If the user is editing
+		themselves, always :data:`True` by default. Otherwise, this depends on
+		the ``user_edit`` value in the performing user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as the
+		performing user's highest group's :attr:`level <.Group.level>` being
+		higher than the receiving user's.
+
+	``edit_ban``:
+		Whether or not a user can edit another user's ban - including its deletion.
+		This depends on the ``user_edit_ban`` value in the performing user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as the
+		performing user's highest group's :attr:`level <.Group.level>` being
+		higher than the receiving user's.
+
+	``edit_block``:
+		Whether or not a user can block / unblock another user. By default, this
+		will always be :data:`True`, unless the user is attempting to block
+		themselves.
+
+	``edit_follow``:
+		Whether or not a user can follow / unfollow another user. By default, this
+		will always be :data:`True`, unless the user is attempting to follow
+		themselves.
+
+	``edit_group``:
+		Whether or not a user can edit the :class:`.Group`\ s assigned to another
+		user. This depends on the ``user_edit_groups`` value in the performing
+		user's :attr:`parsed_permissions <.User.parsed_permissions>`, as well as
+		the performing user's highest group's :attr:`level <.Group.level>` being
+		higher than the receiving user's. If an ``edited_group`` attribute
+		is assigned to the receiving user, it also depends on that group's
+		level being lower.
+
+		.. seealso::
+			:data:`.user_groups` (TODO)
+
+	``edit_permissions``:
+		Whether or not a user can edit another user's permissions. This depends on
+		the ``user_edit_permissions`` value in the performing user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as the
+		performing user's highest group's :attr:`level <.Group.level>` being
+		higher than the receiving user's.
+
+	``view``:
+		Whether or not a user can view another user. By default, this will always
+		be :data:`True`.
+
+	``view_ban``:
+		Whether or not a user can view another user's ban. By default, this will
+		always be :data:`True`.
+
+	``view_groups``:
+		Whether or not a user can view another user's groups. By default, this
+		will always be :data:`True`.
+
+	``view_permissions``:
+		Whether or not a user can view another user's permissions. By default,
+		this will always be :data:`True`.
+	"""
 
 	viewable_columns = {
 		"id": lambda self, user: True,
@@ -599,6 +724,54 @@ class User(
 		"thread_count": lambda self, user: True,
 		"post_count": lambda self, user: True
 	}
+	"""The columns of one user which are allowed to be seen by other users.
+
+	Public, visible to all:
+		:attr:`.User.id`
+
+		:attr:`.User.creation_timestamp`
+
+		:attr:`.User.edit_timestamp`
+
+		:attr:`.User.edit_count`
+
+		:attr:`.User.avatar_type`
+
+		:attr:`.User.is_banned`
+
+		:attr:`.User.parsed_permissions`
+
+		:attr:`.User.public_key`
+
+		:attr:`.User.name`
+
+		:attr:`.User.status`
+
+		:attr:`.User.followee_count`
+
+		:attr:`.User.follower_count`
+
+		:attr:`.User.forum_count`
+
+		:attr:`.User.thread_count`
+
+		:attr:`.User.post_count`
+
+	Private, only visible to the user:
+		:attr:`.User.registered_by`
+
+		:attr:`.User.external_id`
+
+		:attr:`.User.encrypted_private_key`
+
+		:attr:`.User.message_received_count`
+
+		:attr:`.User.message_sent_count`
+
+		:attr:`.User.notification_count`
+
+		:attr:`.User.notification_unread_count`
+	"""
 
 	def write(
 		self: User,
@@ -606,8 +779,8 @@ class User(
 		bypass_first_user_check: bool = False
 	) -> None:
 		r"""If no :class:`.Group`\ s have already been assigned to this user,
-		they're set to all groups where the :attr:`.Group.default_for` column
-		contains the service this user was registered by or `*`.
+		they're set to all groups where the :attr:`default_for <.Group.default_for>`
+		column contains the service this user was registered by or `*`.
 
 		.. seealso::
 			:data:`.User.user_groups`
@@ -727,7 +900,7 @@ class User(
 
 	@sqlalchemy.ext.hybrid.hybrid_property
 	def highest_group(self: User) -> Group:
-		r"""Returns the :class:`.Group` with the highest :attr:`.Group.level`
+		"""Returns the :class:`.Group` with the highest :attr:`level <.Group.level>`
 		this user has.
 		"""
 
@@ -749,7 +922,7 @@ class User(
 	@highest_group.expression
 	def highest_group(cls: User) -> sqlalchemy.sql.Select:
 		r"""Returns a selection query that represents the :class:`.Group` with
-		the highest :attr:`.Group.level` this user has.
+		the highest :attr:`level <.Group.level>` this user has.
 		"""
 
 		return (
@@ -874,11 +1047,12 @@ class User(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		r"""Sets this user's :attr:`.User.parsed_permissions` column to the
-		combination of:
+		r"""Sets this user's :attr:`parsed_permissions <.User.parsed_permissions>`
+		column to the combination of:
 
 			#. This user's :class:`.Group`\ s' permissions, where the group with
-			   the highest :attr:`.Group.level` attribute is the most important.
+			   the highest :attr:`level <.Group.level>` attribute is the most
+			   important.
 			#. This user's permissions.
 
 		The lower on the list an item is, the higher priority it has.
