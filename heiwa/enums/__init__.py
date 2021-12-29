@@ -3,4 +3,4 @@
 from .notification import NotificationTypes
 
 __all__ = ["NotificationTypes"]
-__version__ = "1.2.0"
+__version__ = "1.2.1"

@@ -21,7 +21,7 @@ from .utils import (
 	parse_search,
 	requires_permission,
 	validate_permission,
-	validate_thread_exists,
+	validate_thread_exists
 )
 
 __all__ = ["thread_blueprint"]

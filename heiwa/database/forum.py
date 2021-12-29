@@ -7,7 +7,6 @@ import uuid
 import sqlalchemy
 import sqlalchemy.orm
 
-from .. import enums
 from . import Base
 from .group import Group
 from .utils import (
@@ -17,7 +16,7 @@ from .utils import (
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
-	ReprMixin,
+	ReprMixin
 )
 from .notification import Notification
 from .post import Post
@@ -70,35 +69,19 @@ class ForumPermissionMixin:
 		sqlalchemy.Boolean,
 		nullable=True
 	)
-	forum_delete_own = sqlalchemy.Column(
+	forum_delete = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
 	)
-	forum_delete_any = sqlalchemy.Column(
+	forum_edit = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
 	)
-	forum_edit_own = sqlalchemy.Column(
+	forum_merge = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
 	)
-	forum_edit_any = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=True
-	)
-	forum_merge_own = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=True
-	)
-	forum_merge_any = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=True
-	)
-	forum_move_own = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=True
-	)
-	forum_move_any = sqlalchemy.Column(
+	forum_move = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
 	)
@@ -201,14 +184,10 @@ class ForumPermissionMixin:
 
 	DEFAULT_PERMISSIONS = {
 		"forum_create": None,
-		"forum_delete_own": None,
-		"forum_delete_any": None,
-		"forum_edit_own": None,
-		"forum_edit_any": None,
-		"forum_merge_own": None,
-		"forum_merge_any": None,
-		"forum_move_own": None,
-		"forum_move_any": None,
+		"forum_delete": None,
+		"forum_edit": None,
+		"forum_merge": None,
+		"forum_move": None,
 		"forum_view": None,
 		"post_create": None,
 		"post_delete_own": None,
@@ -296,35 +275,19 @@ class ForumParsedPermissions(
 		sqlalchemy.Boolean,
 		nullable=False
 	)
-	forum_delete_own = sqlalchemy.Column(
+	forum_delete = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=False
 	)
-	forum_delete_any = sqlalchemy.Column(
+	forum_edit = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=False
 	)
-	forum_edit_own = sqlalchemy.Column(
+	forum_merge = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=False
 	)
-	forum_edit_any = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=False
-	)
-	forum_merge_own = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=False
-	)
-	forum_merge_any = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=False
-	)
-	forum_move_own = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=False
-	)
-	forum_move_any = sqlalchemy.Column(
+	forum_move = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=False
 	)
@@ -566,24 +529,13 @@ class Forum(
 ):
 	"""Forum model.
 
-	Contains:
+	.. note::
+		Forums used to have their specific owners in the past, but since they're
+		mainly going to be defined by a group of administrators who host the
+		service and dealing with owners would cause unnecessary complications,
+		they have been removed.
 
-	#. An ``id`` column from the ``IdMixin``.
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-	#. A nullable ``parent_forum_id`` foreign key column that corresponds to
-	   this forum's parent. This can later be used for nested permissions, as
-	   well as subforums.
-	#. A ``user_id`` foreign key column, associating this forum with its author,
-	   a ``User``.
-	#. ``name`` and ``description`` columns. ``description`` is nullable.
-	#. An ``order`` column, used for default ordering.
-	#. A dynamic ``subscriber_count`` column, corresponding to how many users
-	   have subscribed to this forum.
-	#. A dynamic ``thread_count`` column, corresponding to how many threads exist
-	   with this forum's ``id`` defined as their ``forum_id``.
-	#. A dynamic ``last_thread_timestamp`` column, corresponding to the latest
-	   thread in this forum's ``creation_timestamp``.
+	TODO
 	"""
 
 	__tablename__ = "forums"
@@ -597,16 +549,6 @@ class Forum(
 		),
 		index=True,
 		nullable=True
-	)
-	user_id = sqlalchemy.Column(
-		UUID,
-		sqlalchemy.ForeignKey(
-			"users.id",
-			ondelete="CASCADE",
-			onupdate="CASCADE"
-		),
-		index=True,
-		nullable=False
 	)
 
 	name = sqlalchemy.Column(
@@ -723,43 +665,31 @@ class Forum(
 			user.parsed_permissions["thread_edit_pin"]
 		),
 		"delete": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
-				user.parsed_permissions["forum_delete_own"] or
-				user.parsed_permissions["forum_delete_any"]
-			)
+			cls.get_class_permission(user, "view") and
+			user.parsed_permissions["forum_delete"]
 		),
 		"edit": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
-				user.parsed_permissions["forum_edit_own"] or
-				user.parsed_permissions["forum_edit_any"]
-			)
+			cls.get_class_permission(user, "view") and
+			user.parsed_permissions["forum_edit"]
 		),
 		"edit_permissions_group": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
-				user.parsed_permissions["forum_edit_own"] or
-				user.parsed_permissions["forum_edit_any"]
-			)
+			cls.get_class_permission(user, "view") and
+			cls.get_class_permission(user, "edit")
 		),
 		"edit_permissions_user": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
-				user.parsed_permissions["forum_edit_own"] or
-				user.parsed_permissions["forum_edit_any"]
-			)
+			cls.get_class_permission(user, "view") and
+			cls.get_class_permission(user, "edit")
 		),
 		"edit_subscription": lambda cls, user: (
 			cls.get_class_permission(user, "view")
 		),
 		"merge": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
-				user.parsed_permissions["forum_merge_own"] or
-				user.parsed_permissions["forum_merge_any"]
-			)
+			cls.get_class_permission(user, "view") and
+			user.parsed_permissions["forum_merge"]
 		),
 		"move": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
-				user.parsed_permissions["forum_move_own"] or
-				user.parsed_permissions["forum_move_any"]
-			)
+			cls.get_class_permission(user, "view") and
+			user.parsed_permissions["forum_move"]
 		),
 		"view": lambda cls, user: user.parsed_permissions["forum_view"],
 		"view_permissions_group": lambda cls, user: (
@@ -788,78 +718,36 @@ class Forum(
 			self.get_parsed_permissions(user.id).thread_edit_pin
 		),
 		"delete": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
-				(
-					self.user_id == user.id and
-					self.get_parsed_permissions(user.id).forum_delete_own
-				) or
-				self.get_parsed_permissions(user.id).forum_delete_any
-			)
+			self.get_instance_permission(user, "view") and
+			self.get_parsed_permissions(user.id).forum_delete
 		),
 		"edit": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
-				(
-					self.user_id == user.id and
-					self.get_parsed_permissions(user.id).forum_edit_own
-				) or
-				self.get_parsed_permissions(user.id).forum_edit_any
-			)
+			self.get_instance_permission(user, "view") and
+			self.get_parsed_permissions(user.id).forum_edit
 		),
 		"edit_permissions_group": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
-				(
-					self.user_id == user.id and
-					self.get_parsed_permissions(user.id).forum_edit_own
-				) or
-				self.get_parsed_permissions(user.id).forum_edit_any
-			)
+			self.get_instance_permission(user, "view") and
+			self.get_instance_permission(user, "edit")
 		),
 		"edit_permissions_user": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
-				(
-					self.user_id == user.id and
-					self.get_parsed_permissions(user.id).forum_edit_own
-				) or
-				self.get_parsed_permissions(user.id).forum_edit_any
-			)
+			self.get_instance_permission(user, "view") and
+			self.get_instance_permission(user, "edit")
 		),
 		"edit_subscription": lambda self, user: (
 			self.get_instance_permission(user, "view")
 		),
 		"merge": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
-				(
-					self.user_id == user.id and
-					self.get_parsed_permissions(user.id).forum_merge_own
-				) or
-				self.get_parsed_permissions(user.id).forum_merge_any
-			) and (
+			self.get_instance_permission(user, "view") and
+			self.get_parsed_permissions(user.id).forum_merge and (
 				not hasattr(self, "future_forum") or
-				(
-					(
-						self.future_forum.user_id == user.id and
-						self.future_forum.get_parsed_permissions(user.id).forum_merge_own
-					) or
-					self.future_forum.get_parsed_permissions(user.id).forum_merge_any
-				)
+				self.future_forum.get_parsed_permissions(user.id).forum_merge
 			)
 		),
 		"move": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
-				(
-					self.user_id == user.id and
-					self.get_parsed_permissions(user.id).forum_move_own
-				) or
-				self.get_parsed_permissions(user.id).forum_move_any
-			) and (
+			self.get_instance_permission(user, "view") and
+			self.get_parsed_permissions(user.id).forum_move and (
 				not hasattr(self, "future_forum") or
-				(
-					(
-						self.future_forum.user_id == user.id and
-						self.future_forum.get_parsed_permissions(user.id).forum_move_own
-					) or
-					self.future_forum.get_parsed_permissions(user.id).forum_move_any
-				)
+				self.future_forum.get_parsed_permissions(user.id).forum_move
 			)
 		),
 		"view": lambda self, user: self.get_parsed_permissions(user.id).forum_view,
@@ -870,8 +758,6 @@ class Forum(
 			self.get_instance_permission(user, "view")
 		)
 	}
-
-	NOTIFICATION_TYPES = (enums.NotificationTypes.FORUM_CHANGED_OWNERSHIP,)
 
 	def delete(
 		self: Forum,

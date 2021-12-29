@@ -14,7 +14,7 @@ from .utils import (
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
-	ReprMixin,
+	ReprMixin
 )
 
 __all__ = [

@@ -14,7 +14,7 @@ from .utils import (
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
-	ReprMixin,
+	ReprMixin
 )
 from .notification import Notification
 from .user import user_follows

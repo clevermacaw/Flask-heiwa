@@ -1,6 +1,7 @@
 """Blueprints and utilities for different parts of the API."""
 
 from . import utils
+from .category import category_blueprint
 from .forum import forum_blueprint
 from .group import group_blueprint
 from .guest import guest_blueprint
@@ -13,6 +14,7 @@ from .thread import thread_blueprint
 from .user import user_blueprint
 
 __all__ = [
+	"category_blueprint",
 	"forum_blueprint",
 	"group_blueprint",
 	"guest_blueprint",
@@ -25,4 +27,4 @@ __all__ = [
 	"user_blueprint",
 	"utils"
 ]
-__version__ = "0.57.4"
+__version__ = "0.58.0"

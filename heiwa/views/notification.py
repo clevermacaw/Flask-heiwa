@@ -16,7 +16,7 @@ from .. import (
 from .utils import (
 	generate_search_schema,
 	generate_search_schema_registry,
-	parse_search,
+	parse_search
 )
 
 __all__ = ["notification_blueprint"]

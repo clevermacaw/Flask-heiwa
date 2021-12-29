@@ -21,7 +21,7 @@ from .utils import (
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
-	ReprMixin,
+	ReprMixin
 )
 from .message import Message
 from .notification import Notification
@@ -356,17 +356,6 @@ class User(
 	)
 	"""The number of users following a user."""
 
-	forum_count = sqlalchemy.orm.column_property(
-		sqlalchemy.select(
-			sqlalchemy.func.count(sqlalchemy.text("forums.id"))
-		).
-		select_from(sqlalchemy.text("forums")).
-		where(sqlalchemy.text("forums.user_id = users.id")).
-		scalar_subquery(),
-		deferred=True
-	)
-	r"""The number of :class:`.Forum`\ s a user owns."""
-
 	message_received_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
 			sqlalchemy.func.count(Message.id)
@@ -523,8 +512,8 @@ class User(
 		"view_groups": lambda cls, user: cls.get_class_permission(user, "view"),
 		"view_permissions": lambda cls, user: cls.get_class_permission(user, "view")
 	}
-	r"""Actions a given user is allowed to perform on any user, without any indication
-	of which one it is.
+	r"""Actions a given user is allowed to perform on any user, without any
+	indication of which one it is.
 
 	``delete``:
 		Whether or not a user can delete another user, or themselves. Since we
@@ -718,7 +707,6 @@ class User(
 		"status": lambda self, user: True,
 		"followee_count": lambda self, user: True,
 		"follower_count": lambda self, user: True,
-		"forum_count": lambda self, user: True,
 		"message_received_count": lambda self, user: self.id == user.id,
 		"message_sent_count": lambda self, user: self.id == user.id,
 		"notification_count": lambda self, user: self.id == user.id,
@@ -752,8 +740,6 @@ class User(
 		:attr:`.User.followee_count`
 
 		:attr:`.User.follower_count`
-
-		:attr:`.User.forum_count`
 
 		:attr:`.User.thread_count`
 
@@ -858,43 +844,54 @@ class User(
 
 	@sqlalchemy.ext.hybrid.hybrid_property
 	def has_content(self: User) -> bool:
-		r"""Returns whether or not this user owns any forums, has made any threads
+		"""Returns whether or not this user owns any forums, has made any threads
 		or posts, or sent any messages.
+		"""
 
-		.. seealso::
-			:attr:`.User.forum_count`
+		return sqlalchemy.orm.object_sesion(self).execute(User.has_content)
 
-			:attr:`.User.thread_count`
-
-			:attr:`.User.post_count`
-
-			:attr:`.User.message_sent_count`
+	@has_content.expression
+	def has_content(cls: User) -> sqlalchemy.sql.Select:
+		"""Returns a selection query representing whether or not this user owns
+		any forums, has made any threads or posts, or sent any messages.
 		"""
 
 		return (
-			self.forum_count != 0 or
-			self.thread_count != 0 or
-			self.post_count != 0 or
-			self.message_sent_count != 0
+			sqlalchemy.select(User.id).
+			where(
+				sqlalchemy.and_(
+					User.id == cls.id,
+					(
+						sqlalchemy.select(sqlalchemy.text("forums.user_id")).
+						select_from(sqlalchemy.text("forums")).
+						where(sqlalchemy.text("forums.user_id = users.id")).
+						exists()
+					),
+					(
+						sqlalchemy.select(sqlalchemy.text("threads.user_id")).
+						select_from(sqlalchemy.text("threads")).
+						where(sqlalchemy.text("threads.user_id = users.id")).
+						exists()
+					),
+					(
+						sqlalchemy.select(sqlalchemy.text("posts.user_id")).
+						select_from(sqlalchemy.text("posts")).
+						where(sqlalchemy.text("posts.user_id = users.id")).
+						exists()
+					),
+					(
+						sqlalchemy.select(sqlalchemy.text("messages.sender_id")).
+						select_from(sqlalchemy.text("messages")).
+						where(sqlalchemy.text("messages.sender_id = users.id")).
+						exists()
+					)
+				)
+			).
+			exists().
+			select()
 		)
 
-	@has_content.expression
-	def has_content(cls: User) -> sqlalchemy.sql.elements.BooleanClauseList:
-		r"""Returns a list of conditions representing whether or not this user
-		owns any forums, has made any threads or posts, or sent any messages.
-
-		.. seealso::
-			:attr:`.User.forum_count`
-
-			:attr:`.User.thread_count`
-
-			:attr:`.User.post_count`
-
-			:attr:`.User.message_sent_count`
-		"""
-
 		return sqlalchemy.or_(
-			cls.forum_count != 0,
 			cls.thread_count != 0,
 			cls.post_count != 0,
 			cls.message_sent_count != 0

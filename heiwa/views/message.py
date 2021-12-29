@@ -16,7 +16,7 @@ from .utils import (
 	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
-	validate_user_exists,
+	validate_user_exists
 )
 
 __all__ = ["message_blueprint"]

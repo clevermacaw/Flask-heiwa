@@ -21,7 +21,7 @@ from .utils import (
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
-	validate_permission,
+	validate_permission
 )
 
 __all__ = ["group_blueprint"]

@@ -32,35 +32,19 @@ class BasePermissionMixin:
 		sqlalchemy.Boolean,
 		nullable=True
 	)
-	forum_delete_own = sqlalchemy.Column(
+	forum_delete = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
 	)
-	forum_delete_any = sqlalchemy.Column(
+	forum_edit = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
 	)
-	forum_edit_own = sqlalchemy.Column(
+	forum_merge = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
 	)
-	forum_edit_any = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=True
-	)
-	forum_merge_own = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=True
-	)
-	forum_merge_any = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=True
-	)
-	forum_move_own = sqlalchemy.Column(
-		sqlalchemy.Boolean,
-		nullable=True
-	)
-	forum_move_any = sqlalchemy.Column(
+	forum_move = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
 	)
@@ -199,14 +183,10 @@ class BasePermissionMixin:
 
 	DEFAULT_PERMISSIONS = {
 		"forum_create": None,
-		"forum_delete_own": None,
-		"forum_delete_any": None,
-		"forum_edit_own": None,
-		"forum_edit_any": None,
-		"forum_merge_own": None,
-		"forum_merge_any": None,
-		"forum_move_own": None,
-		"forum_move_any": None,
+		"forum_delete": None,
+		"forum_edit": None,
+		"forum_merge": None,
+		"forum_move": None,
 		"forum_view": None,
 		"group_create": None,
 		"group_delete": None,

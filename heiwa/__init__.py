@@ -14,7 +14,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.15.9"
+__version__ = "0.16.0"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -140,6 +140,7 @@ def create_app() -> ConfiguredLockFlask:
 			app.register_error_handler(*handler)
 
 		from .views import (
+			category_blueprint,
 			forum_blueprint,
 			group_blueprint,
 			guest_blueprint,
@@ -149,10 +150,11 @@ def create_app() -> ConfiguredLockFlask:
 			openid_blueprint,
 			post_blueprint,
 			thread_blueprint,
-			user_blueprint,
+			user_blueprint
 		)
 
 		for blueprint in (
+			category_blueprint,
 			forum_blueprint,
 			group_blueprint,
 			guest_blueprint,

@@ -9,7 +9,7 @@ from .utils import (
 	CreationTimestampMixin,
 	EditInfoMixin,
 	IdMixin,
-	ReprMixin,
+	ReprMixin
 )
 
 __all__ = ["Message"]

@@ -10,14 +10,10 @@ PERMISSION_KEY_SCHEMA = {
 }
 BASE_PERMISSION_SCHEMA = {
 	"forum_create": PERMISSION_KEY_SCHEMA,
-	"forum_delete_own": PERMISSION_KEY_SCHEMA,
-	"forum_delete_any": PERMISSION_KEY_SCHEMA,
-	"forum_edit_own": PERMISSION_KEY_SCHEMA,
-	"forum_edit_any": PERMISSION_KEY_SCHEMA,
-	"forum_merge_own": PERMISSION_KEY_SCHEMA,
-	"forum_merge_any": PERMISSION_KEY_SCHEMA,
-	"forum_move_own": PERMISSION_KEY_SCHEMA,
-	"forum_move_any": PERMISSION_KEY_SCHEMA,
+	"forum_delete": PERMISSION_KEY_SCHEMA,
+	"forum_edit": PERMISSION_KEY_SCHEMA,
+	"forum_merge": PERMISSION_KEY_SCHEMA,
+	"forum_move": PERMISSION_KEY_SCHEMA,
 	"forum_view": PERMISSION_KEY_SCHEMA,
 	"group_create": PERMISSION_KEY_SCHEMA,
 	"group_delete": PERMISSION_KEY_SCHEMA,

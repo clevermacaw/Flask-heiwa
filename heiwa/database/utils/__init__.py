@@ -8,7 +8,7 @@ from .mixins import (
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
-	ReprMixin,
+	ReprMixin
 )
 from .types import UUID
 

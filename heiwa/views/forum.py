@@ -8,10 +8,9 @@ from .. import (
 	authentication,
 	database,
 	encoders,
-	enums,
 	exceptions,
 	statuses,
-	validators,
+	validators
 )
 from .utils import (
 	BASE_PERMISSION_SCHEMA,
@@ -24,7 +23,7 @@ from .utils import (
 	requires_permission,
 	validate_forum_exists,
 	validate_permission,
-	validate_user_exists,
+	validate_user_exists
 )
 
 __all__ = ["forum_blueprint"]
@@ -536,13 +535,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 					sqlalchemy.and_(
 						inner_conditions,
 						database.ForumParsedPermissions.forum_view.is_(True),
-						sqlalchemy.or_(
-							sqlalchemy.and_(
-								database.Forum.user_id == flask.g.user.id,
-								database.ForumParsedPermissions.forum_delete_own.is_(True)
-							),
-							database.ForumParsedPermissions.forum_delete_any.is_(True)
-						)
+						database.ForumParsedPermissions.forum_delete.is_(True)
 					)
 				).
 				exists()
@@ -599,10 +592,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			"type": "dict",
 			"minlength": 1,
 			"schema": {
-				"user_id": {
-					**ATTR_SCHEMAS["user_id"],
-					"required": True
-				},
 				"name": {
 					**ATTR_SCHEMAS["name"],
 					"required": False
@@ -679,22 +668,10 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 					sqlalchemy.and_(
 						inner_conditions,
 						database.ForumParsedPermissions.forum_view.is_(True),
-						sqlalchemy.or_(
-							sqlalchemy.and_(
-								database.Forum.user_id == flask.g.user.id,
-								database.ForumParsedPermissions.forum_edit_own.is_(True)
-							),
-							database.ForumParsedPermissions.forum_edit_any.is_(True)
-						),
+						database.ForumParsedPermissions.forum_edit.is_(True),
 						sqlalchemy.and_(
 							database.Forum.id != parent_forum.id,
-							sqlalchemy.or_(
-								sqlalchemy.and_(
-									database.Forum.user_id == flask.g.user.id,
-									database.ForumParsedPermissions.forum_move_own.is_(True)
-								),
-								database.ForumParsedPermissions.forum_move_any.is_(True)
-							)
+							database.ForumParsedPermissions.forum_move.is_(True)
 						) if "parent_forum_id" in flask.g.json["values"] else True,
 						(
 							database.Forum.user_id != flask.g.json["values"]["user_id"]
@@ -713,15 +690,6 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 			where(database.Forum.id.in_(forum_ids)).
 			values(**flask.g.json["values"])
 		)
-
-		if "user_id" in flask.g.json["values"]:
-			for forum_id in forum_ids:
-				database.Notification.create(
-					flask.g.sa_session,
-					user_id=flask.g.json["values"]["user_id"],
-					type=enums.NotificationTypes.FORUM_CHANGED_OWNERSHIP,
-					identifier=forum_id
-				)
 
 		flask.g.sa_session.commit()
 
@@ -754,13 +722,7 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 
 @forum_blueprint.route("/<uuid:id_>", methods=["PUT"])
-@validators.validate_json({
-	"user_id": {
-		**ATTR_SCHEMAS["user_id"],
-		"required": True
-	},  # Change forum ownership
-	**ATTR_SCHEMAS
-})
+@validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit", database.Forum)
 def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
@@ -817,19 +779,6 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		forum.parent_forum = future_parent
 
 		forum.delete_all_parsed_permissions(flask.g.sa_session)
-
-	if flask.g.json["user_id"] != forum.user_id:
-		validate_user_exists(
-			flask.g.json["user_id"],
-			flask.g.sa_session
-		)
-
-		database.Notification.create(
-			flask.g.sa_session,
-			user_id=flask.g.json["user_id"],
-			type=enums.NotificationTypes.FORUM_CHANGED_OWNERSHIP,
-			identifier=forum.id
-		)
 
 	forum.edited()
 

@@ -27,7 +27,7 @@ from .utils import (
 	parse_search,
 	requires_permission,
 	validate_permission,
-	validate_user_exists,
+	validate_user_exists
 )
 
 __all__ = ["user_blueprint"]
@@ -114,11 +114,6 @@ ATTR_SCHEMAS = {
 		"min": 0,
 		"max": 2147483647
 	},
-	"forum_count": {
-		"type": "integer",
-		"min": 0,
-		"max": 2147483647
-	},
 	"post_count": {
 		"type": "integer",
 		"min": 0,
@@ -138,7 +133,6 @@ SEARCH_SCHEMA = generate_search_schema(
 		"edit_count",
 		"follower_count",
 		"followee_count",
-		"forum_count",
 		"post_count",
 		"thread_count"
 	),
@@ -152,7 +146,6 @@ LT_GT_SEARCH_SCHEMA = {
 	"edit_count": ATTR_SCHEMAS["edit_count"],
 	"followee_count": ATTR_SCHEMAS["followee_count"],
 	"follower_count": ATTR_SCHEMAS["follower_count"],
-	"forum_count": ATTR_SCHEMAS["forum_count"],
 	"post_count": ATTR_SCHEMAS["post_count"],
 	"thread_count": ATTR_SCHEMAS["thread_count"]
 }
@@ -183,7 +176,6 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			},
 			"followee_count": ATTR_SCHEMAS["followee_count"],
 			"follower_count": ATTR_SCHEMAS["follower_count"],
-			"forum_count": ATTR_SCHEMAS["forum_count"],
 			"post_count": ATTR_SCHEMAS["post_count"],
 			"thread_count": ATTR_SCHEMAS["thread_count"]
 		},
@@ -284,12 +276,6 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"follower_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["follower_count"],
-				"minlength": 1,
-				"maxlength": 32
-			},
-			"forum_count": {
-				"type": "list",
-				"schema": ATTR_SCHEMAS["forum_count"],
 				"minlength": 1,
 				"maxlength": 32
 			},
@@ -1551,14 +1537,10 @@ def delete_permissions(
 )
 @validators.validate_json({
 	"forum_create": PERMISSION_KEY_SCHEMA,
-	"forum_delete_own": PERMISSION_KEY_SCHEMA,
-	"forum_delete_any": PERMISSION_KEY_SCHEMA,
-	"forum_edit_own": PERMISSION_KEY_SCHEMA,
-	"forum_edit_any": PERMISSION_KEY_SCHEMA,
-	"forum_merge_own": PERMISSION_KEY_SCHEMA,
-	"forum_merge_any": PERMISSION_KEY_SCHEMA,
-	"forum_move_own": PERMISSION_KEY_SCHEMA,
-	"forum_move_any": PERMISSION_KEY_SCHEMA,
+	"forum_delete": PERMISSION_KEY_SCHEMA,
+	"forum_edit": PERMISSION_KEY_SCHEMA,
+	"forum_merge": PERMISSION_KEY_SCHEMA,
+	"forum_move": PERMISSION_KEY_SCHEMA,
 	"forum_view": PERMISSION_KEY_SCHEMA,
 	"group_create": PERMISSION_KEY_SCHEMA,
 	"group_delete": PERMISSION_KEY_SCHEMA,

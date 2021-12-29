@@ -17,7 +17,7 @@ from .utils import (
 	EditInfoMixin,
 	IdMixin,
 	PermissionControlMixin,
-	ReprMixin,
+	ReprMixin
 )
 from .notification import Notification
 from .post import Post
