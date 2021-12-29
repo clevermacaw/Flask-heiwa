@@ -1,4 +1,4 @@
-"""Encoders for the Heiwa API. Currently only supports JSON."""
+"""Encoders for the API. Currently only supports JSON."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import sqlalchemy
 import sqlalchemy.orm
 
 __all__ = ["JSONEncoder"]
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 
 
 # Flask does have a custom encoder already that would take care of UUID

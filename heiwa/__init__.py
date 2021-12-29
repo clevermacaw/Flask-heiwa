@@ -1,3 +1,5 @@
+"""Heiwa, a forum API."""
+
 from __future__ import annotations
 
 import functools
@@ -12,23 +14,22 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.15.7"
+__version__ = "0.15.8"
 
 
 class ConfiguredLockFlask(flask.Flask):
-	"""A Flask subclass which supports detecting whether or not everything has
-	been set up for production use based on either ``CONFIGURED_LOCK_LOCATION``,
-	or ``$current_working_directory/configured.lock``.
+	"""A Flask subclass which supports detecting and setting whether or not
+	everything has been set up for production use.
 	"""
 
 	@property
 	@functools.lru_cache()
 	def configured(self: ConfiguredLockFlask) -> bool:
 		"""Returns whether or not this app has been configured. This depends on
-		whether or not the file located where the ``'CONFIGURED_LOCK_LOCATION'``
+		whether or not the file located where the ``CONFIGURED_LOCK_LOCATION``
 		environment variable (or ``'$current_working_directory/configured.lock'``,
-		if it's unset) describes. If it does exist, it has not been configured.
-		Otherwise, it has.
+		if it's unset) describes exists. If it does exist, it has not been
+		configured. Otherwise, it has.
 		"""
 
 		return not os.path.isfile(
@@ -61,10 +62,10 @@ class ConfiguredLockFlask(flask.Flask):
 
 
 def create_app() -> ConfiguredLockFlask:
-	r"""Creates a pre-configured ``ConfiguredLockFlask`` app. If the app is
+	r"""Creates a pre-configured :class:`.ConfiguredLockFlask` app. If the app is
 	detected as not having been fully configured before, all database models and
-	tables are also created. Once that's done, default ``Group``\ s are also
-	created.
+	tables are also created. Once that's done, default
+	:class:`Group <.database.Group>``\ s are also created.
 	"""
 
 	app = ConfiguredLockFlask(__name__)
@@ -97,9 +98,9 @@ def create_app() -> ConfiguredLockFlask:
 
 		@app.before_request
 		def before_request() -> None:
-			"""Sets the global user identifier (``flask.g.identifier``) to the
-			remote IP address, and creates a basic SQLAlchemy session derived
-			from ``flask.current_app.SASession`` at ``flask.g.sa_session``.
+			"""Sets the global current user identifier (``flask.g.identifier``)
+			to the remote IP address, and creates a basic SQLAlchemy session
+			derived from ``flask.current_app.SASession`` at ``flask.g.sa_session``.
 			"""
 
 			flask.g.identifier = flask.request.remote_addr

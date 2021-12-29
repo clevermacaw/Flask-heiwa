@@ -1,3 +1,5 @@
+"""Models and tables for threads."""
+
 from __future__ import annotations
 
 import typing
@@ -35,16 +37,7 @@ class ThreadVote(
 	EditInfoMixin,
 	Base
 ):
-	"""A ``Thread`` helper model for storing votes.
-
-	Contains:
-
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-	#. A ``thread_id`` column, associating the instance with a ``Thread``.
-	#. A ``user_id`` column, associating the instance with a ``User``.
-	#. An ``upvote`` column, signifying whether this is a downvote or an upvote.
-	"""
+	r"""A model for storing votes on :class:`.Thread`\ s."""
 
 	__tablename__ = "thread_votes"
 
@@ -57,6 +50,8 @@ class ThreadVote(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.Thread.id>` of the :class:`.Thread` a vote belongs to."""
+
 	user_id = sqlalchemy.Column(
 		UUID,
 		sqlalchemy.ForeignKey(
@@ -66,12 +61,19 @@ class ThreadVote(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.User.id>` of the :class:`.User` who created a vote."""
 
 	upvote = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		index=True,
 		nullable=False
 	)
+	"""Whether or not a vote is an upvote, or a downvote, if :data:`True`, it's
+	considered an upvote, otherwise, it's considered a downvote.
+
+	.. seealso::
+		:attr:`.Thread.vote_value`
+	"""
 
 
 thread_subscribers = sqlalchemy.Table(
@@ -109,33 +111,7 @@ class Thread(
 	EditInfoMixin,
 	Base
 ):
-	"""Thread model.
-
-	Contains:
-
-	#. An ``id`` column from the ``IdMixin``.
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-	#. A ``forum_id`` foreign key column, associating this thread with a
-	   ``Forum``.
-	#. A ``user_id`` foreign key column, associating this thread with its author,
-	   a ``User``.
-	#. An ``is_locked`` column, signifying whether or not this thread is locked.
-	#. An ``is_pinned`` column, signifying whether or not this thread is pinned.
-	   On frontend applications, this should make pinned threads float to the top
-	   of their respective lists.
-	#. A ``tags`` column, signifying this thread's tags
-	   (e.g. ``'Support'``, ``'Important'``).
-	#. ``name`` and ``content`` columns.
-	#. A dynamic ``vote_value`` column, corresponding to the total count of this
-	   thread's upvotes, with the downvotes' count subtracted.
-	#. A dynamic ``post_count`` column, corresponding to how many posts exist
-	   with this thread's ``id`` defined as their ``thread_id``.
-	#. A dynamic ``subscriber_count`` column, corresponding to how many users
-	   have subscribed to this thread.
-	#. A dynamic ``last_post_timestamp`` column, corresponding to the latest
-	   post in this thread's ``creation_timestamp``.
-	"""
+	"""Thread model."""
 
 	__tablename__ = "threads"
 
@@ -149,6 +125,11 @@ class Thread(
 		index=True,
 		nullable=False
 	)
+	"""The :attr:`id <.Forum.id>` of the :class:`.Forum` a thread is in. This
+	can be changed after the thread has been created, as long as the user
+	attempting to do so has sufficient permissions.
+	"""
+
 	user_id = sqlalchemy.Column(
 		UUID,
 		sqlalchemy.ForeignKey(
@@ -159,28 +140,49 @@ class Thread(
 		index=True,
 		nullable=False
 	)
+	"""The :attr:`id <.User.id>` of the :class:`.User` who created a thread."""
 
 	is_locked = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=False
 	)
+	"""Whether or not a thread has been locked. :data:`False` by default. If
+	:data:`True`, creating any new posts in the thread will be disabled for
+	everyone, including administrators.
+	"""
+
 	is_pinned = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=False
 	)
+	"""Whether or not a thread is pinned. :data:`False` by default. If
+	:data:`True`, the thread should float to the top of lists on frontend
+	programs and be marked as such, or even appear in a separate section.
+	This, however, is not mandatory and API endpoints for listing threads will
+	not apply this order by default.
+	"""
 
 	tags = sqlalchemy.Column(
 		sqlalchemy.ARRAY(sqlalchemy.String(128)),
 		nullable=False
 	)
+	"""A thread's tags. For example, when a thread is related to tech support,
+	the tags can be ``tech support`` and ``help requested``.
+	"""
+
 	name = sqlalchemy.Column(
 		sqlalchemy.String(128),
 		nullable=False
 	)
+	"""A thread's name."""
+
 	content = sqlalchemy.Column(
 		sqlalchemy.String(262144),
 		nullable=False
 	)
+	"""A thread's content. Generally, this will often be shown as the first post
+	in a thread.
+	"""
 
 	vote_value = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -206,6 +208,13 @@ class Thread(
 		).
 		scalar_subquery()
 	)
+	"""The final value of a thread's votes. Upvotes will add 1, downvotes will
+	subtract 1. If there are no votes at all, this will be 0. Negative numbers
+	are allowed.
+
+	.. seealso::
+		:class:`.ThreadVote`
+	"""
 
 	post_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -217,6 +226,7 @@ class Thread(
 		).
 		scalar_subquery()
 	)
+	r"""The amount of :class:`.Post`\ s in a thread."""
 
 	subscriber_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -225,6 +235,11 @@ class Thread(
 		where(sqlalchemy.text("thread_subscribers.thread_id = threads.id")).
 		scalar_subquery()
 	)
+	r"""The amount of :class:`.User`\ s who have subscribed to a thread.
+
+	.. seealso::
+		:data:`.thread_subscribers`
+	"""
 
 	last_post_timestamp = sqlalchemy.orm.column_property(
 		sqlalchemy.select(sqlalchemy.text("posts.creation_timestamp")).
@@ -238,6 +253,9 @@ class Thread(
 		limit(1).
 		scalar_subquery()
 	)
+	"""The time the latest :class:`.Post` in a thread was made. If there haven't
+	been any posts so far, this will be :data:`None`.
+	"""
 
 	forum = sqlalchemy.orm.relationship(
 		"Forum",
@@ -245,6 +263,7 @@ class Thread(
 		passive_deletes="all",
 		lazy=True
 	)
+	"""The :class:`.Forum` a thread is in."""
 
 	votes = sqlalchemy.orm.relationship(
 		ThreadVote,
@@ -256,6 +275,11 @@ class Thread(
 		passive_deletes="all",
 		lazy=True
 	)
+	"""The votes that have been made on this thread.
+
+	.. seealso::
+		:class:`.ThreadVote`
+	"""
 
 	class_actions = {
 		"create": lambda cls, user: (
@@ -311,6 +335,73 @@ class Thread(
 		"view": lambda cls, user: user.parsed_permissions["thread_view"],
 		"view_vote": lambda cls, user: cls.get_class_permission(user, "view")
 	}
+	r"""Actions :class:`User`\ s are allowed to perform on all threads, without
+	any indication of which thread it is.
+
+	``create``:
+		Whether or not a user can create threads. This depends on the
+		``thread_create`` and ``thread_view`` values in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``create_post``:
+		Whether or not a user can create posts within threads. This depends on
+		the ``post_create`` and ``post_view`` values in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``delete``:
+		Whether or not a user can delete threads. This depends on the
+		``thread_view`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
+		either ``thread_delete_own``, or ``thread_delete_any``.
+
+	``edit``:
+		Whether or not a user can edit threads. This depends on the
+		``thread_view`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
+		either ``thread_edit_own``, or ``thread_edit_any``.
+
+	``edit_lock``:
+		Whether or not a user can lock / unlock threads. This depends on the
+		``thread_view`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
+		either ``thread_edit_lock_own``, or ``thread_edit_lock_any``.
+
+	``edit_pin``:
+		Whether or not a user can pin / unpin threads. This depends on the
+		``thread_view`` and ``thread_edit_pin`` values in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``edit_subscription``:
+		Whether or not a user can subscribe to / unsubscribe from threads. Always
+		:data:`True` by default, as long as the user has permission to view them.
+
+	``edit_vote``:
+		Whether or not a user can pin / unpin threads. This depends on the
+		``thread_view`` and ``thread_edit_vote`` values in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``merge``:
+		Whether or not a user can merge threads with other threads. This depends
+		on the ``thread_view`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
+		either ``thread_merge_own``, or ``thread_merge_any``.
+
+	``move``:
+		Whether or not a user can move threads to other forums. This depends
+		on the ``thread_view`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
+		either ``thread_move_own``, or ``thread_move_any``.
+
+	``view``:
+		Whether or not a user can view this thread. This depends on the
+		``thread_view`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``view_vote``:
+		Whether or not a user can view their votes for threads. As long as they
+		have permission to view threads, this will always be :data:`True` by
+		default.
+	"""
 
 	instance_actions = {
 		"create_post": lambda self, user: (
@@ -382,13 +473,13 @@ class Thread(
 				) or
 				self.forum.get_parsed_permissions(user.id).thread_move_any
 			) and (
-				not hasattr(self, "future_thread") or
+				not hasattr(self, "future_forum") or
 				(
 					(
-						self.future_thread.user_id == user.id and
-						self.future_thread.forum.get_parsed_permissions(user.id).thread_move_own
+						self.future_forum.user_id == user.id and
+						self.future_forum.get_parsed_permissions(user.id).thread_move_own
 					) or
-					self.future_thread.forum.get_parsed_permissions(user.id).thread_move_any
+					self.future_forum.get_parsed_permissions(user.id).thread_move_any
 				)
 			)
 		),
@@ -397,11 +488,83 @@ class Thread(
 		),
 		"view_vote": lambda self, user: self.get_instance_permission(user, "view")
 	}
+	r"""Actions :class:`User`\ s are allowed to perform on a given thread. Unlike
+	:attr:`class_actions <.Thread.class_actions>`, this can vary by each thread.
+
+	``create_post``:
+		Whether or not a user can create posts in this thread. This depends on the
+		``thread_view``, ``post_view`` and ``post_create`` values in the thread's
+		forum's parsed permissions.
+
+	``delete``:
+		Whether or not a user can delete this thread. This depends on the
+		``thread_view`` value in the thread's forum's parsed permissions, as well
+		as either ``thread_delete_own`` when the thread belongs to the user, or
+		``thread_delete_any`` when it does not.
+
+	``edit``:
+		Whether or not a user can edit this thread. This depends on the
+		``thread_view`` value in the thread's forum's parsed permissions, as well
+		as either ``thread_edit_own`` when the thread belongs to the user, or
+		``thread_edit_any`` when it does not.
+
+	``edit_lock``:
+		Whether or not a user can lock / unlock this thread. This depends on the
+		``thread_view`` value in the thread's forum's parsed permissions, as well
+		as either ``thread_edit_lock_own`` when the thread belongs to the user,
+		or ``thread_edit_lock_any`` when it does not.
+
+	``edit_pin``:
+		Whether or not a user can pin / unpin this thread. This depends on the
+		``thread_view`` and ``thread_edit_pin`` values in the thread's forum's
+		parsed permissions.
+
+	``edit_subscription``:
+		Whether or not a user can subscribe to / unsubscribe from this thread.
+		As long as they have permission to view it, this will always be
+		:data:`True` by default.
+
+	``edit_vote``:
+		Whether or not a user can vote on this thread. This depends on the
+		``thread_view`` and ``thread_edit_vote`` values in the thread's forum's
+		parsed permissions.
+
+	``merge``:
+		Whether or not a user can merge this thread with another thread. This
+		depends on the ``thread_view`` value in the thread's forum's parsed
+		permissions, as well as either ``thread_merge_own`` when the thread
+		belongs to the user, or ``thread_merge_any`` when it does not. If the
+		``future_thread`` atrribute has been assigned to this thread, the same
+		conditions must also apply to the thread contained within it.
+
+	``move``:
+		Whether or not a user can move this thread to a different forum. This
+		depends on the ``thread_view`` value in the thread's forum's parsed
+		permissions, as well as either ``thread_move_own`` when the thread
+		belongs to the user, or ``thread_move_any`` when it does not. If the
+		``future_forum`` atrribute has been assigned to this thread, the same
+		conditions must also apply to the forum contained within it.
+
+	``view``:
+		Whether or not a user can view this thread. This depends on the
+		``thread_view`` value in the thread's forum's parsed permissions.
+
+	``view_vote``:
+		Whether or not a user can view their vote on this thread. As long as they
+		have permission to view the thread, this will always be :data:`True` by
+		default.
+
+	.. seealso::
+		:class:`.ForumParsedPermissions`
+
+		:meth:`.Forum.reparse_permissions`
+	"""
 
 	NOTIFICATION_TYPES = (
 		enums.NotificationTypes.NEW_THREAD_FROM_FOLLOWEE,
 		enums.NotificationTypes.NEW_THREAD_IN_SUBSCRIBED_FORUM
 	)
+	r"""The types of :class:`.Notification`\ s that can refer to threads."""
 
 	def delete(
 		self: Thread,
@@ -410,9 +573,9 @@ class Thread(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Deletes all notifications associated with this thread, as well as the
-		thread itself. If the ``session`` argument is ``None``, it's set to this
-		object's session.
+		r"""Deletes all :class:`.Notification`\ s associated with this thread,
+		as well as the thread itself. If the ``session`` argument is :data:`None`,
+		it's set to this object's session.
 		"""
 
 		if session is None:
@@ -444,10 +607,13 @@ class Thread(
 		self: Thread,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Creates a notification about this thread for:
+		r"""Creates a :class:`.Notification` about this thread for:
 
-		#. Users subscribed to the parent forum.
-		#. The author's followers. (Who aren't subscribed to the forum)
+		#. :class:`.User`\ s subscribed to the :class:`.Forum` this thread is in.
+		#. The author's followers, as long as they aren't also subscribed to
+		   the forum.
+
+		Then adds this thread to the given ``session``.
 		"""
 
 		# Premature session add and flush. We have to access the ID later.
@@ -489,7 +655,9 @@ class Thread(
 			sqlalchemy.orm.Session
 		] = None
 	) -> typing.List[uuid.UUID]:
-		"""Returns this forum's subscribers' IDs."""
+		r"""Returns this thread's subscribers' :attr:`id <.User.id>`\ s. If the
+		``session`` argument is :data:`None`, it's set to this object's session.
+		"""
 
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)

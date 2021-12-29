@@ -44,7 +44,9 @@ class GroupPermissions(
 		),
 		primary_key=True
 	)
-	"""The :class:`.Group` these permissions belong to."""
+	"""The :attr:`id <.Group.id>` of the :class:`.Group` these permissions
+	belong to.
+	"""
 
 
 class Group(

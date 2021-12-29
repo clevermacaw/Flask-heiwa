@@ -143,7 +143,7 @@ class UserBan(
 		),
 		primary_key=True
 	)
-	"""The ID of the :class:`.User` who a ban was issued to."""
+	"""The :attr:`id <.User.id>` of the :class:`.User` who a ban was issued to."""
 
 	expiration_timestamp = sqlalchemy.Column(
 		sqlalchemy.DateTime(timezone=True),
@@ -184,7 +184,9 @@ class UserPermissions(
 		),
 		primary_key=True
 	)
-	"""The ID of the :class:`.User` these permissions belong to."""
+	"""The :attr:`id <.User.id>` of the :class:`.User` these permissions belong
+	to.
+	"""
 
 
 class User(
@@ -670,8 +672,8 @@ class User(
 		user's :attr:`parsed_permissions <.User.parsed_permissions>`, as well as
 		the performing user's highest group's :attr:`level <.Group.level>` being
 		higher than the receiving user's. If an ``edited_group`` attribute
-		is assigned to the receiving user, it also depends on that group's
-		level being lower.
+		is assigned to the receiving user, it also depends on the group contained
+		within's level being lower.
 
 		.. seealso::
 			:data:`.user_groups` (TODO)
@@ -1018,7 +1020,8 @@ class User(
 		] = None
 	) -> None:
 		"""Bans this user with the provided ``expiration_timestamp``, and
-		optionally a ``reason``.
+		optionally a ``reason``. If the ``session`` argument is :data:`None`,
+		it's set to this object's session.
 
 		.. seealso::
 			:class:`.UserBan`
@@ -1056,6 +1059,9 @@ class User(
 			#. This user's permissions.
 
 		The lower on the list an item is, the higher priority it has.
+
+		If the ``session`` argument is :data:`None`, it's set to this object's
+		session.
 
 		.. seealso::
 			:class:`.GroupPermissions`
