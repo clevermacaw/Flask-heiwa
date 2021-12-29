@@ -330,7 +330,7 @@ def get_forum_ids_from_search(
 
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
-				database.Forum.id,
+				database.Forum,
 				(
 					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
 					where(inner_conditions).
