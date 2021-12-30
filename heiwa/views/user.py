@@ -19,7 +19,7 @@ from .. import (
 	validators
 )
 from .utils import (
-	PERMISSION_KEY_SCHEMA,
+	BASE_PERMISSION_SCHEMA,
 	find_group_by_id,
 	find_user_by_id,
 	generate_search_schema,
@@ -1535,46 +1535,7 @@ def delete_permissions(
 	defaults={"id_": None},
 	methods=["PUT"]
 )
-@validators.validate_json({
-	"forum_create": PERMISSION_KEY_SCHEMA,
-	"forum_delete": PERMISSION_KEY_SCHEMA,
-	"forum_edit": PERMISSION_KEY_SCHEMA,
-	"forum_merge": PERMISSION_KEY_SCHEMA,
-	"forum_move": PERMISSION_KEY_SCHEMA,
-	"forum_view": PERMISSION_KEY_SCHEMA,
-	"group_create": PERMISSION_KEY_SCHEMA,
-	"group_delete": PERMISSION_KEY_SCHEMA,
-	"group_edit": PERMISSION_KEY_SCHEMA,
-	"group_edit_permissions": PERMISSION_KEY_SCHEMA,
-	"post_create": PERMISSION_KEY_SCHEMA,
-	"post_delete_own": PERMISSION_KEY_SCHEMA,
-	"post_delete_any": PERMISSION_KEY_SCHEMA,
-	"post_edit_own": PERMISSION_KEY_SCHEMA,
-	"post_edit_any": PERMISSION_KEY_SCHEMA,
-	"post_edit_vote": PERMISSION_KEY_SCHEMA,
-	"post_move_own": PERMISSION_KEY_SCHEMA,
-	"post_move_any": PERMISSION_KEY_SCHEMA,
-	"post_view": PERMISSION_KEY_SCHEMA,
-	"thread_create": PERMISSION_KEY_SCHEMA,
-	"thread_delete_own": PERMISSION_KEY_SCHEMA,
-	"thread_delete_any": PERMISSION_KEY_SCHEMA,
-	"thread_edit_own": PERMISSION_KEY_SCHEMA,
-	"thread_edit_any": PERMISSION_KEY_SCHEMA,
-	"thread_edit_lock_own": PERMISSION_KEY_SCHEMA,
-	"thread_edit_lock_any": PERMISSION_KEY_SCHEMA,
-	"thread_edit_pin": PERMISSION_KEY_SCHEMA,
-	"thread_edit_vote": PERMISSION_KEY_SCHEMA,
-	"thread_merge_own": PERMISSION_KEY_SCHEMA,
-	"thread_merge_any": PERMISSION_KEY_SCHEMA,
-	"thread_move_own": PERMISSION_KEY_SCHEMA,
-	"thread_move_any": PERMISSION_KEY_SCHEMA,
-	"thread_view": PERMISSION_KEY_SCHEMA,
-	"user_delete": PERMISSION_KEY_SCHEMA,
-	"user_edit": PERMISSION_KEY_SCHEMA,
-	"user_edit_ban": PERMISSION_KEY_SCHEMA,
-	"user_edit_groups": PERMISSION_KEY_SCHEMA,
-	"user_edit_permissions": PERMISSION_KEY_SCHEMA
-})
+@validators.validate_json(BASE_PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions", database.User)
 def edit_permissions(

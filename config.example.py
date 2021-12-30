@@ -15,6 +15,10 @@ GROUP_DEFAULTS = {
 		"level": 0,
 		"description": "The group all users are assigned to by default.",
 		"permissions": {
+			"category_create": False,
+			"category_delete": False,
+			"category_edit": False,
+			"category_view": True,
 			"forum_create": False,
 			"forum_delete": False,
 			"forum_edit": False,
@@ -60,6 +64,10 @@ GROUP_DEFAULTS = {
 		"level": 1,
 		"description": "The group all registered users are assigned to.",
 		"permissions": {
+			"category_create": None,
+			"category_delete": None,
+			"category_edit": None,
+			"category_view": None,
 			"forum_create": None,
 			"forum_delete": None,
 			"forum_edit": None,
@@ -105,6 +113,10 @@ GROUP_DEFAULTS = {
 		"level": 999,
 		"description": "Board administrators.",
 		"permissions": {
+			"category_create": True,
+			"category_delete": True,
+			"category_edit": True,
+			"category_view": True,
 			"forum_create": True,
 			"forum_delete": True,
 			"forum_edit": True,

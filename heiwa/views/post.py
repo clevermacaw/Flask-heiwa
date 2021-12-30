@@ -15,6 +15,7 @@ from .. import (
 )
 from .utils import (
 	find_thread_by_id,
+	generate_parsed_forum_permissions_exist_query,
 	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
@@ -220,15 +221,15 @@ def find_post_by_id(
 		database.ForumParsedPermissions.user_id == user.id
 	)
 
+	parsed_forum_permissions_exist_query = (
+		generate_parsed_forum_permissions_exist_query(inner_conditions)
+	)
+
 	while True:
 		row = session.execute(
 			sqlalchemy.select(
 				database.Post,
-				(
-					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-					where(inner_conditions).
-					exists()
-				),
+				parsed_forum_permissions_exist_query,
 				database.Thread.forum_id
 			).
 			join(
@@ -239,20 +240,12 @@ def find_post_by_id(
 				sqlalchemy.and_(
 					database.Post.id == id_,
 					sqlalchemy.or_(
-						~(
-							sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-							where(inner_conditions).
-							exists()
-						),
-						(
-							sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-							where(
-								sqlalchemy.and_(
-									inner_conditions,
-									database.ForumParsedPermissions.post_view.is_(True)
-								)
-							).
-							exists()
+						~parsed_forum_permissions_exist_query,
+						generate_parsed_forum_permissions_exist_query(
+							sqlalchemy.and_(
+								inner_conditions,
+								database.ForumParsedPermissions.post_view.is_(True)
+							)
 						)
 					)
 				)
@@ -282,10 +275,7 @@ def get_post_ids_from_search(
 		sqlalchemy.sql.expression.BinaryExpression,
 		sqlalchemy.sql.expression.ClauseList
 	],
-	inner_conditions: typing.Union[
-		sqlalchemy.sql.expression.BinaryExpression,
-		sqlalchemy.sql.expression.ClauseList
-	]
+	parsed_forum_permissions_exist_query: sqlalchemy.sql.selectable.Exists
 ) -> typing.List[uuid.UUID]:
 	"""Returns the IDs of posts that match the current search query, and
 	``conditions``.
@@ -315,11 +305,7 @@ def get_post_ids_from_search(
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
 				database.Post.id,
-				(
-					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-					where(inner_conditions).
-					exists()
-				),
+				parsed_forum_permissions_exist_query,
 				database.Thread.forum_id
 			).
 			join(
@@ -408,21 +394,17 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
+	parsed_forum_permissions_exist_query = (
+		generate_parsed_forum_permissions_exist_query(inner_conditions)
+	)
+
 	conditions = sqlalchemy.or_(
-		~(
-			sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-			where(inner_conditions).
-			exists()
-		),
-		(
-			sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-			where(
-				sqlalchemy.and_(
-					inner_conditions,
-					database.ForumParsedPermissions.post_view.is_(True)
-				)
-			).
-			exists()
+		~parsed_forum_permissions_exist_query,
+		generate_parsed_forum_permissions_exist_query(
+			sqlalchemy.and_(
+				inner_conditions,
+				database.ForumParsedPermissions.post_view.is_(True)
+			)
 		)
 	)
 
@@ -450,11 +432,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
 				database.Post,
-				(
-					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-					where(inner_conditions).
-					exists()
-				),
+				parsed_forum_permissions_exist_query,
 				database.Thread.forum_id
 			).
 			join(
@@ -511,32 +489,28 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
+	parsed_forum_permissions_exist_query = (
+		generate_parsed_forum_permissions_exist_query(inner_conditions)
+	)
+
 	post_ids = get_post_ids_from_search(
 		sqlalchemy.or_(
-			~(
-				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-				where(inner_conditions).
-				exists()
-			),
-			(
-				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-				where(
-					sqlalchemy.and_(
-						inner_conditions,
-						database.ForumParsedPermissions.post_view.is_(True),
-						sqlalchemy.or_(
-							sqlalchemy.and_(
-								database.Post.id == flask.g.user.id,
-								database.ForumParsedPermissions.post_delete_own.is_(True)
-							),
-							database.ForumParsedPermissions.post_delete_any.is_(True)
-						)
+			~parsed_forum_permissions_exist_query,
+			generate_parsed_forum_permissions_exist_query(
+				sqlalchemy.and_(
+					inner_conditions,
+					database.ForumParsedPermissions.post_view.is_(True),
+					sqlalchemy.or_(
+						sqlalchemy.and_(
+							database.Post.id == flask.g.user.id,
+							database.ForumParsedPermissions.post_delete_own.is_(True)
+						),
+						database.ForumParsedPermissions.post_delete_any.is_(True)
 					)
-				).
-				exists()
+				)
 			)
 		),
-		inner_conditions
+		parsed_forum_permissions_exist_query
 	)
 
 	if len(post_ids) != 0:
@@ -596,32 +570,28 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
+	parsed_forum_permissions_exist = (
+		generate_parsed_forum_permissions_exist_query(inner_conditions)
+	)
+
 	post_ids = get_post_ids_from_search(
 		sqlalchemy.or_(
-			~(
-				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-				where(inner_conditions).
-				exists()
-			),
-			(
-				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-				where(
-					sqlalchemy.and_(
-						inner_conditions,
-						database.ForumParsedPermissions.post_view.is_(True),
-						sqlalchemy.or_(
-							sqlalchemy.and_(
-								database.Post.id == flask.g.user.id,
-								database.ForumParsedPermissions.post_edit_own.is_(True)
-							),
-							database.ForumParsedPermissions.post_edit_any.is_(True)
-						)
+			~parsed_forum_permissions_exist,
+			generate_parsed_forum_permissions_exist_query(
+				sqlalchemy.and_(
+					inner_conditions,
+					database.ForumParsedPermissions.post_view.is_(True),
+					sqlalchemy.or_(
+						sqlalchemy.and_(
+							database.Post.id == flask.g.user.id,
+							database.ForumParsedPermissions.post_edit_own.is_(True)
+						),
+						database.ForumParsedPermissions.post_edit_any.is_(True)
 					)
-				).
-				exists()
+				)
 			)
 		),
-		inner_conditions
+		parsed_forum_permissions_exist
 	)
 
 	if len(post_ids) != 0:

@@ -10,6 +10,8 @@ __all__ = [
 	"APIException",
 	"APIAuthorizationHeaderInvalid",
 	"APIAuthorizationHeaderMissing",
+	"APICategoryNotFound",
+	"APIForumCategoryOutsideParent",
 	"APIForumChildLevelLimitReached",
 	"APIForumNotFound",
 	"APIForumParentIsChild",
@@ -73,7 +75,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.31.1"
+__version__ = "1.32.0"
 
 
 class APIException(Exception):
@@ -127,6 +129,24 @@ class APIAuthorizationHeaderMissing(APIException):
 	"""
 
 	code = statuses.BAD_REQUEST
+
+
+class APICategoryNotFound(APIException):
+	"""Exception class for when a requested
+	:class:`Category <heiwa.database.Category>` does not exist.
+	"""
+
+	code = statuses.NOT_FOUND
+
+
+class APIForumCategoryOutsideParent(APIException):
+	"""Exception class for when a user attempts to assign a category to a
+	:class:`Forum <heiwa.database.Forum>`, while also assigning a parent forum
+	whose :attr:`id <heiwa.database.Forum.id>` does not match the category's
+	:attr:`forum_id <heiwa.database.Category.forum_id>`.
+	"""
+
+	code = statuses.FORBIDDEN
 
 
 class APIForumChildLevelLimitReached(APIException):

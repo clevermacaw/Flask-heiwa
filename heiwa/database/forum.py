@@ -65,6 +65,22 @@ class ForumPermissionMixin:
 	method.
 	"""
 
+	category_create = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=True
+	)
+	category_delete = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=True
+	)
+	category_edit = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=True
+	)
+	category_view = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=True
+	)
 	forum_create = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
@@ -183,6 +199,10 @@ class ForumPermissionMixin:
 	)
 
 	DEFAULT_PERMISSIONS = {
+		"category_create": None,
+		"category_delete": None,
+		"category_edit": None,
+		"category_view": None,
 		"forum_create": None,
 		"forum_delete": None,
 		"forum_edit": None,
@@ -271,6 +291,22 @@ class ForumParsedPermissions(
 		primary_key=True
 	)
 
+	category_create = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=False
+	)
+	category_delete = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=False
+	)
+	category_edit = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=False
+	)
+	category_view = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=False
+	)
 	forum_create = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=False
@@ -387,6 +423,42 @@ class ForumParsedPermissions(
 		sqlalchemy.Boolean,
 		nullable=False
 	)
+
+	DEFAULT_PERMISSIONS = {
+		"category_create": False,
+		"category_delete": False,
+		"category_edit": False,
+		"category_view": False,
+		"forum_create": False,
+		"forum_delete": False,
+		"forum_edit": False,
+		"forum_merge": False,
+		"forum_move": False,
+		"forum_view": False,
+		"post_create": False,
+		"post_delete_own": False,
+		"post_delete_any": False,
+		"post_edit_own": False,
+		"post_edit_any": False,
+		"post_edit_vote": False,
+		"post_move_own": False,
+		"post_move_any": False,
+		"post_view": False,
+		"thread_create": False,
+		"thread_delete_own": False,
+		"thread_delete_any": False,
+		"thread_edit_own": False,
+		"thread_edit_any": False,
+		"thread_edit_lock_own": False,
+		"thread_edit_lock_any": False,
+		"thread_edit_pin": False,
+		"thread_edit_vote": False,
+		"thread_merge_own": False,
+		"thread_merge_any": False,
+		"thread_move_own": False,
+		"thread_move_any": False,
+		"thread_view": False
+	}
 
 
 class ForumPermissionsGroup(
@@ -534,11 +606,27 @@ class Forum(
 		mainly going to be defined by a group of administrators who host the
 		service and dealing with owners would cause unnecessary complications,
 		they have been removed.
-
-	TODO
 	"""
 
 	__tablename__ = "forums"
+
+	category_id = sqlalchemy.Column(
+		UUID,
+		sqlalchemy.ForeignKey(
+			"categories.id",
+			ondelete="SET NULL",
+			onupdate="CASCADE"
+		),
+		index=True,
+		nullable=True
+	)
+	"""The :attr:`id <.Category.id>` of the :class:`.Category` a forum belongs
+	in. If :data:`None`, the forum doesn't belong in any category and will
+	generally be shown at the bottom in frontend programs.
+
+	When / if the category is deleted, the forum will not be deleted, but
+	instead, this column will become :data:`None`.
+	"""
 
 	parent_forum_id = sqlalchemy.Column(
 		UUID,
@@ -550,21 +638,34 @@ class Forum(
 		index=True,
 		nullable=True
 	)
+	"""The :attr:`id <.Forum.id>` of the forum another forum is a child of.
+
+	.. seealso::
+		:attr:`.Forum.child_forums`
+
+		:meth:`.Forum.get_child_level`
+	"""
 
 	name = sqlalchemy.Column(
 		sqlalchemy.String(128),
 		nullable=False
 	)
+	"""A forum's name."""
+
 	description = sqlalchemy.Column(
 		sqlalchemy.String(65536),
 		nullable=True
 	)
+	"""A forum's description."""
 
 	order = sqlalchemy.Column(
 		sqlalchemy.Integer,
 		default=0,
 		nullable=False
 	)
+	"""The order a forum will be displayed in by default. The higher it is, the
+	higher the forum will be.
+	"""
 
 	subscriber_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -573,6 +674,7 @@ class Forum(
 		where(forum_subscribers.c.forum_id == sqlalchemy.text("forums.id")).
 		scalar_subquery()
 	)
+	r"""The amount of :class:`.User`\ s subscribed to a forum."""
 
 	thread_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -584,6 +686,11 @@ class Forum(
 		).
 		scalar_subquery()
 	)
+	r"""The amount of :class:`.Thread`\ s in a forum
+
+	.. seealso::
+		:data:`.forum_subscribers`
+	"""
 
 	last_thread_timestamp = sqlalchemy.orm.column_property(
 		sqlalchemy.select(sqlalchemy.text("threads.creation_timestamp")).
@@ -597,6 +704,9 @@ class Forum(
 		limit(1).
 		scalar_subquery()
 	)
+	"""The time the latest :class:`.Thread` in a forum was made. If there haven't
+	been any threads so far, this will be :data:`None`.
+	"""
 
 	parsed_permissions = sqlalchemy.orm.relationship(
 		ForumParsedPermissions,
@@ -607,6 +717,13 @@ class Forum(
 		passive_deletes="all",
 		lazy=True
 	)
+	"""A forum's parsed permission cache.
+
+	.. seealso::
+		:meth:`.Forum.reparse_permissions`
+
+		:class:`.ForumParsedPermissions`
+	"""
 
 	permissions_groups = sqlalchemy.orm.relationship(
 		ForumPermissionsGroup,
@@ -618,6 +735,11 @@ class Forum(
 		passive_deletes="all",
 		lazy=True
 	)
+	"""Forum permissions for groups.
+
+	.. seealso::
+		:class:`.ForumPermissionsGroup`
+	"""
 
 	permissions_users = sqlalchemy.orm.relationship(
 		ForumPermissionsUser,
@@ -629,6 +751,11 @@ class Forum(
 		passive_deletes="all",
 		lazy=True
 	)
+	"""Forum permissions for users.
+
+	.. seealso::
+		:class:`.ForumPermissionsUser`
+	"""
 
 	child_forums = sqlalchemy.orm.relationship(
 		lambda: Forum,
@@ -641,6 +768,14 @@ class Forum(
 		passive_deletes="all",
 		lazy=True
 	)
+	"""A forum's children. Unless those child forums have their own specific
+	permissions set, they inherit their parent's.
+
+	.. seealso::
+		:attr:`.Forum.parent_forum_id`
+
+		:meth:`.Forum.get_child_level`
+	"""
 
 	class_actions = {
 		"create": lambda cls, user: (
@@ -699,31 +834,32 @@ class Forum(
 			cls.get_class_permission(user, "view")
 		)
 	}
+	""" TODO """
 
 	instance_actions = {
 		"create_subforum": lambda self, user: (
-			self.get_parsed_permissions(user.id).forum_create
+			self.get_parsed_permissions(user).forum_create
 		),
 		"create_thread": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.get_parsed_permissions(user.id).thread_view and
-			self.get_parsed_permissions(user.id).thread_create
+			self.get_parsed_permissions(user).thread_view and
+			self.get_parsed_permissions(user).thread_create
 		),
 		"create_thread_locked": lambda self, user: (
 			self.get_instance_permission(user, "create_thread") and
-			self.get_parsed_permissions(user.id).thread_edit_lock_own
+			self.get_parsed_permissions(user).thread_edit_lock_own
 		),
 		"create_thread_pinned": lambda self, user: (
 			self.get_instance_permission(user, "create_thread") and
-			self.get_parsed_permissions(user.id).thread_edit_pin
+			self.get_parsed_permissions(user).thread_edit_pin
 		),
 		"delete": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.get_parsed_permissions(user.id).forum_delete
+			self.get_parsed_permissions(user).forum_delete
 		),
 		"edit": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.get_parsed_permissions(user.id).forum_edit
+			self.get_parsed_permissions(user).forum_edit
 		),
 		"edit_permissions_group": lambda self, user: (
 			self.get_instance_permission(user, "view") and
@@ -738,19 +874,19 @@ class Forum(
 		),
 		"merge": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.get_parsed_permissions(user.id).forum_merge and (
+			self.get_parsed_permissions(user).forum_merge and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.get_parsed_permissions(user.id).forum_merge
+				self.future_forum.get_parsed_permissions(user).forum_merge
 			)
 		),
 		"move": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.get_parsed_permissions(user.id).forum_move and (
+			self.get_parsed_permissions(user).forum_move and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.get_parsed_permissions(user.id).forum_move
+				self.future_forum.get_parsed_permissions(user).forum_move
 			)
 		),
-		"view": lambda self, user: self.get_parsed_permissions(user.id).forum_view,
+		"view": lambda self, user: self.get_parsed_permissions(user).forum_view,
 		"view_permissions_group": lambda self, user: (
 			self.get_instance_permission(user, "view")
 		),
@@ -758,6 +894,7 @@ class Forum(
 			self.get_instance_permission(user, "view")
 		)
 	}
+	""" TODO """
 
 	def delete(
 		self: Forum,
@@ -766,9 +903,9 @@ class Forum(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Deletes all notifications associated with this forum, as well as the
-		forum itself. If the ``session`` argument is ``None``, it's set to this
-		object's session.
+		r"""Deletes all :class:`.Notification`\ s associated with this forum, as
+		well as the forum itself. If the ``session`` argument is :data:`None`,
+		it's set to this object's session.
 		"""
 
 		if session is None:
@@ -813,7 +950,13 @@ class Forum(
 			uuid.UUID
 		] = None
 	) -> typing.List[uuid.UUID]:
-		"""Returns this forum's ``id``, combined with its child forums'."""
+		"""Returns a list of this forum's :attr:`id <.Forum.id>`, combined with
+		its child forums'. If the ``session`` argument is :data:`None`, it's set
+		to this object's session.
+
+		.. seealso::
+			:attr:`.Forum.child_forums`
+		"""
 
 		if current_id is None:
 			current_id = self.id
@@ -838,8 +981,9 @@ class Forum(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Deletes all cached parsed permissions this forum has,
-		as well as the child forums', in a recursive manner.
+		"""Deletes all instances of :class:`.ForumParsedPermissions` associated
+		with this forum, as well as its children. If the ``session`` argument is
+		:data:`None`, it's set to this object's session.
 		"""
 
 		if session is None:
@@ -863,7 +1007,13 @@ class Forum(
 			uuid.UUID
 		] = None
 	) -> int:
-		"""Recursively obtains the current forum's child level."""
+		"""Returns how many levels 'deep' this forum is. For example, if there is
+		no parent forum set, it's ``0``. If it's the child of a forum with no
+		parent of it sown, it's ``1``.
+
+		.. seealso::
+			:meth:`.Forum.get_child_level`
+		"""
 
 		if current_id is None:
 			current_id = self.id
@@ -891,8 +1041,22 @@ class Forum(
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Returns the child level of this forum. For example, if there is a parent
-		forum which is itself the child of another forum, the level will be 2.
+		"""Returns how many levels 'deep' this forum is. For example, if there is
+		no parent forum set, it's ``0``. If it's the child of a forum with no
+		parent of it sown, it's ``1``. If the ``session`` argument is :data:`None`,
+		it's set to this object's session.
+
+		This value is primarily used to limit forum creation through the API. If
+		the child level limit is, for example, a fairly liberal ``25``, forums
+		more than 25 levels deep will not be created.
+
+		.. note::
+			Ideally, there would be no limit at all, but calculating inherited
+			permissions has to be done through a recursive function to some
+			extent. Recursion, at least in CPython, currently has inherent limits.
+
+		.. seealso::
+			:meth:`.Forum._parse_child_level`
 		"""
 
 		if self.parent_forum_id is None:
@@ -907,7 +1071,8 @@ class Forum(
 	@functools.lru_cache()
 	def get_parsed_permissions(
 		self: Forum,
-		user_id: uuid.UUID,
+		user,
+		auto_parse: bool = True,
 		session: typing.Union[
 			None,
 			sqlalchemy.orm.Session
@@ -916,22 +1081,29 @@ class Forum(
 		None,
 		ForumParsedPermissions
 	]:
-		"""Returns this forum's parsed permissions for user with the given
-		``user_id``.
+		"""Returns the cached parsed permissions this forum has for the given
+		``user``. If ``auto_parse`` is :data:`True` and the permissions have not
+		yet been parsed, they are parsed automatically. If the ``session``
+		argument is :data:`None`, it's set to this object's session.
 		"""
 
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)
 
-		return session.execute(
+		parsed_permissions = session.execute(
 			sqlalchemy.select(ForumParsedPermissions).
 			where(
 				sqlalchemy.and_(
 					ForumParsedPermissions.forum_id == self.id,
-					ForumParsedPermissions.user_id == user_id
+					ForumParsedPermissions.user_id == user.id
 				)
 			)
 		).scalars().one_or_none()
+
+		if parsed_permissions is None and auto_parse:
+			self.reparse_permissions(user)
+
+		return parsed_permissions
 
 	def get_subscriber_ids(
 		self: Forum,
@@ -940,7 +1112,12 @@ class Forum(
 			sqlalchemy.orm.Session
 		] = None
 	) -> typing.List[uuid.UUID]:
-		"""Returns this forum's subscribers' IDs."""
+		r"""Returns this forum's subscribers' :attr:`id <.User.id>`\ s. If the
+		``session`` argument is :data:`None`, it's set to this object's session.
+
+		.. seealso::
+			:data:`.forum_subscribers`
+		"""
 
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)
@@ -959,9 +1136,22 @@ class Forum(
 			uuid.UUID
 		] = None
 	) -> typing.Dict[str, bool]:
-		"""Gets this forum's permissions for the group with the given ``group_id``,
-		as well as the parent forums'. This forum's permissions will take
-		precedence.
+		"""Returns this forum's, as well as the parent forums' permissions for
+		the :class:`.Group` with the given ``group_id``. If the ``forum_id``
+		argument is :data:`None`, the current forum is considered to be ``self``.
+		Otherwise, the :attr:`id <.Forum.id>` supplied within the argument is
+		considered to be that of the current forum's.
+
+		This forum's permissions take precedence. For unset permissions, the
+		parent closest to this forum takes precedence.
+
+		.. note::
+			In the past, this function used to retrieve the parent forum object,
+			and called this function on it. This does improve readability, but
+			introduces a considerable amount of unnecessary data being used.
+
+		.. seealso::
+			:class:`.ForumPermissionsGroup`
 		"""
 
 		if forum_id is None:
@@ -1013,9 +1203,22 @@ class Forum(
 			uuid.UUID
 		] = None
 	) -> typing.Dict[str, bool]:
-		"""Gets this forum's permissions for the user with the given ``user_id``,
-		as well as the parent forums'. This forum's permissions will take
-		precedence.
+		"""Returns this forum's, as well as the parent forums' permissions for
+		the :class:`.User` with the given ``user_id``. If the ``forum_id``
+		argument is :data:`None`, the current forum is considered to be ``self``.
+		Otherwise, the :attr:`id <.Forum.id>` supplied within the argument is
+		considered to be that of the current forum's.
+
+		This forum's permissions take precedence. For unset permissions, the
+		parent closest to this forum takes precedence.
+
+		.. note::
+			In the past, this function used to retrieve the parent forum object,
+			and called this function on it. This does improve readability, but
+			introduces a considerable amount of unnecessary data being used.
+
+		.. seealso::
+			:class:`.ForumPermissionsUser`
 		"""
 
 		if forum_id is None:
@@ -1066,18 +1269,28 @@ class Forum(
 			sqlalchemy.orm.Session
 		] = None
 	) -> ForumParsedPermissions:
-		"""Sets the given user's ``ForumParsedPermissions`` to:
+		"""Sets the given ``user``'s :class:`.ForumParsedPermissions` for the
+		current forum to:
 
-		#. The given ``user``'s ``parsed_permissions``.
-		#. Any defined permissions for groups that this ``user`` is part of for
-		   this forum, as well as the parent forum(s),
-		   where the group with the highest level is most important.
-		#. Any permissions specific to the given ``user`` defined for this forum,
-		   as well as the parent forum(s).
+		#. The user's :attr:`parsed_permissions <.User.parsed_permissions>`.
+		#. Any permissions associated with this forum defined for the groups the
+		   user is a part of.
+		#. Any permissions associated with this forum defined for the user.
 
-		Where the lower on the list an item is, the higher priority it has. This
-		instance of ``ForumParsedPermissions`` is created if inexistent, then filled
-		with the calculated values.
+		In that order. The lower on the list a set of permissions is, the more
+		important it is and overrides values that existed in the previous set.
+
+		If the ``session`` argument is :data:`None`, it's set to this object's
+		session.
+
+		.. seealso::
+			:meth:`.Forum._get_permissions_group`
+
+			:class:`.ForumPermissionsGroup`
+
+			:meth:`.Forum._get_permissions_user`
+
+			:class:`.ForumPermissionsUser`
 		"""
 
 		if session is None:
@@ -1127,7 +1340,7 @@ class Forum(
 					permission_name
 				]
 
-		existing_parsed_permissions = self.get_parsed_permissions(user.id)
+		existing_parsed_permissions = self.get_parsed_permissions(user)
 
 		if existing_parsed_permissions is None:
 			ForumParsedPermissions.create(

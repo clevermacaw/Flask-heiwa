@@ -5,6 +5,7 @@ import sqlalchemy.orm
 Base = sqlalchemy.orm.declarative_base()
 
 from . import utils
+from .category import Category
 from .forum import (
 	Forum,
 	ForumParsedPermissions,
@@ -29,6 +30,7 @@ from .user import (
 
 __all__ = [
 	"Base",
+	"Category",
 	"Forum",
 	"ForumParsedPermissions",
 	"ForumPermissionsGroup",
@@ -52,4 +54,4 @@ __all__ = [
 	"user_groups",
 	"utils"
 ]
-__version__ = "0.34.7"
+__version__ = "0.35.0"

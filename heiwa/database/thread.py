@@ -406,62 +406,62 @@ class Thread(
 	instance_actions = {
 		"create_post": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.forum.get_parsed_permissions(user.id).post_view and
-			self.forum.get_parsed_permissions(user.id).post_create
+			self.forum.get_parsed_permissions(user).post_view and
+			self.forum.get_parsed_permissions(user).post_create
 		),
 		"delete": lambda self, user: (
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user.id).thread_delete_own
+					self.forum.get_parsed_permissions(user).thread_delete_own
 				) or
-				self.forum.get_parsed_permissions(user.id).thread_delete_any
+				self.forum.get_parsed_permissions(user).thread_delete_any
 			)
 		),
 		"edit": lambda self, user: (
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user.id).thread_edit_own
+					self.forum.get_parsed_permissions(user).thread_edit_own
 				) or
-				self.forum.get_parsed_permissions(user.id).thread_edit_any
+				self.forum.get_parsed_permissions(user).thread_edit_any
 			)
 		),
 		"edit_lock": lambda self, user: (
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user.id).thread_edit_lock_own
+					self.forum.get_parsed_permissions(user).thread_edit_lock_own
 				) or
-				self.forum.get_parsed_permissions(user.id).thread_edit_lock_any
+				self.forum.get_parsed_permissions(user).thread_edit_lock_any
 			)
 		),
 		"edit_pin": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.forum.get_parsed_permissions(user.id).thread_edit_pin
+			self.forum.get_parsed_permissions(user).thread_edit_pin
 		),
 		"edit_subscription": lambda self, user: (
 			self.get_instance_permission(user, "view")
 		),
 		"edit_vote": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.forum.get_parsed_permissions(user.id).thread_edit_vote
+			self.forum.get_parsed_permissions(user).thread_edit_vote
 		),
 		"merge": lambda self, user: (
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user.id).thread_merge_own
+					self.forum.get_parsed_permissions(user).thread_merge_own
 				) or
-				self.forum.get_parsed_permissions(user.id).thread_merge_any
+				self.forum.get_parsed_permissions(user).thread_merge_any
 			) and (
 				not hasattr(self, "future_thread") or
 				(
 					(
 						self.future_thread.user_id == user.id and
-						self.future_thread.forum.get_parsed_permissions(user.id).thread_merge_own
+						self.future_thread.forum.get_parsed_permissions(user).thread_merge_own
 					) or
-					self.future_thread.forum.get_parsed_permissions(user.id).thread_merge_any
+					self.future_thread.forum.get_parsed_permissions(user).thread_merge_any
 				)
 			)
 		),
@@ -469,22 +469,22 @@ class Thread(
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user.id).thread_move_own
+					self.forum.get_parsed_permissions(user).thread_move_own
 				) or
-				self.forum.get_parsed_permissions(user.id).thread_move_any
+				self.forum.get_parsed_permissions(user).thread_move_any
 			) and (
 				not hasattr(self, "future_forum") or
 				(
 					(
 						self.future_forum.user_id == user.id and
-						self.future_forum.get_parsed_permissions(user.id).thread_move_own
+						self.future_forum.get_parsed_permissions(user).thread_move_own
 					) or
-					self.future_forum.get_parsed_permissions(user.id).thread_move_any
+					self.future_forum.get_parsed_permissions(user).thread_move_any
 				)
 			)
 		),
 		"view": lambda self, user: (
-			self.forum.get_parsed_permissions(user.id).thread_view
+			self.forum.get_parsed_permissions(user).thread_view
 		),
 		"view_vote": lambda self, user: self.get_instance_permission(user, "view")
 	}
@@ -657,6 +657,9 @@ class Thread(
 	) -> typing.List[uuid.UUID]:
 		r"""Returns this thread's subscribers' :attr:`id <.User.id>`\ s. If the
 		``session`` argument is :data:`None`, it's set to this object's session.
+
+		.. seealso::
+			:data:`.thread_subscribers`
 		"""
 
 		if session is None:

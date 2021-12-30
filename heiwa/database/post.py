@@ -215,44 +215,44 @@ class Post(
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user.id).post_delete_own
+					self.forum.get_parsed_permissions(user).post_delete_own
 				) or
-				self.forum.get_parsed_permissions(user.id).post_delete_any
+				self.forum.get_parsed_permissions(user).post_delete_any
 			)
 		),
 		"edit": lambda self, user: (
 			self.get_instance_permission(user, "view") and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user.id).post_edit_own
+					self.forum.get_parsed_permissions(user).post_edit_own
 				) or
-				self.forum.get_parsed_permissions(user.id).post_edit_any
+				self.forum.get_parsed_permissions(user).post_edit_any
 			)
 		),
 		"edit_vote": lambda self, user: (
 			self.get_instance_permission(user, "view") and
-			self.forum.get_parsed_permissions(user.id).post_edit_vote
+			self.forum.get_parsed_permissions(user).post_edit_vote
 		),
 		"move": lambda self, user: (
 			self.get_instance_permission(user, "view") and (
 				(
 					self.thread.user_id == user.id and
-					self.forum.get_parsed_permissions(user.id).post_move_own
+					self.forum.get_parsed_permissions(user).post_move_own
 				) or
-				self.forum.get_parsed_permissions(user.id).post_move_any
+				self.forum.get_parsed_permissions(user).post_move_any
 			) and (
 				not hasattr(self, "future_thread") or
 				(
 					(
 						self.future_thread.user_id == user.id and
-						self.future_thread.forum.get_parsed_permissions(user.id).post_move_own
+						self.future_thread.forum.get_parsed_permissions(user).post_move_own
 					) or
-					self.future_thread.forum.get_parsed_permissions(user.id).post_move_any
+					self.future_thread.forum.get_parsed_permissions(user).post_move_any
 				)
 			)
 		),
 		"view": lambda self, user: (
-			self.forum.get_parsed_permissions(user.id).post_view
+			self.forum.get_parsed_permissions(user).post_view
 		),
 		"view_vote": lambda self, user: (
 			self.get_instance_permission(user, "view")

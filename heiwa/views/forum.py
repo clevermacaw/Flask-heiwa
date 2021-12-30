@@ -13,14 +13,17 @@ from .. import (
 	validators
 )
 from .utils import (
-	BASE_PERMISSION_SCHEMA,
+	PERMISSION_KEY_SCHEMA,
+	find_category_by_id,
 	find_forum_by_id,
 	find_group_by_id,
 	find_user_by_id,
+	generate_parsed_forum_permissions_exist_query,
 	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
 	requires_permission,
+	validate_category_exists,
 	validate_forum_exists,
 	validate_permission,
 	validate_user_exists
@@ -53,11 +56,11 @@ ATTR_SCHEMAS = {
 		"min": 0,
 		"max": 2147483647
 	},
-	"parent_forum_id": {
+	"category_id": {
 		"type": "uuid",
 		"coerce": "convert_to_uuid"
 	},
-	"user_id": {
+	"parent_forum_id": {
 		"type": "uuid",
 		"coerce": "convert_to_uuid"
 	},
@@ -93,6 +96,16 @@ ATTR_SCHEMAS = {
 }
 
 CREATE_EDIT_SCHEMA = {
+	"category_id": {
+		**ATTR_SCHEMAS["category_id"],
+		"nullable": True,
+		"required": True
+	},
+	"parent_forum_id": {
+		**ATTR_SCHEMAS["parent_forum_id"],
+		"nullable": True,
+		"required": True
+	},
 	"name": {
 		**ATTR_SCHEMAS["name"],
 		"required": True
@@ -104,11 +117,6 @@ CREATE_EDIT_SCHEMA = {
 	},
 	"order": {
 		**ATTR_SCHEMAS["order"],
-		"required": True
-	},
-	"parent_forum_id": {
-		**ATTR_SCHEMAS["parent_forum_id"],
-		"nullable": True,
 		"required": True
 	}
 }
@@ -124,6 +132,42 @@ SEARCH_SCHEMA = generate_search_schema(
 	default_order_by="order",
 	default_order_asc=False
 )
+
+PERMISSION_SCHEMA = {
+	"category_create": PERMISSION_KEY_SCHEMA,
+	"category_delete": PERMISSION_KEY_SCHEMA,
+	"category_edit": PERMISSION_KEY_SCHEMA,
+	"category_view": PERMISSION_KEY_SCHEMA,
+	"forum_create": PERMISSION_KEY_SCHEMA,
+	"forum_delete": PERMISSION_KEY_SCHEMA,
+	"forum_edit": PERMISSION_KEY_SCHEMA,
+	"forum_merge": PERMISSION_KEY_SCHEMA,
+	"forum_move": PERMISSION_KEY_SCHEMA,
+	"forum_view": PERMISSION_KEY_SCHEMA,
+	"post_create": PERMISSION_KEY_SCHEMA,
+	"post_delete_own": PERMISSION_KEY_SCHEMA,
+	"post_delete_any": PERMISSION_KEY_SCHEMA,
+	"post_edit_own": PERMISSION_KEY_SCHEMA,
+	"post_edit_any": PERMISSION_KEY_SCHEMA,
+	"post_edit_vote": PERMISSION_KEY_SCHEMA,
+	"post_move_own": PERMISSION_KEY_SCHEMA,
+	"post_move_any": PERMISSION_KEY_SCHEMA,
+	"post_view": PERMISSION_KEY_SCHEMA,
+	"thread_create": PERMISSION_KEY_SCHEMA,
+	"thread_delete_own": PERMISSION_KEY_SCHEMA,
+	"thread_delete_any": PERMISSION_KEY_SCHEMA,
+	"thread_edit_own": PERMISSION_KEY_SCHEMA,
+	"thread_edit_any": PERMISSION_KEY_SCHEMA,
+	"thread_edit_lock_own": PERMISSION_KEY_SCHEMA,
+	"thread_edit_lock_any": PERMISSION_KEY_SCHEMA,
+	"thread_edit_pin": PERMISSION_KEY_SCHEMA,
+	"thread_edit_vote": PERMISSION_KEY_SCHEMA,
+	"thread_merge_own": PERMISSION_KEY_SCHEMA,
+	"thread_merge_any": PERMISSION_KEY_SCHEMA,
+	"thread_move_own": PERMISSION_KEY_SCHEMA,
+	"thread_move_any": PERMISSION_KEY_SCHEMA,
+	"thread_view": PERMISSION_KEY_SCHEMA
+}
 
 LT_GT_SEARCH_SCHEMA = {
 	"creation_timestamp": ATTR_SCHEMAS["creation_timestamp"],
@@ -145,11 +189,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"nullable": True
 			},
 			"edit_count": ATTR_SCHEMAS["edit_count"],
+			"category_id": {
+				**ATTR_SCHEMAS["category_id"],
+				"nullable": True
+			},
 			"parent_forum_id": {
 				**ATTR_SCHEMAS["parent_forum_id"],
 				"nullable": True
 			},
-			"user_id": ATTR_SCHEMAS["user_id"],
 			"name": ATTR_SCHEMAS["name"],
 			"description": {
 				**ATTR_SCHEMAS["description"],
@@ -215,18 +262,21 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"minlength": 1,
 				"maxlength": 32
 			},
+			"category_id": {
+				"type": "list",
+				"schema": {
+					**ATTR_SCHEMAS["category_id"],
+					"nullable": True
+				},
+				"minlength": 1,
+				"maxlength": 32
+			},
 			"parent_forum_id": {
 				"type": "list",
 				"schema": {
 					**ATTR_SCHEMAS["parent_forum_id"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
-			},
-			"user_id": {
-				"type": "list",
-				"schema": ATTR_SCHEMAS["user_id"],
 				"minlength": 1,
 				"maxlength": 32
 			},
@@ -297,10 +347,7 @@ def get_forum_ids_from_search(
 		sqlalchemy.sql.expression.BinaryExpression,
 		sqlalchemy.sql.expression.ClauseList
 	],
-	inner_conditions: typing.Union[
-		sqlalchemy.sql.expression.BinaryExpression,
-		sqlalchemy.sql.expression.ClauseList
-	]
+	parsed_permissions_exist_query: sqlalchemy.sql.selectable.Exists
 ) -> typing.List[uuid.UUID]:
 	"""Returns the IDs of forums that match the current search query, and
 	``conditions``.
@@ -330,11 +377,7 @@ def get_forum_ids_from_search(
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
 				database.Forum,
-				(
-					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-					where(inner_conditions).
-					exists()
-				)
+				parsed_permissions_exist_query
 			).
 			where(conditions).
 			order_by(
@@ -369,14 +412,29 @@ def get_forum_ids_from_search(
 @authentication.authenticate_via_jwt
 @requires_permission("create", database.Forum)
 def create() -> typing.Tuple[flask.Response, int]:
-	"""Creates a forum with the requested ``parent_forum_id``, ``name``,
-	``description`` and default order position (``order``).
+	"""Creates a forum with the requested ``category_id``, ``parent_forum_id``,
+	``name``, ``description`` and default order position (``order``).
 	"""
 
-	forum = database.Forum(
-		user_id=flask.g.user.id,
-		**flask.g.json
-	)
+	forum = database.Forum(**flask.g.json)
+
+	if flask.g.json["category_id"] is not None:
+		with flask.g.sa_session.no_autoflush:
+			if flask.g.json["parent_forum_id"] is not None:
+				category = find_category_by_id(
+					flask.g.json["category_id"],
+					flask.g.sa_session,
+					flask.g.user
+				)
+
+				if category.forum_id != flask.g.json["parent_forum_id"]:
+					raise exceptions.APIForumCategoryOutsideParent
+			else:
+				validate_category_exists(
+					flask.g.json["category_id"],
+					flask.g.sa_session,
+					flask.g.user
+				)
 
 	if flask.g.json["parent_forum_id"] is not None:
 		with flask.g.sa_session.no_autoflush:
@@ -428,21 +486,17 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
+	parsed_permissions_exist_query = (
+		generate_parsed_forum_permissions_exist_query(inner_conditions)
+	)
+
 	conditions = sqlalchemy.or_(
-		~(
-			sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-			where(inner_conditions).
-			exists()
-		),
-		(
-			sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-			where(
-				sqlalchemy.and_(
-					inner_conditions,
-					database.ForumParsedPermissions.forum_view.is_(True)
-				)
-			).
-			exists()
+		~parsed_permissions_exist_query,
+		generate_parsed_forum_permissions_exist_query(
+			sqlalchemy.and_(
+				inner_conditions,
+				database.ForumParsedPermissions.forum_view.is_(True)
+			)
 		)
 	)
 
@@ -470,11 +524,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		rows = flask.g.sa_session.execute(
 			sqlalchemy.select(
 				database.Forum,
-				(
-					sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-					where(inner_conditions).
-					exists()
-				)
+				parsed_permissions_exist_query
 			).
 			where(conditions).
 			order_by(
@@ -522,26 +572,22 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		database.ForumParsedPermissions.user_id == flask.g.user.id
 	)
 
+	parsed_permissions_exist_query = (
+		generate_parsed_forum_permissions_exist_query(inner_conditions)
+	)
+
 	forum_ids = get_forum_ids_from_search(
 		sqlalchemy.or_(
-			~(
-				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-				where(inner_conditions).
-				exists()
-			),
-			(
-				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-				where(
-					sqlalchemy.and_(
-						inner_conditions,
-						database.ForumParsedPermissions.forum_view.is_(True),
-						database.ForumParsedPermissions.forum_delete.is_(True)
-					)
-				).
-				exists()
+			~parsed_permissions_exist_query,
+			generate_parsed_forum_permissions_exist_query(
+				sqlalchemy.and_(
+					inner_conditions,
+					database.ForumParsedPermissions.forum_view.is_(True),
+					database.ForumParsedPermissions.forum_delete.is_(True)
+				)
 			)
 		),
-		inner_conditions
+		parsed_permissions_exist_query
 	)
 
 	if len(forum_ids) != 0:
@@ -592,6 +638,16 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			"type": "dict",
 			"minlength": 1,
 			"schema": {
+				"parent_forum_id": {
+					**ATTR_SCHEMAS["parent_forum_id"],
+					"nullable": True,
+					"required": False
+				},
+				"category_id": {
+					**ATTR_SCHEMAS["category_id"],
+					"nullable": True,
+					"required": False
+				},
 				"name": {
 					**ATTR_SCHEMAS["name"],
 					"required": False
@@ -603,11 +659,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 				},
 				"order": {
 					**ATTR_SCHEMAS["order"],
-					"required": False
-				},
-				"parent_forum_id": {
-					**ATTR_SCHEMAS["parent_forum_id"],
-					"nullable": True,
 					"required": False
 				}
 			}
@@ -623,10 +674,16 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	haven't been calculated for them, they're automatically calculated.
 	"""
 
-	inner_conditions = sqlalchemy.and_(
-		database.Forum.id == database.ForumParsedPermissions.forum_id,
-		database.ForumParsedPermissions.user_id == flask.g.user.id
-	)
+	if "category_id" in flask.g.json["values"]:
+		category = find_category_by_id(
+			flask.g.json["category_id"],
+			flask.g.sa_session,
+			flask.g.user
+		)
+
+		if "parent_forum_id" in flask.g.json["values"]:
+			if category.forum_id != flask.g.json["values"]["parent_forum_id"]:
+				raise exceptions.APIForumCategoryOutsideParent
 
 	if "parent_forum_id" in flask.g.json["values"]:
 		parent_forum = find_forum_by_id(
@@ -649,39 +706,37 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 				flask.current_app.config["FORUM_MAX_CHILD_LEVEL"]
 			)
 
-	if "user_id" in flask.g.json["values"]:
-		validate_user_exists(
-			flask.g.json["values"]["user_id"],
-			flask.g.sa_session
-		)
+	inner_conditions = sqlalchemy.and_(
+		database.Forum.id == database.ForumParsedPermissions.forum_id,
+		database.ForumParsedPermissions.user_id == flask.g.user.id
+	)
+
+	parsed_permissions_exist_query = (
+		generate_parsed_forum_permissions_exist_query(inner_conditions)
+	)
 
 	forum_ids = get_forum_ids_from_search(
 		sqlalchemy.or_(
-			~(
-				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-				where(inner_conditions).
-				exists()
-			),
-			(
-				sqlalchemy.select(database.ForumParsedPermissions.forum_id).
-				where(
+			~parsed_permissions_exist_query,
+			generate_parsed_forum_permissions_exist_query(
+				sqlalchemy.and_(
+					inner_conditions,
+					database.ForumParsedPermissions.forum_view.is_(True),
+					database.ForumParsedPermissions.forum_edit.is_(True),
 					sqlalchemy.and_(
-						inner_conditions,
-						database.ForumParsedPermissions.forum_view.is_(True),
-						database.ForumParsedPermissions.forum_edit.is_(True),
-						sqlalchemy.and_(
-							database.Forum.id != parent_forum.id,
-							database.ForumParsedPermissions.forum_move.is_(True)
-						) if "parent_forum_id" in flask.g.json["values"] else True,
-						(
-							database.Forum.user_id != flask.g.json["values"]["user_id"]
-						) if "user_id" in flask.g.json["values"] else True
-					)
-				).
-				exists()
+						database.Forum.id != parent_forum.id,
+						database.ForumParsedPermissions.forum_move.is_(True)
+					) if "parent_forum_id" in flask.g.json["values"] else True,
+					(
+						database.Forum.parent_forum_id == category.forum_id
+					) if (
+						"category_id" in flask.g.json["values"] and
+						"parent_forum_id" not in flask.g.json["values"]
+					) else True
+				)
 			)
 		),
-		inner_conditions
+		parsed_permissions_exist_query
 	)
 
 	if len(forum_ids) != 0:
@@ -740,15 +795,21 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		forum
 	)
 
-	unchanged = True
+	if flask.g.json["category_id"] != forum.category_id:
+		category = find_category_by_id(
+			flask.g.json["category_id"],
+			flask.g.sa_session,
+			flask.g.user
+		)
 
-	for key, value in flask.g.json.items():
-		if getattr(forum, key) != value:
-			unchanged = False
-			setattr(forum, key, value)
-
-	if unchanged:
-		raise exceptions.APIForumUnchanged
+		if (
+			category.forum_id != (
+				flask.g.json["parent_forum_id"]
+				if flask.g.json["parent_forum_id"] != forum.parent_forum_id
+				else forum.parent_forum_id
+			)
+		):
+			raise exceptions.APIForumCategoryOutsideParent
 
 	if flask.g.json["parent_forum_id"] != forum.parent_forum_id:
 		if forum.id == flask.g.json["parent_forum_id"]:
@@ -779,6 +840,16 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		forum.parent_forum = future_parent
 
 		forum.delete_all_parsed_permissions(flask.g.sa_session)
+
+	unchanged = True
+
+	for key, value in flask.g.json.items():
+		if getattr(forum, key) != value:
+			unchanged = False
+			setattr(forum, key, value)
+
+	if unchanged:
+		raise exceptions.APIForumUnchanged
 
 	forum.edited()
 
@@ -905,12 +976,9 @@ def view_parsed_permissions(
 		flask.g.user
 	)
 
-	parsed_permissions = forum.get_parsed_permissions(flask.g.user.id)
-
-	if parsed_permissions is None:
-		parsed_permissions = forum.reparse_permissions(flask.g.user)
-
-	return flask.jsonify(parsed_permissions), statuses.OK
+	return flask.jsonify(
+		forum.get_parsed_permissions(flask.g.user)
+	), statuses.OK
 
 
 # TODO: List and mass delete permissions for groups and users
@@ -920,7 +988,7 @@ def view_parsed_permissions(
 	"/<uuid:forum_id>/permissions/group/<uuid:group_id>",
 	methods=["DELETE"]
 )
-@validators.validate_json(BASE_PERMISSION_SCHEMA)
+@validators.validate_json(PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions_group", database.Forum)
 def delete_permissions_group(
@@ -979,7 +1047,7 @@ def delete_permissions_group(
 	"/<uuid:forum_id>/permissions/group/<uuid:group_id>",
 	methods=["PUT"]
 )
-@validators.validate_json(BASE_PERMISSION_SCHEMA)
+@validators.validate_json(PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions_group", database.Forum)
 def edit_permissions_group(
@@ -1101,7 +1169,7 @@ def view_permissions_group(
 	"/<uuid:forum_id>/permissions/user/<uuid:user_id>",
 	methods=["DELETE"]
 )
-@validators.validate_json(BASE_PERMISSION_SCHEMA)
+@validators.validate_json(PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions_user", database.Forum)
 def delete_permissions_user(
@@ -1158,7 +1226,7 @@ def delete_permissions_user(
 	"/<uuid:forum_id>/permissions/user/<uuid:user_id>",
 	methods=["PUT"]
 )
-@validators.validate_json(BASE_PERMISSION_SCHEMA)
+@validators.validate_json(PERMISSION_SCHEMA)
 @authentication.authenticate_via_jwt
 @requires_permission("edit_permissions_user", database.Forum)
 def edit_permissions_user(

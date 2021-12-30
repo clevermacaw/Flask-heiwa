@@ -28,6 +28,22 @@ class BasePermissionMixin:
 	values.
 	"""
 
+	category_create = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=True
+	)
+	category_delete = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=True
+	)
+	category_edit = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=True
+	)
+	category_view = sqlalchemy.Column(
+		sqlalchemy.Boolean,
+		nullable=True
+	)
 	forum_create = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		nullable=True
@@ -182,6 +198,10 @@ class BasePermissionMixin:
 	)
 
 	DEFAULT_PERMISSIONS = {
+		"category_create": None,
+		"category_delete": None,
+		"category_edit": None,
+		"category_view": None,
 		"forum_create": None,
 		"forum_delete": None,
 		"forum_edit": None,

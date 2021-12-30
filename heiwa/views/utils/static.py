@@ -9,6 +9,10 @@ PERMISSION_KEY_SCHEMA = {
 	"required": True
 }
 BASE_PERMISSION_SCHEMA = {
+	"category_create": PERMISSION_KEY_SCHEMA,
+	"category_delete": PERMISSION_KEY_SCHEMA,
+	"category_edit": PERMISSION_KEY_SCHEMA,
+	"category_view": PERMISSION_KEY_SCHEMA,
 	"forum_create": PERMISSION_KEY_SCHEMA,
 	"forum_delete": PERMISSION_KEY_SCHEMA,
 	"forum_edit": PERMISSION_KEY_SCHEMA,
