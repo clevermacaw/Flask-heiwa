@@ -782,7 +782,7 @@ class Forum(
 			cls.get_class_permission(user, "view") and
 			user.parsed_permissions["forum_create"]
 		),
-		"create_subforum": lambda cls, user: (
+		"create_child_forum": lambda cls, user: (
 			cls.get_class_permission(user, "view") and
 			user.parsed_permissions["forum_create"]
 		),
@@ -834,10 +834,93 @@ class Forum(
 			cls.get_class_permission(user, "view")
 		)
 	}
-	""" TODO """
+	r"""Actions :class:`User`\ s are allowed to perform on all threads, without
+	any indication of which thread it is.
+
+	``create``:
+		Whether or not a user can create forums. This depends on the user being
+		allowed to view forums, as well as the ``forum_create`` value in their
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``create_child_forum``:
+		Whether or not a user can create child forums within other forums. This
+		depends on the user being allowed to view forums, as well as the
+		``forum_create`` value in their
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``create_thread``:
+		Whether or not a user can create threads within forums. This depends on
+		the user being allowed to view forums, as well as the ``thread_view``
+		and ``thread_create`` values in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``create_thread_locked``:
+		Whether or not a user can create locked threads within forums. This
+		depends on the user being allowed to create threads, as well as the
+		``thread_edit_lock_own`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``create_thread_pinned``:
+		Whether or not a user can create locked threads within forums. This
+		depends on the user being allowed to create threads, as well as the
+		``thread_edit_pin`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``delete``:
+		Whether or not a user can delete forums. This depends on the user being
+		allowed to view forums, as well as the ``forum_delete`` value in their
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``edit``:
+		Whether or not a user can edit forums. This depends on the user being
+		allowed to view forums, as well as the ``forum_edit`` value in their
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``edit_permissions_group``:
+		Whether or not a user can edit forums' permission for groups. As long as
+		the user is allowed to edit and view forums, this will always be
+		:data:`True` by default.
+
+	``edit_permissions_user``:
+		Whether or not a user can edit forums' permission for users. As long as
+		the user is allowed to edit and view forums, this will always be
+		:data:`True` by default.
+
+	``edit_subscription``:
+		Whether or not a user is allowed to subscribe to / unsubscribe from
+		forums. As long as they are allowed to view them, this will always
+		be :data:`True` by default.
+
+	``merge``:
+		Whether or not a user is allowed to merge forums with other forums. This
+		depends on the ``forum_merge`` value in their
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``move``:
+		Whether or not a user is allowed to move forums to other forums, making
+		them child forums. This depends on the user being allowed to view forums,
+		as well as the ``forum_move`` value in their
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``view``:
+		Whether or not a user is allowed to view forums. This depends on the
+		``forum_view`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``view_permissions_group``:
+		Whether or not a user is allowed to view groups' permissions for forums.
+		As long as the user is allowed to view forums, always :data:`True` by
+		default.
+
+	``view_permissions_user``:
+		Whether or not a user is allowed to view users' permissions for forums.
+		As long as the user is allowed to view forums, always :data:`True` by
+		default.
+	"""
 
 	instance_actions = {
-		"create_subforum": lambda self, user: (
+		"create_child_forum": lambda self, user: (
+			self.get_instance_permission(user, "view") and
 			self.get_parsed_permissions(user).forum_create
 		),
 		"create_thread": lambda self, user: (
@@ -876,14 +959,14 @@ class Forum(
 			self.get_instance_permission(user, "view") and
 			self.get_parsed_permissions(user).forum_merge and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.get_parsed_permissions(user).forum_merge
+				self.future_forum.get_instance_permission(user, "merge")
 			)
 		),
 		"move": lambda self, user: (
 			self.get_instance_permission(user, "view") and
 			self.get_parsed_permissions(user).forum_move and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.get_parsed_permissions(user).forum_move
+				self.future_forum.get_instance_permission(user, "move")
 			)
 		),
 		"view": lambda self, user: self.get_parsed_permissions(user).forum_view,
@@ -894,7 +977,81 @@ class Forum(
 			self.get_instance_permission(user, "view")
 		)
 	}
-	""" TODO """
+	r"""Actions :class:`User`\ s are allowed to perform on a given forum. Unlike
+	:attr:`class_actions <.Forum.class_actions>`, this can vary by each forum.
+
+	``create_child_forum``:
+		Whether or not a user can create child forums within this forum. This
+		depends on the user being allowed to view it, as well as the
+		``forum_create`` value in this forum's permissions for that user.
+
+	``create_thread``:
+		Whether or not a user can create threads within this forum. This depends
+		on the user being allowed to view it, as well as the ``thread_view`` and
+		``thread_create`` values in this forum's permissions for that user.
+
+	``create_thread_locked``:
+		Whether or not a user can create locked threads within this forum. This
+		depends on them being allowed to create threads, as well as the
+		``thread_edit_lock_own`` value in this forum's permissions for that user.
+
+	``create_thread_pinned``:
+		Whether or not a user can create pinned threads within this forum. This
+		depends on them being allowed to create threads, as well as the
+		``thread_edit_pin`` value in this forum's permissions for that user.
+
+	``delete``:
+		Whether or not a user is allowed to delete this forum. This depends on
+		them being allowed to view it, as well as the ``forum_delete`` value
+		in this forum's permissions for that user.
+
+	``edit``:
+		Whether or not a user is allowed to edit this forum. This depends on them
+		being allowed to view it, as well as the ``forum_edit`` value in this
+		forum's permissions for that user.
+
+	``edit_permissions_group``:
+		Whether or not a user is allowed to edit groups' permissions for this
+		user. As long as they are allowed to edit it, always :data:`True` by
+		default.
+
+	``edit_permissions_user``:
+		Whether or not a user is allowed to edit users' permissions for this
+		user. As long as they are allowed to edit it, always :data:`True` by
+		default.
+
+	``edit_subscription``:
+		Whether or not a user is allowed to subscribe to / unsubscribe from this
+		forum. As long as they are allowed to view it, always :data:`True` by
+		default.
+
+	``merge``:
+		Whether or not a user is allowed to merge this forum with other forums.
+		This depends on them being able to view it, as well as the ``forum_merge``
+		value in the user's permissions for this forum. If the ``future_forum``
+		attribute is set, the same conditions must also apply to it.
+
+	``move``:
+		Whether or not a user is allowed to move this forum to another forum,
+		making it its child forum. This depends on them being able to view it,
+		as well as the ``forum_move`` value in the user's permissions for this
+		forum. If the ``future_forum`` attribute is set, the same conditions
+		must also apply to it.
+
+	``view``:
+		Whether or not a user is allowed to view this forum. This depends on the
+		``forum_view`` value in this forum's permissions for that user.
+
+	``view_permissions_group``:
+		Whether or not a user is allowed to view groups' permissions for this
+		forum. As long as they are allowed to view the forum itself, this will
+		always be :data:`True` by default.
+
+	``view_permissions_user``:
+		Whether or not a user is allowed to view users' permissions for this
+		forum. As long as they are allowed to view the forum itself, this will
+		always be :data:`True` by default.
+	"""
 
 	def delete(
 		self: Forum,

@@ -446,7 +446,7 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 			validate_permission(
 				flask.g.user,
-				"create_subforum",
+				"create_child_forum",
 				parent_forum
 			)
 

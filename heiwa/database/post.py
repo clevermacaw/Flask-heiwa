@@ -243,11 +243,14 @@ class Post(
 			) and (
 				not hasattr(self, "future_thread") or
 				(
+					self.future_thread.get_instance_permission(user, "view") and
 					(
-						self.future_thread.user_id == user.id and
-						self.future_thread.forum.get_parsed_permissions(user).post_move_own
-					) or
-					self.future_thread.forum.get_parsed_permissions(user).post_move_any
+						(
+							self.future_thread.user_id == user.id and
+							self.future_thread.forum.get_parsed_permissions(user).post_move_own
+						) or
+						self.future_thread.forum.get_parsed_permissions(user).post_move_any
+					)
 				)
 			)
 		),

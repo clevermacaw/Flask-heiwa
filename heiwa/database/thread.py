@@ -340,67 +340,67 @@ class Thread(
 
 	``create``:
 		Whether or not a user can create threads. This depends on the
-		``thread_create`` and ``thread_view`` values in the user's
-		:attr:`parsed_permissions <.User.parsed_permissions>`.
+		user being allowed to view them, as well as the ``thread_create``
+		value in the user's :attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``create_post``:
 		Whether or not a user can create posts within threads. This depends on
-		the ``post_create`` and ``post_view`` values in the user's
-		:attr:`parsed_permissions <.User.parsed_permissions>`.
+		the ``post_view`` and ``post_create`` values in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as the
+		user being allowed to view threads.
 
 	``delete``:
-		Whether or not a user can delete threads. This depends on the
-		``thread_view`` value in the user's
-		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
-		either ``thread_delete_own``, or ``thread_delete_any``.
+		Whether or not a user can delete threads. This depends on the user being
+		allowed to view them, as well as either the ``thread_delete_own`` or
+		``thread_delete_any`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``edit``:
-		Whether or not a user can edit threads. This depends on the
-		``thread_view`` value in the user's
-		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
-		either ``thread_edit_own``, or ``thread_edit_any``.
+		Whether or not a user can edit threads. This depends on the user being
+		allowed to view them, as well as either the ``thread_edit_own`` or
+		``thread_delete_any`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``edit_lock``:
-		Whether or not a user can lock / unlock threads. This depends on the
-		``thread_view`` value in the user's
-		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
-		either ``thread_edit_lock_own``, or ``thread_edit_lock_any``.
+		Whether or not a user can lock / unlock threads. This depends on the user
+		being allowed to view them, as well as either the
+		``thread_edit_lock_own`` or ``thread_edit_lock_any`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``edit_pin``:
-		Whether or not a user can pin / unpin threads. This depends on the
-		``thread_view`` and ``thread_edit_pin`` values in the user's
-		:attr:`parsed_permissions <.User.parsed_permissions>`.
+		Whether or not a user can pin / unpin threads. This depends on the user
+		being allowed to view them, as well as the ``thread_edit_pin`` value
+		in the user's :attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``edit_subscription``:
 		Whether or not a user can subscribe to / unsubscribe from threads. Always
 		:data:`True` by default, as long as the user has permission to view them.
 
 	``edit_vote``:
-		Whether or not a user can pin / unpin threads. This depends on the
-		``thread_view`` and ``thread_edit_vote`` values in the user's
+		Whether or not a user can vote on threads. This depends on the user being
+		allowed to view them, as well as the ``thread_edit_vote`` value in their
 		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``merge``:
 		Whether or not a user can merge threads with other threads. This depends
-		on the ``thread_view`` value in the user's
-		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
-		either ``thread_merge_own``, or ``thread_merge_any``.
+		on the user being allowed to view them, as well as either the
+		``thread_merge_own`` or ``thread_merge_any`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``move``:
 		Whether or not a user can move threads to other forums. This depends
-		on the ``thread_view`` value in the user's
-		:attr:`parsed_permissions <.User.parsed_permissions>`, as well as
-		either ``thread_move_own``, or ``thread_move_any``.
+		on the user being allowed to view them, as well as either the
+		``thread_move_own`` or ``thread_move_any`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``view``:
-		Whether or not a user can view this thread. This depends on the
+		Whether or not a user can view threads. This depends on the
 		``thread_view`` value in the user's
 		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``view_vote``:
 		Whether or not a user can view their votes for threads. As long as they
-		have permission to view threads, this will always be :data:`True` by
-		default.
+		have permission to view them, this will always be :data:`True` by default.
 	"""
 
 	instance_actions = {
@@ -456,13 +456,7 @@ class Thread(
 				self.forum.get_parsed_permissions(user).thread_merge_any
 			) and (
 				not hasattr(self, "future_thread") or
-				(
-					(
-						self.future_thread.user_id == user.id and
-						self.future_thread.forum.get_parsed_permissions(user).thread_merge_own
-					) or
-					self.future_thread.forum.get_parsed_permissions(user).thread_merge_any
-				)
+				self.future_thread.get_instance_permission(user, "merge")
 			)
 		),
 		"move": lambda self, user: (
@@ -475,11 +469,14 @@ class Thread(
 			) and (
 				not hasattr(self, "future_forum") or
 				(
+					self.future_forum.get_instance_permission(user, "view") and
 					(
-						self.future_forum.user_id == user.id and
-						self.future_forum.get_parsed_permissions(user).thread_move_own
-					) or
-					self.future_forum.get_parsed_permissions(user).thread_move_any
+						(
+							self.future_forum.user_id == user.id and
+							self.future_forum.get_parsed_permissions(user).thread_move_own
+						) or
+						self.future_forum.get_parsed_permissions(user).thread_move_any
+					)
 				)
 			)
 		),
@@ -492,67 +489,66 @@ class Thread(
 	:attr:`class_actions <.Thread.class_actions>`, this can vary by each thread.
 
 	``create_post``:
-		Whether or not a user can create posts in this thread. This depends on the
-		``thread_view``, ``post_view`` and ``post_create`` values in the thread's
-		forum's parsed permissions.
+		Whether or not a user can create posts this thread. This depends on the
+		``post_view`` and ``post_create`` values in the forum's permissions.
 
 	``delete``:
-		Whether or not a user can delete this thread. This depends on the
-		``thread_view`` value in the thread's forum's parsed permissions, as well
-		as either ``thread_delete_own`` when the thread belongs to the user, or
-		``thread_delete_any`` when it does not.
+		Whether or not a user can delete this thread. This depends on the user
+		being allowed to view it, as well as them either owning this thread and
+		the ``thread_delete_own`` value in the forum's permissions, or them not
+		owning it and the ``thread_delete_any`` value.
 
 	``edit``:
-		Whether or not a user can edit this thread. This depends on the
-		``thread_view`` value in the thread's forum's parsed permissions, as well
-		as either ``thread_edit_own`` when the thread belongs to the user, or
-		``thread_edit_any`` when it does not.
+		Whether or not a user can edit this thread. This depends on the user
+		being allowed to view it, as well as them either owning this thread and
+		the ``thread_edit_own`` value in the forum's permissions, or them not
+		owning it and the ``thread_edit_any`` value.
 
 	``edit_lock``:
 		Whether or not a user can lock / unlock this thread. This depends on the
-		``thread_view`` value in the thread's forum's parsed permissions, as well
-		as either ``thread_edit_lock_own`` when the thread belongs to the user,
-		or ``thread_edit_lock_any`` when it does not.
+		user being allowed to view it, as well as them either owning this thread
+		and the ``thread_edit_lock_own`` value in the forum's permissions, or
+		them not owning it and the ``thread_edit_lock_any`` value.
 
 	``edit_pin``:
 		Whether or not a user can pin / unpin this thread. This depends on the
-		``thread_view`` and ``thread_edit_pin`` values in the thread's forum's
-		parsed permissions.
+		``thread_edit_pin`` value in the forum's permissions, as well as the user
+		being allowed to view it.
 
 	``edit_subscription``:
 		Whether or not a user can subscribe to / unsubscribe from this thread.
-		As long as they have permission to view it, this will always be
-		:data:`True` by default.
+		Always :data:`True` by default, as long as the user has permission to
+		view it.
 
 	``edit_vote``:
-		Whether or not a user can vote on this thread. This depends on the
-		``thread_view`` and ``thread_edit_vote`` values in the thread's forum's
-		parsed permissions.
+		Whether or not a user can vote on this thread. This depends on the user
+		being allowed to view it, as well as the ``thread_edit_vote`` value in
+		the forum's permissions.
 
 	``merge``:
-		Whether or not a user can merge this thread with another thread. This
-		depends on the ``thread_view`` value in the thread's forum's parsed
-		permissions, as well as either ``thread_merge_own`` when the thread
-		belongs to the user, or ``thread_merge_any`` when it does not. If the
-		``future_thread`` atrribute has been assigned to this thread, the same
-		conditions must also apply to the thread contained within it.
+		Whether or not a user can merge this thread with other threads. This
+		depends on the user being allowed to view it, as well as them either
+		owning this thread and the ``thread_merge_own`` value in the forum's
+		permissions, or them not owning it and the ``thread_merge_any`` value. If
+		the ``future_thread`` attribute has been set, the same conditions must
+		also apply to it.
 
 	``move``:
-		Whether or not a user can move this thread to a different forum. This
-		depends on the ``thread_view`` value in the thread's forum's parsed
-		permissions, as well as either ``thread_move_own`` when the thread
-		belongs to the user, or ``thread_move_any`` when it does not. If the
-		``future_forum`` atrribute has been assigned to this thread, the same
-		conditions must also apply to the forum contained within it.
+		Whether or not a user can move this thread to another :class:`.Forum`.
+		This depends on the user being allowed to view it, as well as them either
+		owning this thread and the ``thread_move_own`` value in the forum's
+		permissions, or them not owning it and the ``thread_move_any`` value. If
+		the ``future_forum`` attribute has been set, the same conditions must
+		also apply to it, and the user must have permission to view it.
 
 	``view``:
-		Whether or not a user can view this thread. This depends on the
-		``thread_view`` value in the thread's forum's parsed permissions.
+		Whether or not a user is allowed to view this thread. This depends on the
+		``thread_view`` value in the forum's permissions.
 
 	``view_vote``:
-		Whether or not a user can view their vote on this thread. As long as they
-		have permission to view the thread, this will always be :data:`True` by
-		default.
+		Whether or not a user is allowed to view their votes on this thread. As
+		long as they have permission to view the thread itself, this will always
+		be :data:`True` by default.
 
 	.. seealso::
 		:class:`.ForumParsedPermissions`
