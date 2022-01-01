@@ -13,23 +13,23 @@ __all__ = [
 	"handle_api_exception",
 	"handle_http_exception"
 ]
-__version__ = "1.3.5"
+__version__ = "1.4.0"
 
 
 def handle_api_exception(
 	exception: exceptions.APIException
 ) -> typing.Tuple[flask.Response, int]:
 	"""Turns an :class:`APIException <heiwa.exceptions.APIException>` object into
-	a dictionary of its type (class name) and details, then returns a tuple of:
+	a dictionary of its type (class name) and
+	:attr:`details <heiwa.exceptions.APIException.details>`, then returns a tuple
+	of:
 		#. The dictionary contained within a :class:`flask.Response`.
 		#. Its status code.
 	"""
 
 	return flask.jsonify({
-		"exception": {
-			"type": exception.__class__.__name__,
-			"details": exception.details
-		}
+		"type": exception.__class__.__name__,
+		"details": exception.details
 	}), exception.code
 
 
@@ -37,8 +37,9 @@ def handle_http_exception(
 	exception: werkzeug.exceptions.HTTPException
 ) -> typing.Tuple[flask.Response, int]:
 	"""Turns an :class:`HTTPException <werkzeug.exceptions.HTTPException>` object
-	into a dictionary of its type (class name) and description, then returns a
-	tuple of:
+	into a dictionary of its type (class name) and
+	:attr:`description <werkzeug.exceptions.HTTPException.description>`, then
+	returns a tuple of:
 		#. The dictionary contained within a :class:`flask.Response`.
 		#. Its status code.
 
@@ -49,8 +50,6 @@ def handle_http_exception(
 	"""
 
 	return flask.jsonify({
-		"exception": {
-			"type": exception.__class__.__name__,
-			"details": exception.description
-		}
+		"type": exception.__class__.__name__,
+		"details": exception.description
 	}), exception.code
