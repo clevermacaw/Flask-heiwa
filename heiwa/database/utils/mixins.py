@@ -23,9 +23,7 @@ __all__ = [
 @sqlalchemy.orm.declarative_mixin
 class BasePermissionMixin:
 	"""A helper mixin with columns corresponding to all permissions recognized
-	by default, as well as the ``to_permissions`` method to convert them to a
-	dictionary, and a static ``DEFAULT_PERMISSIONS`` dictionary with their default
-	values.
+	by default, as well as methods to use them.
 	"""
 
 	category_create = sqlalchemy.Column(
@@ -241,6 +239,7 @@ class BasePermissionMixin:
 		"user_edit_groups": None,
 		"user_edit_permissions": None
 	}
+	"""The default values of all permissions. In this case, :data:`None`."""
 
 	def to_permissions(self: BasePermissionMixin) -> typing.Dict[
 		str,
@@ -250,8 +249,8 @@ class BasePermissionMixin:
 		]
 	]:
 		"""Transforms the values in this instance to the standard format for
-		permissions. (A dictionary, where string keys represent permissions,
-		and their value represents whether or not they're granted.
+		permissions - a dictionary, where string keys represent permissions,
+		and their boolean value represents whether or not they're granted.
 		"""
 
 		return {
@@ -262,7 +261,7 @@ class BasePermissionMixin:
 
 @sqlalchemy.orm.declarative_mixin
 class CDWMixin:
-	"""A helper mixin with ``create``, ``write`` and ``delete`` methods."""
+	"""A mixin used to simplify the creation and deletion of objects."""
 
 	@classmethod
 	def create(
@@ -270,9 +269,9 @@ class CDWMixin:
 		session: sqlalchemy.orm.Session,
 		*args,
 		**kwargs
-	):
-		"""Creates an instance of the mixed-in class and runs its the ``write``
-		method.
+	) -> CDWMixin:
+		"""Creates an instance of the mixed-in class with the provided arguments,
+		and calls the :meth:`write <.CDWMixin.write>` method.
 		"""
 
 		self = cls(
@@ -291,9 +290,9 @@ class CDWMixin:
 			sqlalchemy.orm.Session
 		] = None
 	) -> None:
-		"""Deletes the current instance of the mixed-in class from the provided
-		``session``. If the ``session`` argument is ``None``, it's set to this
-		object's session.
+		"""Deletes the current instance of the mixed-in class from the given
+		``session``. If the argument is :data:`None`, it's set to the instance's
+		session.
 		"""
 
 		if session is None:
@@ -314,51 +313,50 @@ class CDWMixin:
 
 @sqlalchemy.orm.declarative_mixin
 class CreationTimestampMixin:
-	"""A helper mixin that adds a timezone-aware timestamp column named
-	``creation_timestamp``, whose default value is the time of row insertion.
-	"""
+	"""A helper mixin used to store the time an object was created."""
 
 	creation_timestamp = sqlalchemy.Column(
 		sqlalchemy.DateTime(timezone=True),
 		default=datetime.datetime.now,
 		nullable=False
 	)
+	"""The time an object was created."""
 
 
 @sqlalchemy.orm.declarative_mixin
 class EditInfoMixin:
 	"""A helper mixin which contains information about the mixed-in object's
 	edits.
-
-	Contains:
-
-	#. A timezone-aware timestamp column named ``edit_timestamp``, which will
-	   be set to the current time whenever the ``edited`` method is called.
-	   The ``onupdate`` property will unfortunately not work here, since some
-	   columns aren't changed explicitly by users, and updates on those columns
-	   shouldn't be counted as "real".
-	#. A nullable ``edit_count`` column, which signals how many times the
-	   mixed-in object has been edited, and increments by 1 every time the
-	   ``edited`` method is called. The default value is ``0``. This is primarily
-	   for detecting database collisions, but is also useful for other things.
-	   When a row is first inserted, this column will remain NULL unless
-	   specified otherwise.
 	"""
 
 	edit_timestamp = sqlalchemy.Column(
 		sqlalchemy.DateTime(timezone=True),
 		nullable=True
 	)
+	"""The last time an object was edited. If :data:`None`, that has never
+	happened so far.
+
+	.. note::
+		Originally, this used the ``onupdate`` property and changed each time
+		an object was updated no matter the attribute, but since internal
+		changes not requested by users will happen fairly often, we have to
+		make an explicit :meth:`edited <.EditInfoMixin.edited>` method.
+	"""
+
 	edit_count = sqlalchemy.Column(
 		sqlalchemy.Integer,
 		default=0,
 		nullable=False
 	)
+	"""The amount of times an object was edited. Increments by 1 each time
+	:meth:`edited <.EditInfoMixin.edited>` is called, and defaults to 0.
+	"""
 
 	def edited(self: EditInfoMixin) -> None:
-		"""Sets the ``edit_timestamp`` attribute to the current date and time.
-		Increments the ``edit_count`` value by 1, as long as it's under 2147483647,
-		the maximum 4-byte integer value.
+		"""Sets the :attr:`edit_timestamp <.EditInfoMixin.edit_timestamp>`
+		attribute to the current date and time. Also increments the
+		:attr:`edit_count <.EditInfoMixin.edit_timestamp>` attribute by 1, provided
+		that it's under 2147483647, the maximum 4-byte integer value.
 		"""
 
 		self.edit_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
@@ -369,38 +367,58 @@ class EditInfoMixin:
 
 @sqlalchemy.orm.declarative_mixin
 class IdMixin:
-	"""A helper mixin that adds a UUID column named ``id``, whose default value is
-	an automatically generated UUID4. On the off chance that the generated
-	UUID collides with another one in the same column, it will try again.
-	"""
+	"""A helper mixin used to uniquely identify objects."""
 
 	id = sqlalchemy.Column(
 		UUID,
 		primary_key=True,
 		default=generate_uuid
 	)
+	"""The ID of an object, in the form of a UUID4. Uses the :func:`.generate_uuid`
+	function to ensure there are no duplicates within the table, even if the
+	chances of a collision occuring are extremely slim.
+	"""
 
 
 class PermissionControlMixin:
-	"""A helper mixin to handle permissions for users performing different
-	actions on the mixed-in class, as well as viewing different columns.
-	"""
+	"""A helper mixin used to handle permissions."""
 
 	class_actions = {}
+	"""The actions a user is / isn't allowed to perform on any instance of the
+	mixed-in object.
+	
+	.. seealso::
+		:meth:`.PermissionControlMixin.get_allowed_class_actions`
+	"""
 
 	instance_actions = {}
+	"""The actions a user is / isn't allowed to perform on one given instance of
+	the mixed-in object. Unlike
+	:attr:`class_actions <PermissionControlMixin.class_actions>`, this can and
+	should vary with each instance.
 
-	# If this class should not be viewed, this won't be used anyway.
-	# Using an empty set as an alias for "all columns" should be fine.
+	.. seealso::
+		:meth:`.PermissionControlMixin.get_allowed_instance_actions`
+	"""
+
+	# If this class should not be viewed, this mixin won't be used anyway.
 	viewable_columns = {}
+	"""The columns in the mixed-in object a given user is allowed to view. By
+	default, this value is an empty dictionary, meaning they're allowed to view
+	all columns.
+
+	.. seealso::
+		:meth:`.PermissionControlMixin.get_allowed_columns`
+	"""
 
 	@classmethod
 	def get_allowed_class_actions(
 		cls: PermissionControlMixin,
 		user
 	) -> typing.List[str]:
-		"""Returns all actions that ``user`` is allowed to perform as per this
-		class's ``class_actions``.
+		"""Returns all actions that ``user`` is allowed to perform as per the
+		mixed-in class's
+		:attr:`class_actions <.PermissionControlMixin.class_actions>`.
 		"""
 
 		return [
@@ -413,8 +431,9 @@ class PermissionControlMixin:
 		self: PermissionControlMixin,
 		user
 	) -> typing.List[str]:
-		"""Returns all actions that ``user`` is allowed to perform as per this
-		instance's ``instance_actions``.
+		"""Returns all actions that ``user`` is allowed to perform as per the
+		current instance of the mixed-in class's
+		:attr:`class_actions <.PermissionControlMixin.instance_actions>`.
 		"""
 
 		return [
@@ -427,9 +446,11 @@ class PermissionControlMixin:
 		self: PermissionControlMixin,
 		user
 	) -> typing.List[str]:
-		"""Returns all columns in this instance that ``user`` is allowed to view
-		as per ``viewable_columns``. If the variable is an empty set, all columns
-		are returned.
+		"""Returns all columns in the current instance of the mixed-in class
+		that ``user`` is allowed to view, as per the
+		:attr:`viewable_columns <.PermissionControlMixin.viewable_columns>`.
+		If the value is an empty dictionary, all columns in this object are
+		returned.
 		"""
 
 		if self.viewable_columns == {}:
@@ -450,9 +471,10 @@ class PermissionControlMixin:
 		user,
 		action: str
 	) -> bool:
-		"""Returns whether or not ``user`` is allowed to perform ``action``,
-		as per this class's ``class_actions``. If ``action`` isn't present
-		there, ``True`` is automatically returned.
+		"""Returns whether or not ``user`` is allowed to perform ``action``, as
+		per the mixed-in class's
+		:attr:`class_actions <.PermissionControlMixin.class_actions>`. If
+		``action`` isn't present there, :data:`True` is automatically returned.
 		"""
 
 		if action not in cls.class_actions:
@@ -465,9 +487,10 @@ class PermissionControlMixin:
 		user,
 		action: str
 	) -> bool:
-		"""Returns whether or not ``user`` is allowed to perform ``action``,
-		as per this instance's ``instance_actions``. If ``action`` isn't
-		present there, ``True`` is automatically returned.
+		"""Returns whether or not ``user`` is allowed to perform ``action``, as
+		per this instance of the mixed-in class's
+		:attr:`instance_actions <.PermissionControlMixin.instance_actions>`. If
+		``action`` isn't present there, :data:`True` is automatically returned.
 		"""
 
 		if action not in self.instance_actions:
@@ -477,11 +500,11 @@ class PermissionControlMixin:
 
 
 class ReprMixin:
-	"""A helper mixin which adds a default, pretty ``__repr__`` method."""
+	"""A helper mixin used to help with the stringication of objects."""
 
 	def __repr__(self: ReprMixin) -> str:
-		"""Returns the ``_repr`` method with all of the mixed-in model's primary
-		keys.
+		"""Returns the :meth:`_repr <.ReprMixin._repr>` method with all of the
+		mixed-in model's primary keys.
 		"""
 
 		return self._repr(
@@ -497,6 +520,10 @@ class ReprMixin:
 	) -> str:
 		"""Automatically generates a pretty ``__repr__``, based on keyword
 		arguments.
+
+		.. note::
+			Brilliant function borrowed from Stephen Fuhry, at:
+			`https://stackoverflow.com/a/55749579`_.
 		"""
 
 		field_strings = []
