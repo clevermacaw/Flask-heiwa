@@ -238,14 +238,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -253,14 +253,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["edit_timestamp"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"category_id": {
 				"type": "list",
@@ -268,8 +268,8 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["category_id"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"parent_forum_id": {
 				"type": "list",
@@ -277,14 +277,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["parent_forum_id"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"name": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["name"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"description": {
 				"type": "list",
@@ -292,14 +292,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["description"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"order": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["order"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"last_thread_timestamp": {
 				"type": "list",
@@ -307,20 +307,20 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["last_thread_timestamp"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"subscriber_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["subscriber_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"thread_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["thread_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			}
 		},
 		"maxlength": 1

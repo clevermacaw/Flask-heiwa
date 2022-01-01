@@ -161,14 +161,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -176,44 +176,44 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["edit_timestamp"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"sender_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["sender_id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"receiver_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["receiver_id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"encrypted_session_key": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["encrypted_session_key"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"tag": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["tag"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"encrypted_content": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["encrypted_content"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			}
 		},
 		"maxlength": 1

@@ -209,14 +209,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -224,62 +224,62 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["edit_timestamp"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"forum_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["forum_id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"user_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["user_id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"tags": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["tags"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"name": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["name"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"content": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["content"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"vote_value": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["vote_value"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"post_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["post_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"subscriber_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["subscriber_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"last_post_timestamp": {
 				"type": "list",
@@ -287,8 +287,8 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["last_post_timestamp"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			}
 		},
 		"maxlength": 1

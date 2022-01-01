@@ -119,6 +119,10 @@ class Post(
 		nullable=False
 	)
 
+	subject = sqlalchemy.Column(
+		sqlalchemy.String(256),
+		nullable=True
+	)
 	content = sqlalchemy.Column(
 		sqlalchemy.String(262144),
 		nullable=False

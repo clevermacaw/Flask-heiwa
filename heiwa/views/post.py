@@ -58,6 +58,11 @@ ATTR_SCHEMAS = {
 		"type": "uuid",
 		"coerce": "convert_to_uuid"
 	},
+	"subject": {
+		"type": "string",
+		"minlength": 1,
+		"maxlength": 256
+	},
 	"content": {
 		"type": "string",
 		"minlength": 1,
@@ -73,6 +78,11 @@ ATTR_SCHEMAS = {
 CREATE_EDIT_SCHEMA = {
 	"thread_id": {
 		**ATTR_SCHEMAS["thread_id"],
+		"required": True
+	},
+	"subject": {
+		**ATTR_SCHEMAS["subject"],
+		"nullable": True,
 		"required": True
 	},
 	"content": {
@@ -110,6 +120,10 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"edit_count": ATTR_SCHEMAS["edit_count"],
 			"thread_id": ATTR_SCHEMAS["thread_id"],
 			"user_id": ATTR_SCHEMAS["user_id"],
+			"subject": {
+				**ATTR_SCHEMAS["subject"],
+				"nullable": True
+			},
 			"content": ATTR_SCHEMAS["content"],
 			"vote_value": ATTR_SCHEMAS["vote_value"]
 		},
@@ -141,14 +155,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -156,38 +170,44 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["edit_timestamp"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"thread_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["thread_id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"user_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["user_id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
+			},
+			"subject": {
+				"type": "list",
+				"schema": ATTR_SCHEMAS["subject"],
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"content": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["content"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"vote_value": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["vote_value"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			}
 		},
 		"maxlength": 1
@@ -195,6 +215,10 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 	"$re": {
 		"type": "dict",
 		"schema": {
+			"subject": {
+				**ATTR_SCHEMAS["subject"],
+				"check_with": "is_valid_regex"
+			},
 			"content": {
 				**ATTR_SCHEMAS["content"],
 				"check_with": "is_valid_regex"
@@ -348,7 +372,9 @@ def get_post_ids_from_search(
 @authentication.authenticate_via_jwt
 @requires_permission("create_post", database.Thread)
 def create() -> typing.Tuple[flask.Response, int]:
-	"""Creates a post with the requested ``thread_id`` and ``content``."""
+	"""Creates a post with the requested ``thread_id``, ``subject`` and
+	``content``.
+	"""
 
 	thread = find_thread_by_id(
 		flask.g.json["thread_id"],
@@ -545,6 +571,11 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			"schema": {
 				"thread_id": {
 					**ATTR_SCHEMAS["thread_id"],
+					"required": False
+				},
+				"subject": {
+					**ATTR_SCHEMAS["subject"],
+					"nullable": True,
 					"required": False
 				},
 				"content": {

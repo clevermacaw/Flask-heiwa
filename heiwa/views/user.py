@@ -207,14 +207,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 			"id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -222,14 +222,14 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["edit_timestamp"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"public_key": {
 				"type": "list",
@@ -237,8 +237,8 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["public_key"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"avatar_type": {
 				"type": "list",
@@ -246,8 +246,8 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["avatar_type"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"name": {
 				"type": "list",
@@ -255,8 +255,8 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["name"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"status": {
 				"type": "list",
@@ -264,32 +264,32 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					**ATTR_SCHEMAS["status"],
 					"nullable": True
 				},
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"followee_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["followee_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"follower_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["follower_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"post_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["post_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			},
 			"thread_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["thread_count"],
-				"minlength": 1,
-				"maxlength": 32
+				"minlength": 2,
+				"maxlength": 512
 			}
 		},
 		"maxlength": 1
@@ -461,7 +461,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		**SEARCH_SCHEMA,
 		"values": {
 			"type": "dict",
-			"minlength": 1,
+			"minlength": 2,
 			"schema": {
 				"name": {
 					**ATTR_SCHEMAS["name"],
@@ -862,7 +862,7 @@ def delete_ban(
 	},
 	"reason": {
 		"type": "string",
-		"minlength": 1,
+		"minlength": 2,
 		"maxlength": 65536,
 		"nullable": True,
 		"required": False
