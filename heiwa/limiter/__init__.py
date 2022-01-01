@@ -9,7 +9,7 @@ import limits.storage
 import limits.strategies
 
 __all__ = ["Limiter"]
-__version__ = "2.2.3"
+__version__ = "2.2.4"
 
 
 class Limiter:
@@ -42,11 +42,21 @@ class Limiter:
 		] = lambda: flask.request.endpoint
 	) -> None:
 		"""Sets this instance's attributes to the given values.
-		If ``default_limits`` is ``None``, and this method is running within
-		a Flask app context, it's set to the current Flask app's
-		``'RATELIMIT_DEFAULT'`` config key as long there is one.
-		The same applies to ``endpoint_limits`` as well, but with the
-		``'RATELIMIT_SPECIFIC'`` config key.
+
+		:param default_limits: An iterable of default rate limits. For example,
+			``4/1second`` and ``2000/1hour``. If this value is :data:`None` and
+			this method is running within a Flask app context, it's set to the
+			app's ``RATELIMIT_DEFAULT`` config key, if there is one.
+		:param endpoint_limits: The same as ``default_limits``, but for specific
+			endpoints, where the key corresponds to the endpoint's name.
+		:param Storage: The storage backend this rate limiter uses to store
+			requests.
+		:param Strategy: The strategy for this rate limiter.
+		:param key_func: A function that returns the unique identifier for the
+			current user with each request. By default, this will be remote IP
+			addresses.
+		:param endpoint_func: A function which returns the current endpoint with
+			each request. By default, this will be :attr:`flask.request.endpoint`.
 		"""
 
 		self.default_limits = [
@@ -110,13 +120,27 @@ class Limiter:
 			]
 		]
 	]:
-		"""Returns whether or not the user with the given identifier (the output of
-		``key_func`` by default) can access ``endpoint`` (the output of
-		``endpoint_func`` by default) with its rate limit. If ``add_expires`` is
-		``True`` and the user has passed the check, the time when the lowest rate
-		limit's entry in the storage expires is also returned. Otherwise, if the
-		user has not passed the check, the storage expiration time of the rate
-		limit it failed on is returned.
+		"""Returns whether or not the current user has exceeded the rate limit
+		for the given endpoint.
+
+		:param identifier: The current user's identifier. If :data:`None`, the
+			output of the :attr:`key_func <.Limiter.key_func>` is used. This
+			is generally expected behavior.
+		:param endpoint: The current endpoint.
+		:param add_expires: Whether or not the function should return the time
+			the user will be allowed to access the endpoint again. If :data:`True`,
+			this will always be returned, even if they have not exceeded the rate
+			limit.
+
+		:returns: If ``add_expires`` is :data:`False`, whether or not the user
+			has exceeded the rate limit, stored in a boolean value. If it's
+			:data:`True`, that value and also the time they can access it again.
+
+		.. note::
+			If there are no rate limits specified for the current endpoint, it's
+			assumed that it has none. For example, when a rate limit specific to
+			the endpoint is an empty iterable, the default limit is overriden
+			and the endpoint has no rate limit at all.
 		"""
 
 		identifier = self.key_func() if identifier is None else identifier
@@ -146,10 +170,6 @@ class Limiter:
 				):
 					soonest_expiration_limit = limit
 					passed_limit = False
-
-		# If there are no rate limits specified, we can assume this endpoint has
-		# none. For example, a rate limit specific to this endpoint is ``[]``,
-		# overrides the default, and that endpoint then has no rate limit.
 
 		if add_expires:
 			return (

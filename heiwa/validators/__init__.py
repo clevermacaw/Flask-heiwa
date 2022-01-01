@@ -80,7 +80,7 @@ class APIValidator(cerberus.Validator):
 
 		:param value: The current field's value.
 
-		:returns The converted UUID.:
+		:returns: The converted UUID.
 		"""
 
 		return uuid.UUID(value)
@@ -94,7 +94,7 @@ class APIValidator(cerberus.Validator):
 
 		:param value: The current field's value.
 
-		:returns The converted date and time.:
+		:returns: The converted date and time.
 		"""
 
 		result = datetime.datetime.fromisoformat(value)
@@ -112,7 +112,7 @@ class APIValidator(cerberus.Validator):
 
 		:param value: The current field's value.
 
-		:returns The decoded bytes.:
+		:returns: The decoded bytes.
 		"""
 
 		return base64.b64decode(
