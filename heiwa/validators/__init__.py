@@ -19,7 +19,7 @@ import validators
 from .. import exceptions, types
 
 __all__ = ["APIValidator", "validate_json"]
-__version__ = "1.10.1"
+__version__ = "1.10.2"
 
 
 class APIValidator(cerberus.Validator):
@@ -30,7 +30,11 @@ class APIValidator(cerberus.Validator):
 		field: str,
 		value: str
 	) -> None:
-		"""Checks whether or not ``value`` is a valid regular expression."""
+		"""Checks whether or not ``value`` is a valid regular expression.
+
+		:param field: The current field.
+		:param value: The current field's value.
+		"""
 
 		try:
 			re.compile(value)
@@ -44,6 +48,9 @@ class APIValidator(cerberus.Validator):
 	) -> None:
 		"""Checks that ``value`` is a valid URL, and corresponds to a public
 		resource.
+
+		:param field: The current field.
+		:param value: The current field's value.
 		"""
 
 		try:
@@ -56,7 +63,11 @@ class APIValidator(cerberus.Validator):
 		field: str,
 		value: typing.List[typing.Any]
 	) -> None:
-		"""Checks that the list in ``value`` contains no duplicate items."""
+		"""Checks that the list in ``value`` contains no duplicate items.
+
+		:param field: The current field.
+		:param value: The current field's value.
+		"""
 
 		if len(value) != len(set(value)):
 			self._error(field, "must contain no duplicate items")
@@ -65,7 +76,12 @@ class APIValidator(cerberus.Validator):
 		self: APIValidator,
 		value: str
 	) -> uuid.UUID:
-		"""Converts the ``value`` to an UUID."""
+		"""Converts the ``value`` to an :class:`UUID <uuid.UUID>`.
+
+		:param value: The current field's value.
+
+		:returns The converted UUID.:
+		"""
 
 		return uuid.UUID(value)
 
@@ -73,8 +89,12 @@ class APIValidator(cerberus.Validator):
 		self: APIValidator,
 		value: str
 	) -> datetime.datetime:
-		"""As long as ``value`` is a string formatted as per ISO-8601,
-		it's converted to a ``datetime`` object.
+		"""As long as ``value`` is a string formatted as per ISO-8601, it's
+		converted to a :class:`datetime <datetime.datetime>` object.
+
+		:param value: The current field's value.
+
+		:returns The converted date and time.:
 		"""
 
 		result = datetime.datetime.fromisoformat(value)
@@ -88,7 +108,12 @@ class APIValidator(cerberus.Validator):
 		self: APIValidator,
 		value: str
 	) -> bytes:
-		"""Converts the base64 ``value`` to the bytes it represents."""
+		"""Converts the base64-encoded ``value`` to the bytes it represents.
+
+		:param value: The current field's value.
+
+		:returns The decoded bytes.:
+		"""
 
 		return base64.b64decode(
 			value,
@@ -103,6 +128,12 @@ class APIValidator(cerberus.Validator):
 	) -> None:
 		"""Checks whether or not the length of ``value`` is divisible by ``divider``.
 		If not, an error is raised.
+
+		:param divider: The required divider.
+		:param field: The current field.
+		:param value: The current field's value, which must support the ``__len__``
+			method.
+
 		The rule's arguments are validated against this schema:
 		{
 			'type': 'integer'
@@ -133,9 +164,14 @@ class APIValidator(cerberus.Validator):
 		.. note::
 			There are no ``valuesrules`` defined for the rule validation schema,
 			since unlike type *hints*, where they serve as a hint and no actual
-			validation is performed, checking whether or not the value is a ``list``
-			of ``any`` / simply ``any`` would be redundant and always resolve to
-			``True``.
+			validation is performed, checking whether or not the value is a
+			:class:`list` of :class:`typing.Any` / simply :class:`typing.Any`
+			would be redundant and always resolve to :data:`True`.
+
+		:param makes_required: The keys that must equal a certain value in order
+			to become required.
+		:param field: The current field.
+		:param value: The current field's value.
 
 		The rule's arguments are validated against this schema:
 		{
@@ -183,12 +219,17 @@ def validate_json(
 		typing.Any
 	]
 ]:
-	"""Checks JSON data sent in the ``flask.request`` against a Cerberus schema.
-	If there is no data at all, ``exceptions.APIJSONMissing`` will be raised. If
-	there is data, but it's not a dictionary as ``cerberus.Validator`` requires,
-	``exceptions.APIJSONInvalid`` will be raised will no additional details. If
-	the data is invalid as per the schema, ``exceptions.APIJSONInvalid`` will be
-	raised with the validation errors given in its details.
+	"""Checks JSON data sent in the :attr:`flask.request` against a Cerberus
+	schema. If the validation was sucessful, sets :attr:`flask.g.json` to the
+	document the validator outputs - in case there were any coercions or other
+	modiciations done by it.
+
+	:param schema: The cerberus schema.
+
+	:raises heiwa.exceptions.APIJSONMissing: Raised if there is no JSON in the
+		request.
+	:raises heiwa.exceptions.APIJSONInvalid: Raised if there is JSON in the
+		request and not a dict, or the validation failed.
 	"""
 
 	def wrapper(

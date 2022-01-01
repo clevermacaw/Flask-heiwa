@@ -1,7 +1,9 @@
+import enum
+
 """Enums. Currently only contains Notification types."""
 
 __all__ = ["NotificationTypes"]
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 
 class NotificationTypes(enum.Enum):

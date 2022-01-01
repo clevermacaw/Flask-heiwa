@@ -38,4 +38,4 @@ __all__ = [
 	"validate_thread_exists",
 	"validate_user_exists"
 ]
-__version__ = "1.29.0"
+__version__ = "1.29.1"

@@ -255,9 +255,9 @@ def validate_category_exists(
 	user: heiwa.database.User
 ) -> None:
 	"""Raises
-	:exception:`APICategoryNotFound <heiwa.exceptions.APICategoryNotFound>`
-	if the :class:`Category <heiwa.database.Category>` with the given ``id_``
-	does not exist, or ``user`` does not have permission to view it.
+	:exc:`APICategoryNotFound <heiwa.exceptions.APICategoryNotFound>` if the
+	:class:`Category <heiwa.database.Category>` with the given ``id_`` does not
+	exist, or ``user`` does not have permission to view it.
 
 	.. seealso::
 		:meth:`Forum.reparse_permissions <heiwa.database.Forum.reparse_permissions>`
