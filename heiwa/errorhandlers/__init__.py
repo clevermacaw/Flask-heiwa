@@ -13,15 +13,15 @@ __all__ = [
 	"handle_api_exception",
 	"handle_http_exception"
 ]
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 
 
 def handle_api_exception(
 	exception: exceptions.APIException
 ) -> typing.Tuple[flask.Response, int]:
-	"""Turns an ``APIException`` object into a dictionary of its type (class name)
-	and details, then returns a tuple of:
-		#. The dictionary contained within a ``flask.Response``.
+	"""Turns an :class:`APIException <heiwa.exceptions.APIException>` object into
+	a dictionary of its type (class name) and details, then returns a tuple of:
+		#. The dictionary contained within a :class:`flask.Response`.
 		#. Its status code.
 	"""
 
@@ -36,9 +36,10 @@ def handle_api_exception(
 def handle_http_exception(
 	exception: werkzeug.exceptions.HTTPException
 ) -> typing.Tuple[flask.Response, int]:
-	"""Turns an ``HTTPException`` object into a dictionary of its type (class name)
-	and description, then returns a tuple of:
-		#. The dictionary contained within a ``flask.Response``.
+	"""Turns an :class:`HTTPException <werkzeug.exceptions.HTTPException>` object
+	into a dictionary of its type (class name) and description, then returns a
+	tuple of:
+		#. The dictionary contained within a :class:`flask.Response`.
 		#. Its status code.
 
 	.. note::
