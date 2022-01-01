@@ -24,5 +24,3 @@ Module contents
 
 .. automodule:: heiwa
    :members:
-   :undoc-members:
-   :show-inheritance:

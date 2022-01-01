@@ -348,15 +348,15 @@ class EditInfoMixin:
 		default=0,
 		nullable=False
 	)
-	"""The amount of times an object was edited. Increments by 1 each time
-	:meth:`edited <.EditInfoMixin.edited>` is called, and defaults to 0.
+	"""The amount of times an object was edited. Increments by ``1`` each time
+	:meth:`edited <.EditInfoMixin.edited>` is called, and defaults to ``0``.
 	"""
 
 	def edited(self: EditInfoMixin) -> None:
 		"""Sets the :attr:`edit_timestamp <.EditInfoMixin.edit_timestamp>`
 		attribute to the current date and time. Also increments the
-		:attr:`edit_count <.EditInfoMixin.edit_timestamp>` attribute by 1, provided
-		that it's under 2147483647, the maximum 4-byte integer value.
+		:attr:`edit_count <.EditInfoMixin.edit_timestamp>` attribute by ``1``,
+		provided that it's under ``2147483647``, the maximum 4-byte integer value.
 		"""
 
 		self.edit_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)

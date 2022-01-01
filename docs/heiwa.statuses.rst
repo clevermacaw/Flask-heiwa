@@ -6,5 +6,3 @@ Module contents
 
 .. automodule:: heiwa.statuses
    :members:
-   :undoc-members:
-   :show-inheritance:

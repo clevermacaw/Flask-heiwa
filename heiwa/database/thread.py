@@ -208,9 +208,9 @@ class Thread(
 		).
 		scalar_subquery()
 	)
-	"""The final value of a thread's votes. Upvotes will add 1, downvotes will
-	subtract 1. If there are no votes at all, this will be 0. Negative numbers
-	are allowed.
+	"""The final value of a thread's votes. Upvotes will add ``1``, downvotes
+	will subtract ``1``. If there are no votes at all, this will be ``0``.
+	Negative numbers are allowed.
 
 	.. seealso::
 		:class:`.ThreadVote`

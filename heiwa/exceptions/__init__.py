@@ -1,4 +1,4 @@
-"""Exceptions."""
+"""API Exceptions."""
 
 from __future__ import annotations
 
@@ -75,14 +75,15 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.32.0"
+__version__ = "1.32.1"
 
 
 class APIException(Exception):
 	"""The base class for all API exceptions. Default values:
 
-	* (HTTP) ``code``: ``500``
-	* ``details``: ``None``
+	* (HTTP) :attr:`code <.APIException.code>`:
+	  :attr:`INTERNAL_SERVER_ERROR <heiwa.statuses.INTERNAL_SERVER_ERROR>`
+	* :attr:`details <.APIException.details>`: :data:`None`
 	"""
 
 	code = statuses.INTERNAL_SERVER_ERROR
@@ -105,8 +106,8 @@ class APIException(Exception):
 		*args,
 		**kwargs
 	) -> None:
-		"""Sets the ``details`` class variable to the given value. If this method
-		isn't used, it remains ``None``.
+		"""Sets the :attr:`details <.APIException.details>` class variable to the
+		given value. If this method isn't used, it remains :data:`None`.
 		"""
 
 		self.details = details
@@ -115,7 +116,7 @@ class APIException(Exception):
 
 
 class APIAuthorizationHeaderInvalid(APIException):
-	"""Exception class for when the ``'Authorization'`` header is required and
+	"""Exception class for when the ``Authorization`` header is required and
 	present, but not valid. (e.g. Basic instead of Bearer, when only Bearer
 	is supported)
 	"""
@@ -124,8 +125,8 @@ class APIAuthorizationHeaderInvalid(APIException):
 
 
 class APIAuthorizationHeaderMissing(APIException):
-	"""Exception class for when the ``'Authorization'`` header is required,
-	but not present.
+	"""Exception class for when the ``Authorization`` header is required, but
+	not present.
 	"""
 
 	code = statuses.BAD_REQUEST
@@ -140,7 +141,8 @@ class APICategoryNotFound(APIException):
 
 
 class APIForumCategoryOutsideParent(APIException):
-	"""Exception class for when a user attempts to assign a category to a
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts
+	to assign a :class:`Category <heiwa.database.Category>` to a
 	:class:`Forum <heiwa.database.Forum>`, while also assigning a parent forum
 	whose :attr:`id <heiwa.database.Forum.id>` does not match the category's
 	:attr:`forum_id <heiwa.database.Category.forum_id>`.
@@ -150,113 +152,149 @@ class APIForumCategoryOutsideParent(APIException):
 
 
 class APIForumChildLevelLimitReached(APIException):
-	"""Exception class for when a user attempts to create a forum whose
-	child level is above the config's `` 'FORUM_MAX_CHILD_LEVEL'`` key.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts
+	to create a :class:`Forum <heiwa.database.Forum>` whose
+	:attr:`child_level <heiwa.database.Forum.child_level>` is higher than the
+	config's ``FORUM_MAX_CHILD_LEVEL`` key.
 	"""
 
 	code = statuses.FORBIDDEN
 
 
 class APIForumNotFound(APIException):
-	"""Exception class for when a requested forum
-	(e.g. ``'/forums/inexistent-id'``) does not exist.
+	"""Exception class for when a requested :class:`Forum <heiwa.database.Forum>`
+	(e.g. ``/forums/inexistent-id``) does not exist.
 	"""
 
 	code = statuses.NOT_FOUND
 
 
 class APIForumParentIsChild(APIException):
-	"""Exception class for when a user attempts to assign a parent forum,
-	but its ID is the same as the child forum's.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts to
+	assign a parent :class:`Forum <heiwa.database.Forum>`, but its ID is the same
+	as the child forum's.
 	"""
 
 	code = statuses.FORBIDDEN
 
 
 class APIForumPermissionsGroupNotFound(APIException):
-	"""Exception class for when a user attempts to delete a group's permissions
-	permissions for a certain forum, but there are none.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts
+	to delete a :class:`Group <heiwa.database.Group>`'s permissions for a certain
+	:class:`Forum <heiwa.database.Forum>`, but there are none.
+
+	.. seealso::
+		:class:`ForumPermissionsGroup <heiwa.database.ForumPermissionsGroup>`
 	"""
 
 	code = statuses.NOT_FOUND
 
 
 class APIForumPermissionsGroupUnchanged(APIException):
-	"""Exception class for when a user attempts to edit another group's
-	permissions for a certain forum, but all values are the exact same as
-	the existing ones.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts
+	to edit a :class:`Group <heiwa.database.Group>`'s permissions for a certain
+	:class:`Forum <heiwa.database.Forum>`, but there are none.
+
+	.. seealso::
+		:class:`ForumPermissionsGroup <heiwa.database.ForumPermissionsGroup>`
 	"""
 
 	code = statuses.FORBIDDEN
 
 
 class APIForumPermissionsUserNotFound(APIException):
-	"""Exception class for when a user attempts to delete another user's
-	permissions permissions for a certain forum, but there are none.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts
+	to delete another user's permissions for a certain
+	:class:`Forum <heiwa.database.Forum>`, but there are none.
+
+	.. seealso::
+		:class:`ForumPermissionsUser <heiwa.database.ForumPermissionsUser>`
 	"""
 
 	code = statuses.NOT_FOUND
 
 
 class APIForumPermissionsUserUnchanged(APIException):
-	"""Exception class for when a user attempts to edit another user's permissions
-	for a certain forum, but all values are the exact same as the existing ones.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts
+	to edit another user's permissions for a certain
+	:class:`Forum <heiwa.database.Forum>`, but all values are the exact same as
+	the existing ones.
+
+	.. seealso::
+		:class:`ForumPermissionsUser <heiwa.database.ForumPermissionsUser>`
 	"""
 
 	code = statuses.FORBIDDEN
 
 
 class APIForumSubscriptionAlreadyExists(APIException):
-	"""Exception class for when a user attempts to subscribe to a forum,
-	but has already done so before.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts to
+	subscribe to a :class:`Forum <heiwa.database.Forum>`, but has already done so
+	before.
+
+	.. seealso::
+		:data:`forum_subscribers <heiwa.database.forum_subscribers>`
 	"""
 
 	code = statuses.FORBIDDEN
 
 
 class APIForumSubscriptionNotFound(APIException):
-	"""Exception class for when a user attempts to unsubscribe from a forum,
-	but there is no subscription in the first place.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts to
+	unsubscribe from a :class:`Forum <heiwa.database.Forum>`, but there is no
+	subscription in the first place.
+
+	.. seealso::
+		:data:`forum_subscribers <heiwa.database.forum_subscribers>`
 	"""
 
 	code = statuses.NOT_FOUND
 
 
 class APIForumUnchanged(APIException):
-	"""Exception class for when a user attempts to edit a forum,
-	but all values are the exact same as the existing ones.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts to
+	edit a :class:`Forum <heiwa.database.Forum>`, but all values are the exact
+	same as the existing ones.
 	"""
 
 	code = statuses.FORBIDDEN
 
 
 class APIGroupCannotDeleteLastDefault(APIException):
-	"""Exception class for when a user attempts to delete the last group
-	which is default for ``*``.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts to
+	delete the last :class:`Group <heiwa.database.Group>` whose
+	:attr:`default_for <heiwa.database.Group.default_for>` column contains ``*``.
 	"""
 
 	code = statuses.FORBIDDEN
 
 
 class APIGroupCannotDeletePermissionsForLastDefault(APIException):
-	"""Exception class for when a user attempts to delete permissions
-	for the last group whose ``default_for`` column contains ``'*'``.
+	"""Exception class for when a :class:`User <heiwa.database.User>` attempts to
+	delete permissions for the last :class:`Group <heiwa.database.Group>` whose
+	:attr:`default_for <heiwa.database.Group.default_for>` column contains ``*``.
+
+	.. seealso::
+		:class:`GroupPermissions <heiwa.database.GroupPermissions>`
 	"""
 
 	code = statuses.FORBIDDEN
 
+# TODO from here
+
 
 class APIGroupCannotLeavePermissionNullForLastDefault(APIException):
 	"""Exception class for when a user attempts to set a permission whose
-	value is ``None`` for the last group whose ``default_for`` column is ``'*'``.
+	value is :data:`None` for the last group whose
+	:attr:`default_for <heiwa.database.Group.default_for>` column is ``*``.
 	"""
 
 	code = statuses.FORBIDDEN
 
 
 class APIGroupNotFound(APIException):
-	"""Exception class for when a requested group
-	(e.g. ``'/groups/inexistent-id'``) does not exist.
+	"""Exception class for when a requested group (e.g. ``/groups/inexistent-id``)
+	does not exist.
 	"""
 
 	code = statuses.NOT_FOUND
@@ -279,8 +317,8 @@ class APIGroupPermissionsUnchanged(APIException):
 
 
 class APIGroupUnchanged(APIException):
-	"""Exception class for when a user attempts to edit a group,
-	but all values are the exact same as the existing ones.
+	"""Exception class for when a user attempts to edit a group, but all values
+	are the exact same as the existing ones.
 	"""
 
 	code = statuses.FORBIDDEN
@@ -296,8 +334,8 @@ class APIGuestSessionLimitReached(APIException):
 
 
 class APIJSONInvalid(APIException):
-	"""Exception class for when the JSON data sent to the API is invalid,
-	as per the predefined Cerberus schema.
+	"""Exception class for when the JSON data sent to the API is invalid, as per
+	the predefined Cerberus schema.
 	"""
 
 	code = statuses.BAD_REQUEST
@@ -353,7 +391,7 @@ class APIMessageCannotChangeIsReadOfSent(APIException):
 
 class APIMessageNotFound(APIException):
 	"""Exception class for when a requested message
-	(e.g. ``'/messages/inexistent-id'``) does not exist.
+	(e.g. ``/messages/inexistent-id``) does not exist.
 	"""
 
 	code = statuses.NOT_FOUND
@@ -383,7 +421,7 @@ class APINoPermission(APIException):
 
 class APINotificationNotFound(APIException):
 	"""Exception class for when a requested notification
-	(e.g. ``'/notifications/inexistent-id``') does not exist.
+	(e.g. ``/notifications/inexistent-id``) does not exist.
 	"""
 
 	code = statuses.NOT_FOUND
@@ -407,7 +445,7 @@ class APIOpenIDNonceInvalid(APIException):
 
 class APIOpenIDServiceNotFound(APIException):
 	"""Exception class for when a requested OpenID service
-	(e.g. ``'/openid/login/inexistent-service'``) does not exist.
+	(e.g. ``/openid/login/inexistent-service``) does not exist.
 	"""
 
 	code = statuses.NOT_FOUND
@@ -423,7 +461,7 @@ class APIOpenIDStateInvalid(APIException):
 
 class APIPostNotFound(APIException):
 	"""Exception class for when a requested post
-	(e.g. ``'/posts/inexistent-id'``) does not exist.
+	(e.g. ``/posts/inexistent-id``) does not exist.
 	"""
 
 	code = statuses.NOT_FOUND
@@ -469,7 +507,7 @@ class APIThreadLocked(APIException):
 
 class APIThreadNotFound(APIException):
 	"""Exception class for when a requested thread
-	(e.g. ``'/threads/inexistent-id'``) does not exist.
+	(e.g. ``/threads/inexistent-id``) does not exist.
 	"""
 
 	code = statuses.NOT_FOUND
@@ -597,7 +635,7 @@ class APIUserBlockNotFound(APIException):
 
 class APIUserCannotRemoveLastDefaultGroup(APIException):
 	"""Exception class for when a user attempts to remove the last group whose
-	``default_for`` column contains ``'*'`` from another user.
+	``default_for`` column contains ``*`` from another user.
 	"""
 
 	code = statuses.FORBIDDEN
@@ -637,7 +675,7 @@ class APIUserGroupNotAdded(APIException):
 
 class APIUserNotFound(APIException):
 	"""Exception class for when a requested user
-	(e.g. ``'/users/inexistent-id'``) does not exist.
+	(e.g. ``/users/inexistent-id``) does not exist.
 	"""
 
 	code = statuses.NOT_FOUND
