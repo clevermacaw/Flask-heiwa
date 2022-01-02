@@ -8,7 +8,6 @@ import sqlalchemy
 import sqlalchemy.orm
 
 from . import Base
-from .group import Group
 from .utils import (
 	UUID,
 	CDWMixin,
@@ -18,10 +17,6 @@ from .utils import (
 	PermissionControlMixin,
 	ReprMixin
 )
-from .notification import Notification
-from .post import Post
-from .thread import Thread
-from .user import user_groups
 
 __all__ = [
 	"Forum",
@@ -511,6 +506,8 @@ class ForumPermissionsGroup(
 		this instance's ``group_id``.
 		"""
 
+		from .user import user_groups
+
 		session.execute(
 			sqlalchemy.select(ForumParsedPermissions).
 			where(
@@ -707,6 +704,13 @@ class Forum(
 	"""The time the latest :class:`.Thread` in a forum was made. If there haven't
 	been any threads so far, this will be :data:`None`.
 	"""
+
+	category = sqlalchemy.orm.relationship(
+		"Category",
+		passive_deletes="all",
+		foreign_keys=[category_id],
+		lazy=True
+	)
 
 	parsed_permissions = sqlalchemy.orm.relationship(
 		ForumParsedPermissions,
@@ -1064,6 +1068,10 @@ class Forum(
 		well as the forum itself. If the ``session`` argument is :data:`None`,
 		it's set to this object's session.
 		"""
+
+		from .notification import Notification
+		from .post import Post
+		from .thread import Thread
 
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)
@@ -1449,6 +1457,9 @@ class Forum(
 
 			:class:`.ForumPermissionsUser`
 		"""
+
+		from .group import Group
+		from .user import user_groups
 
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)

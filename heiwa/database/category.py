@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import typing
+
 import sqlalchemy
 import sqlalchemy.orm
 
@@ -71,6 +73,7 @@ class Category(
 		"Forum",
 		uselist=False,
 		passive_deletes="all",
+		foreign_keys=[forum_id],
 		lazy=True
 	)
 	"""The :class:`.Forum` a category falls under."""
@@ -144,3 +147,151 @@ class Category(
 		associated with any forum, always :data:`True` by default. If it is, it
 		depends on the user being able to view the forum.
 	"""
+
+	@classmethod
+	def get(
+		cls: Category,
+		user,
+		session: sqlalchemy.orm.Session,
+		additional_actions: typing.Union[
+			None,
+			typing.Iterable[str]
+		] = None,
+		conditions: typing.Union[
+			bool,
+			sqlalchemy.sql.expression.BinaryExpression,
+			sqlalchemy.sql.expression.ClauseList
+		] = True,
+		limit: typing.Union[
+			None,
+			int
+		] = None,
+		offset: typing.Union[
+			None,
+			int
+		] = None,
+		ids_only: bool = False
+	) -> sqlalchemy.sql.Select:
+		"""Generates a selection query with permissions already handled.
+
+		Since this category's :class:`.Forum`'s permissions may not be parsed,
+		this will emit additional queries to check, as long there is a forum
+		attached.
+
+		:param user: The user whose permissions should be evaluated.
+		:param session: The SQLAlchemy session to execute additional queries with.
+		:param additional_actions: Additional actions that a user must be able to
+			perform on this category, other than the default ``view`` action.
+		:param conditions: Any additional conditions. :data:`True` by default,
+			meaning there are no conditions.
+		:param limit: A limit.
+		:param offset: An offset.
+		:param ids_only: Whether or not to only return a query for IDs.
+
+		:returns: The query.
+		"""
+
+		from .forum import Forum, ForumParsedPermissions
+
+		inner_conditions = (
+			sqlalchemy.and_(
+				~Category.forum_id.is_(None),
+				ForumParsedPermissions.forum_id == Category.forum_id,
+				ForumParsedPermissions.user_id == user.id
+			)
+		)
+
+		first_iteration = True
+		category_without_parsed_forum_permissions_exists = False
+
+		while (first_iteration or category_without_parsed_forum_permissions_exists):
+			first_iteration = False
+
+			rows = session.execute(
+				sqlalchemy.select(
+					Category.id,
+					Category.forum_id,
+					(
+						sqlalchemy.select(ForumParsedPermissions.forum_id).
+						where(inner_conditions).
+						exists()
+					)
+				).
+				where(
+					sqlalchemy.and_(
+						conditions,
+						sqlalchemy.or_(
+							~(
+								sqlalchemy.select(ForumParsedPermissions.forum_id).
+								where(inner_conditions).
+								exists()
+							),
+							(
+								sqlalchemy.select(ForumParsedPermissions.forum_id).
+								where(
+									sqlalchemy.and_(
+										inner_conditions,
+										# TODO: Translate permissions
+										ForumParsedPermissions.category_view.is_(True),
+										sqlalchemy.and_(
+											self.action_queries[action]
+											for action in additional_actions
+										) if additional_actions is not None else True
+									)
+								).
+								exists()
+							)
+						)
+					)
+				).
+				limit(limit).
+				offset(offset)
+			).all()
+
+			if len(rows) == 0:
+				# No need to select twice
+				return sqlalchemy.select(None)
+
+			category_ids = []
+			unparsed_permission_forum_ids = []
+
+			for row in rows:
+				(
+					category_id,
+					forum_id,
+					parsed_permissions_exist
+				) = row
+
+				if (
+					forum_id is not None and
+					not parsed_permissions_exist
+				):
+					category_without_parsed_forum_permissions_exists = True
+					unparsed_permission_forum_ids.append(forum_id)
+
+					continue
+
+				category_ids.append(category_id)
+
+			if category_without_parsed_forum_permissions_exists:
+				for forum in (
+					session.execute(
+						sqlalchemy.select(Forum).
+						where(Forum.id.in_(unparsed_permission_forum_ids))
+					).scalars()
+				):
+					forum.reparse_permissions(user)
+
+			return (
+				sqlalchemy.select(
+					Category if not ids_only else Category.id
+				).
+				where(
+					sqlalchemy.and_(
+						Category.id.in_(category_ids),
+						conditions
+					)
+				).
+				limit(limit).
+				offset(offset)
+			)

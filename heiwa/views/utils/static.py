@@ -52,3 +52,5 @@ BASE_PERMISSION_SCHEMA = {
 	"user_edit_groups": PERMISSION_KEY_SCHEMA,
 	"user_edit_permissions": PERMISSION_KEY_SCHEMA
 }
+
+SEARCH_MAX_IN_LIST_LENGTH = 512

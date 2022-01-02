@@ -14,6 +14,7 @@ from .. import (
 	validators
 )
 from .utils import (
+	SEARCH_MAX_IN_LIST_LENGTH,
 	find_thread_by_id,
 	generate_parsed_forum_permissions_exist_query,
 	generate_search_schema,
@@ -156,13 +157,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -171,43 +172,43 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"thread_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["thread_id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"user_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["user_id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"subject": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["subject"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"content": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["content"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"vote_value": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["vote_value"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			}
 		},
 		"maxlength": 1

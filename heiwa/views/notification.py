@@ -14,6 +14,7 @@ from .. import (
 	validators
 )
 from .utils import (
+	SEARCH_MAX_IN_LIST_LENGTH,
 	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search
@@ -104,31 +105,31 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"user_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["user_id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"type": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["type"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"identifier": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["identifier"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			}
 		},
 		"maxlength": 1

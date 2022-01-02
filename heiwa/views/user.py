@@ -20,6 +20,7 @@ from .. import (
 )
 from .utils import (
 	BASE_PERMISSION_SCHEMA,
+	SEARCH_MAX_IN_LIST_LENGTH,
 	find_group_by_id,
 	find_user_by_id,
 	generate_search_schema,
@@ -208,13 +209,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -223,13 +224,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"public_key": {
 				"type": "list",
@@ -238,7 +239,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"avatar_type": {
 				"type": "list",
@@ -247,7 +248,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"name": {
 				"type": "list",
@@ -256,7 +257,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"status": {
 				"type": "list",
@@ -265,31 +266,31 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"followee_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["followee_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"follower_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["follower_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"post_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["post_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"thread_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["thread_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			}
 		},
 		"maxlength": 1

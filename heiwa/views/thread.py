@@ -14,6 +14,7 @@ from .. import (
 	validators
 )
 from .utils import (
+	SEARCH_MAX_IN_LIST_LENGTH,
 	find_forum_by_id,
 	find_thread_by_id,
 	generate_parsed_forum_permissions_exist_query,
@@ -72,7 +73,7 @@ ATTR_SCHEMAS = {
 		"schema": {
 			"type": "string",
 			"minlength": 1,
-			"maxlength": database.Thread.tags.propety.columns[0].type.item_type.length
+			"maxlength": database.Thread.tags.property.columns[0].type.item_type.length
 		}
 	},
 	"name": {
@@ -210,13 +211,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -225,61 +226,61 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"forum_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["forum_id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"user_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["user_id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"tags": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["tags"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"name": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["name"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"content": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["content"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"vote_value": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["vote_value"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"post_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["post_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"subscriber_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["subscriber_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"last_post_timestamp": {
 				"type": "list",
@@ -288,7 +289,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			}
 		},
 		"maxlength": 1

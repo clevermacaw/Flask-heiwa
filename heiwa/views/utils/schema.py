@@ -95,7 +95,7 @@ def generate_search_schema(
 		result["filter"] = {
 			"type": "dict",
 			"schema": "search",
-			"minlength": 2,
+			"minlength": 1,
 			"maxlength": 1,
 			"required": False
 		}

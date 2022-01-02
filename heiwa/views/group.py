@@ -16,6 +16,7 @@ from .. import (
 )
 from .utils import (
 	BASE_PERMISSION_SCHEMA,
+	SEARCH_MAX_IN_LIST_LENGTH,
 	find_group_by_id,
 	generate_search_schema,
 	generate_search_schema_registry,
@@ -171,13 +172,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -186,31 +187,31 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"default_for": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["default_for"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"level": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["level"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"name": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["name"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"description": {
 				"type": "list",
@@ -219,13 +220,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"user_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["user_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			}
 		},
 		"maxlength": 1

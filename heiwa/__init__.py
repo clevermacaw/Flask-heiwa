@@ -14,7 +14,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.16.10"
+__version__ = "0.16.11"
 
 
 class ConfiguredLockFlask(flask.Flask):
@@ -181,7 +181,7 @@ def create_app() -> ConfiguredLockFlask:
 					).scalars().one_or_none() is not None:
 						continue
 
-					group_to_add = Group.create(
+					group = Group.create(
 						sa_session,
 						default_for=group_attrs["default_for"],
 						level=group_attrs["level"],
@@ -189,10 +189,13 @@ def create_app() -> ConfiguredLockFlask:
 						description=group_attrs["description"]
 					)
 
+					# Need to get the group ID here
+					sa_session.commit()
+
 					if "permissions" in group_attrs:
 						GroupPermissions.create(
 							sa_session,
-							group_id=group_to_add.id,
+							group_id=group.id,
 							**group_attrs["permissions"]
 						)
 

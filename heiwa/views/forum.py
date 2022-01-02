@@ -14,6 +14,7 @@ from .. import (
 )
 from .utils import (
 	PERMISSION_KEY_SCHEMA,
+	SEARCH_MAX_IN_LIST_LENGTH,
 	find_category_by_id,
 	find_forum_by_id,
 	find_group_by_id,
@@ -239,13 +240,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -254,13 +255,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"category_id": {
 				"type": "list",
@@ -269,7 +270,7 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"parent_forum_id": {
 				"type": "list",
@@ -278,13 +279,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"name": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["name"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"description": {
 				"type": "list",
@@ -293,13 +294,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"order": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["order"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"last_thread_timestamp": {
 				"type": "list",
@@ -308,19 +309,19 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"subscriber_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["subscriber_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"thread_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["thread_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			}
 		},
 		"maxlength": 1

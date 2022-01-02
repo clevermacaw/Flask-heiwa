@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import datetime
 import typing
 
@@ -386,7 +387,7 @@ class PermissionControlMixin:
 	class_actions = {}
 	"""The actions a user is / isn't allowed to perform on any instance of the
 	mixed-in object.
-	
+
 	.. seealso::
 		:meth:`.PermissionControlMixin.get_allowed_class_actions`
 	"""
@@ -394,11 +395,19 @@ class PermissionControlMixin:
 	instance_actions = {}
 	"""The actions a user is / isn't allowed to perform on one given instance of
 	the mixed-in object. Unlike
-	:attr:`class_actions <PermissionControlMixin.class_actions>`, this can and
+	:attr:`class_actions <.PermissionControlMixin.class_actions>`, this can and
 	should vary with each instance.
 
 	.. seealso::
 		:meth:`.PermissionControlMixin.get_allowed_instance_actions`
+	"""
+
+	action_queries = {}
+	"""Permissions for actions specified for the mixed-in object, but formatted
+	in such a way that they are evaluable within SQL queries.
+
+	.. seealso::
+		:meth:`.PermissionControlMixin.get`
 	"""
 
 	# If this class should not be viewed, this mixin won't be used anyway.
@@ -497,6 +506,49 @@ class PermissionControlMixin:
 			return True
 
 		return self.instance_actions[action](self, user)
+
+	@classmethod
+	@abc.abstractmethod
+	def get(
+		cls: PermissionControlMixin,
+		user,
+		session: sqlalchemy.orm.Session,
+		additional_actions: typing.Union[
+			None,
+			typing.Iterable[str]
+		] = None,
+		conditions: typing.Union[
+			bool,
+			sqlalchemy.sql.expression.BinaryExpression,
+			sqlalchemy.sql.expression.ClauseList
+		] = True,
+		limit: typing.Union[
+			None,
+			int
+		] = None,
+		offset: typing.Union[
+			None,
+			int
+		] = None,
+		ids_only: bool = False
+	):
+		"""Generates a selection query with permissions already handled. This
+		may execute additional queries with some models.
+
+		:param user: The user whose permissions should be evaluated.
+		:param session: The SQLAlchemy session to execute additional queries with.
+		:param additional_actions: Additional actions that a user must be able to
+			perform on this object, other than the default ``view`` action.
+		:param conditions: Any additional conditions. :data:`True` by default,
+			meaning there are no conditions.
+		:param limit: A limit.
+		:param offset: An offset.
+		:param ids_only: Whether or not to only return a query for IDs.
+
+		:returns: The query.
+		"""
+
+		raise NotImplementedError
 
 
 class ReprMixin:

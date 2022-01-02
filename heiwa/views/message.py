@@ -13,6 +13,7 @@ from .. import (
 	validators
 )
 from .utils import (
+	SEARCH_MAX_IN_LIST_LENGTH,
 	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
@@ -62,7 +63,7 @@ ATTR_SCHEMAS = {
 		"coerce": "decode_base64",
 		"length_divisible_by": 16,
 		"minlength": 128,  # encrypted with 1024-bit RSA
-		"maxlength": 512   # encrypted with 4096-bit RSA
+		"maxlength": SEARCH_MAX_IN_LIST_LENGTH   # encrypted with 4096-bit RSA
 	},
 	"tag": {
 		"type": "string",
@@ -162,13 +163,13 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 				"type": "list",
 				"schema": ATTR_SCHEMAS["id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"creation_timestamp": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["creation_timestamp"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_timestamp": {
 				"type": "list",
@@ -177,43 +178,43 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 					"nullable": True
 				},
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"edit_count": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["edit_count"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"sender_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["sender_id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"receiver_id": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["receiver_id"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"encrypted_session_key": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["encrypted_session_key"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"tag": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["tag"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			},
 			"encrypted_content": {
 				"type": "list",
 				"schema": ATTR_SCHEMAS["encrypted_content"],
 				"minlength": 2,
-				"maxlength": 512
+				"maxlength": SEARCH_MAX_IN_LIST_LENGTH
 			}
 		},
 		"maxlength": 1

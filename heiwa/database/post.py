@@ -16,8 +16,6 @@ from .utils import (
 	PermissionControlMixin,
 	ReprMixin
 )
-from .notification import Notification
-from .user import user_follows
 
 __all__ = [
 	"Post",
@@ -283,6 +281,8 @@ class Post(
 		object's session.
 		"""
 
+		from .notification import Notification
+
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)
 
@@ -308,6 +308,9 @@ class Post(
 		#. Users subscribed to the parent thread.
 		#. The author's followers. (Who aren't subscribed to the thread)
 		"""
+
+		from .notification import Notification
+		from .user import user_follows
 
 		# Premature session add and flush. We have to access the ID later.
 		CDWMixin.write(self, session)
