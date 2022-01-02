@@ -62,7 +62,7 @@ class Category(
 	"""A category's name."""
 
 	description = sqlalchemy.Column(
-		sqlalchemy.String(262144),
+		sqlalchemy.String(65536),
 		nullable=False
 	)
 	"""A category's description."""

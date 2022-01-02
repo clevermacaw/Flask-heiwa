@@ -177,7 +177,7 @@ class Thread(
 	"""A thread's name."""
 
 	content = sqlalchemy.Column(
-		sqlalchemy.String(262144),
+		sqlalchemy.String(65536),
 		nullable=False
 	)
 	"""A thread's content. Generally, this will often be shown as the first post

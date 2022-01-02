@@ -124,7 +124,7 @@ class Post(
 		nullable=True
 	)
 	content = sqlalchemy.Column(
-		sqlalchemy.String(262144),
+		sqlalchemy.String(65536),
 		nullable=False
 	)
 
