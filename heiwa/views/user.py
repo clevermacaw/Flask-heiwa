@@ -92,17 +92,17 @@ ATTR_SCHEMAS = {
 	"avatar_type": {
 		"type": "string",
 		"minlength": 3,
-		"maxlength": 256
+		"maxlength": database.User.avatar_type.property.columns[0].type.length
 	},
 	"name": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 128
+		"maxlength": database.User.name.property.columns[0].type.length
 	},
 	"status": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 65536
+		"maxlength": database.User.status.property.columns[0].type.length
 	},
 	"followee_count": {
 		"type": "integer",

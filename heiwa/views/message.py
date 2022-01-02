@@ -67,7 +67,7 @@ ATTR_SCHEMAS = {
 	"tag": {
 		"type": "string",
 		"minlength": 1,  # Both values are completely arbitrary.
-		"maxlength": 64
+		"maxlength": database.Message.tag.property.columns[0].type.length
 	},
 	"encrypted_content": {
 		"type": "binary",

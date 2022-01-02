@@ -24,9 +24,9 @@ def authenticate_via_jwt(
 	typing.Any
 ]:
 	"""If the HTTP ``Authorization`` header is present, derives the current
-	:class:`User <heiwa.database.User>` from it (if possible) using JWT and assigns
-	them to :attr:`flask.g.user`. If the user is banned, it's checked if their
-	ban has expired. If not, access is denied.
+	:class:`User <heiwa.database.User>` from it (if possible) using JWT and
+	assigns them to :attr:`flask.g.user`. If the user is banned, it's checked
+	if their ban has expired. If not, access is denied.
 	"""
 
 	@functools.wraps(function)

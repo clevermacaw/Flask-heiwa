@@ -72,18 +72,18 @@ ATTR_SCHEMAS = {
 		"schema": {
 			"type": "string",
 			"minlength": 1,
-			"maxlength": 128
+			"maxlength": database.Thread.tags.propety.columns[0].type.item_type.length
 		}
 	},
 	"name": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 128
+		"maxlength": database.Thread.name.property.columns[0].type.length
 	},
 	"content": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 65536
+		"maxlength": database.Thread.content.property.columns[0].type.length
 	},
 	"vote_value": {
 		"type": "integer",

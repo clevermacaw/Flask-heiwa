@@ -67,12 +67,12 @@ ATTR_SCHEMAS = {
 	"name": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 128
+		"maxlength": database.Forum.name.property.columns[0].type.length
 	},
 	"description": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 65536
+		"maxlength": database.Forum.description.property.columns[0].type.length
 	},
 	"order": {
 		"type": "integer",

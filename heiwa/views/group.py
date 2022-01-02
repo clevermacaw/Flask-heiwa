@@ -57,7 +57,9 @@ ATTR_SCHEMAS = {
 		"schema": {
 			"type": "string",
 			"minlength": 1,
-			"maxlength": 128
+			"maxlength": (
+				database.Group.default_for.property.columns[0].type.item_type.length
+			)
 		}
 	},
 	"level": {
@@ -68,12 +70,12 @@ ATTR_SCHEMAS = {
 	"name": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 128
+		"maxlength": database.Group.name.property.columns[0].type.length
 	},
 	"description": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 65536
+		"maxlength": database.Group.description.property.columns[0].type.length
 	},
 	"user_count": {
 		"type": "integer",

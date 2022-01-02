@@ -61,12 +61,12 @@ ATTR_SCHEMAS = {
 	"subject": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 256
+		"maxlength": database.Post.subject.property.columns[0].type.length
 	},
 	"content": {
 		"type": "string",
 		"minlength": 1,
-		"maxlength": 65536
+		"maxlength": database.Post.content.property.columns[0].type.length
 	},
 	"vote_value": {
 		"type": "integer",
