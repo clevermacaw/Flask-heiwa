@@ -82,7 +82,7 @@ class Category(
 		"create": lambda cls, user: user.parsed_permissions["category_create"],
 		"delete": lambda cls, user: user.parsed_permissions["category_delete"],
 		"edit": lambda cls, user: user.parsed_permissions["category_edit"],
-		"view": lambda cls, user: True
+		"view": lambda cls, user: user.parsed_permissions["forum_view"]
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all categories, without
 	any indication of which thread it is.
@@ -103,9 +103,9 @@ class Category(
 		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``view``:
-		Whether or not a user can view categories. Since we don't know whether
-		or not they're attached to forums, this will always be :data:`True` by
-		default.
+		Whether or not a user can view categories. This depends on the
+		``forum_view`` value in their
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
 	"""
 
 	instance_actions = {
@@ -120,7 +120,7 @@ class Category(
 			else self.forum.get_parsed_permissions(user).category_edit
 		),
 		"view": lambda self, user: (
-			True
+			user.parsed_permissions["forum_view"]
 			if self.forum_id is None
 			else self.forum.get_instance_permission(user, "view")
 		)
@@ -144,8 +144,95 @@ class Category(
 
 	``view``:
 		Whether or not a user can view this category. If this category is not
-		associated with any forum, always :data:`True` by default. If it is, it
-		depends on the user being able to view the forum.
+		associated with any forum, always :data:`True` by default as long as
+		the user has permission to view forums. If it is associated with one,
+		it depends on the user being able to view that forum.
+	"""
+
+	@classmethod
+	def _action_query_create(cls: Category, user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to create categories.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return (
+			ForumParsedPermissions.category_create.is_(True)
+			if ~cls.forum_id.is_(None)
+			else user.parsed_permissions["category_create"]
+		)
+
+	@classmethod
+	def _action_query_delete(cls: Category, user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to delete categories.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return (
+			ForumParsedPermissions.category_delete.is_(True)
+			if ~cls.forum_id.is_(None)
+			else user.parsed_permissions["category_delete"]
+		)
+
+	@classmethod
+	def _action_query_edit(cls: Category, user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to edit categories.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return (
+			ForumParsedPermissions.category_edit.is_(True)
+			if ~cls.forum_id.is_(None)
+			else user.parsed_permissions["category_edit"]
+		)
+
+	@classmethod
+	def _action_query_view(cls: Category, user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to view categories.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return (
+			ForumParsedPermissions.forum_view.is_(True)
+			if ~cls.forum_id.is_(None)
+			else user.parsed_permissions["forum_view"]
+		)
+
+	action_queries = {
+		"create": _action_query_create,
+		"delete": _action_query_delete,
+		"edit": _action_query_edit,
+		"view": _action_query_view
+	}
+	"""Actions and their required permissions translated to be evaluable within
+	SQL queries.
+
+	.. seealso::
+		:attr:`.Category.instance_actions`
+		:attr:`.Category.class_actions`
 	"""
 
 	@classmethod
@@ -191,12 +278,12 @@ class Category(
 		:returns: The query.
 		"""
 
-		from .forum import Forum, ForumParsedPermissions
+		from .forum import Forum
 
 		inner_conditions = (
 			sqlalchemy.and_(
-				~Category.forum_id.is_(None),
-				ForumParsedPermissions.forum_id == Category.forum_id,
+				~cls.forum_id.is_(None),
+				ForumParsedPermissions.forum_id == cls.forum_id,
 				ForumParsedPermissions.user_id == user.id
 			)
 		)
@@ -209,8 +296,8 @@ class Category(
 
 			rows = session.execute(
 				sqlalchemy.select(
-					Category.id,
-					Category.forum_id,
+					cls.id,
+					cls.forum_id,
 					(
 						sqlalchemy.select(ForumParsedPermissions.forum_id).
 						where(inner_conditions).
@@ -234,7 +321,7 @@ class Category(
 										# TODO: Translate permissions
 										ForumParsedPermissions.category_view.is_(True),
 										sqlalchemy.and_(
-											self.action_queries[action]
+											self.action_queries[action](user)
 											for action in additional_actions
 										) if additional_actions is not None else True
 									)
@@ -284,11 +371,11 @@ class Category(
 
 			return (
 				sqlalchemy.select(
-					Category if not ids_only else Category.id
+					cls if not ids_only else cls.id
 				).
 				where(
 					sqlalchemy.and_(
-						Category.id.in_(category_ids),
+						cls.id.in_(category_ids),
 						conditions
 					)
 				).

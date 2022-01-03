@@ -404,7 +404,8 @@ class PermissionControlMixin:
 
 	action_queries = {}
 	"""Permissions for actions specified for the mixed-in object, but formatted
-	in such a way that they are evaluable within SQL queries.
+	in such a way that they are evaluable within SQL queries. Since a user can
+	change the result, these should be callables with a single ``user`` argument.
 
 	.. seealso::
 		:meth:`.PermissionControlMixin.get`
@@ -455,11 +456,15 @@ class PermissionControlMixin:
 		self: PermissionControlMixin,
 		user
 	) -> typing.List[str]:
-		"""Returns all columns in the current instance of the mixed-in class
-		that ``user`` is allowed to view, as per the
+		"""Finds all columns in the current instance of the mixed-in class that
+		``user`` is allowed to view, as per the
 		:attr:`viewable_columns <.PermissionControlMixin.viewable_columns>`.
 		If the value is an empty dictionary, all columns in this object are
 		returned.
+
+		:param user: The user whose permissions should be evaluated.
+
+		:returns: The list of allowed actions.
 		"""
 
 		if self.viewable_columns == {}:
