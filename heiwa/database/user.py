@@ -565,6 +565,10 @@ class User(
 	``view_permissions``:
 		Whether or not a user can view another user's permissions. By default,
 		this will always be :data:`True`.
+
+	.. seealso::
+		:attr:`.User.instance_actions`
+		:attr:`.User.action_queries`
 	"""
 
 	instance_actions = {
@@ -689,6 +693,74 @@ class User(
 	``view_permissions``:
 		Whether or not a user can view another user's permissions. By default,
 		this will always be :data:`True`.
+
+	.. seealso::
+		:attr:`.User.class_actions`
+		:attr:`.User.action_queries`
+	"""
+
+	action_queries = {
+		"delete": lambda user: sqlalchemy.and_(
+			User.action_queries["view"](user),
+			sqlalchemy.or_(
+				User.id == user.id,
+				sqlalchemy.and_(
+					user.parsed_permissions["user_delete"],
+					user.highest_group.level > User.highest_group.level
+				)
+			)
+		),
+		"edit": lambda user: sqlalchemy.and_(
+			User.action_queries["view"](user),
+			sqlalchemy.or_(
+				User.id == user.id,
+				sqlalchemy.and_(
+					user.parsed_permissions["user_edit"],
+					user.highest_group.level > User.highest_group.level
+				)
+			)
+		),
+		"edit_ban": lambda user: sqlalchemy.and_(
+			User.action_queries["view"](user),
+			sqlalchemy.or_(
+				User.id == user.id,
+				sqlalchemy.and_(
+					user.parsed_permissions["user_edit_ban"],
+					user.highest_group.level > User.highest_group.level
+				)
+			)
+		),
+		"edit_block": lambda user: sqlalchemy.and_(
+			User.action_queries["view"](user),
+			User.id != user.id
+		),
+		"edit_follow": lambda user: sqlalchemy.and_(
+			User.action_queries["view"](user),
+			User.id != user.id
+		),
+		"edit_group": lambda user: sqlalchemy.and_(
+			User.action_queries["view"](user),
+			user.parsed_permissions["user_edit_group"],
+			user.highest_group.level > User.highest_group.level
+		),
+		"edit_permissions": lambda user: sqlalchemy.and_(
+			User.action_queries["view"](user)
+			user.parsed_permissions["user_edit_permissions"],
+			user.highest_group.level > User.highest_group.level
+		),
+		"view": lambda user: True,
+		"view_ban": lambda user: User.action_queries["view"](user),
+		"view_groups": lambda user: User.action_queries["view"](user),
+		"view_permissions": lambda user: User.action_queries["view"](user)
+	}
+	"""Actions and their required permissions translated to be evaluable within
+	SQL queries. Unless arbitrary additional attributes come into play, these
+	permissions will generally be the same as
+	:attr:`instance_actions <.User.instance_actions>`.
+
+	.. seealso::
+		:attr:`.User.instance_actions`
+		:attr:`.User.class_actions`
 	"""
 
 	viewable_columns = {
@@ -841,6 +913,70 @@ class User(
 
 		if self.parsed_permissions == {}:
 			self.reparse_permissions(session)
+
+	@classmethod
+	def get(
+		cls: User,
+		user,
+		session: sqlalchemy.orm.Session,
+		additional_actions: typing.Union[
+			None,
+			typing.Iterable[str]
+		] = None,
+		conditions: typing.Union[
+			bool,
+			sqlalchemy.sql.expression.BinaryExpression,
+			sqlalchemy.sql.expression.ClauseList
+		] = True,
+		limit: typing.Union[
+			None,
+			int
+		] = None,
+		offset: typing.Union[
+			None,
+			int
+		] = None,
+		ids_only: bool = False
+	) -> sqlalchemy.sql.Select:
+		"""Generates a selection query with permissions already handled.
+
+		.. note::
+			Unlike :class:`.Forum`-based permissions, users do not have any
+			context-based permissions. No additional queries will be emitted.
+
+		.. note::
+			Viewing users is allowed for everyone, so this function should
+			primarily be used to evaluate ``addition_actions``
+
+		:param user: The user whose permissions should be evaluated.
+		:param session: The SQLAlchemy session to execute additional queries with.
+		:param additional_actions: Additional actions that a user must be able to
+			perform on users, other than the default ``view`` action.
+		:param conditions: Any additional conditions. :data:`True` by default,
+			meaning there are no conditions.
+		:param limit: A limit.
+		:param offset: An offset.
+		:param ids_only: Whether or not to only return a query for IDs.
+
+		:returns: The query.
+		"""
+
+		return (
+			sqlalchemy.select(
+				cls if not ids_only else cls.id
+			).
+			where(
+				sqlalchemy.and_(
+					sqlalchemy.and_(
+						self.action_queries[action]
+						for action in additional_actions
+					) if additional_actions is not None else True,
+					conditions
+				)
+			).
+			limit(limit).
+			offset(offset)
+		)
 
 	@sqlalchemy.ext.hybrid.hybrid_property
 	def has_content(self: User) -> bool:

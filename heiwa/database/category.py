@@ -106,6 +106,10 @@ class Category(
 		Whether or not a user can view categories. This depends on the
 		``forum_view`` value in their
 		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	.. seealso::
+		:attr:`.Group.instance_actions`
+		:attr:`.Group.action_queries`
 	"""
 
 	instance_actions = {
@@ -147,25 +151,11 @@ class Category(
 		associated with any forum, always :data:`True` by default as long as
 		the user has permission to view forums. If it is associated with one,
 		it depends on the user being able to view that forum.
+
+	.. seealso::
+		:attr:`.Group.class_actions`
+		:attr:`.Group.action_queries`
 	"""
-
-	@classmethod
-	def _action_query_create(cls: Category, user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
-		allowed to create categories.
-
-		:param user: The user, a :class:`.User`.
-
-		:returns: The query.
-		"""
-
-		from .forum import ForumParsedPermissions
-
-		return (
-			ForumParsedPermissions.category_create.is_(True)
-			if ~cls.forum_id.is_(None)
-			else user.parsed_permissions["category_create"]
-		)
 
 	@classmethod
 	def _action_query_delete(cls: Category, user) -> bool:
@@ -179,10 +169,13 @@ class Category(
 
 		from .forum import ForumParsedPermissions
 
-		return (
-			ForumParsedPermissions.category_delete.is_(True)
-			if ~cls.forum_id.is_(None)
-			else user.parsed_permissions["category_delete"]
+		return sqlalchemy.and_(
+			cls._action_query_view(user),
+			(
+				ForumParsedPermissions.category_delete.is_(True)
+				if ~cls.forum_id.is_(None)
+				else user.parsed_permissions["category_delete"]
+			)
 		)
 
 	@classmethod
@@ -197,10 +190,13 @@ class Category(
 
 		from .forum import ForumParsedPermissions
 
-		return (
-			ForumParsedPermissions.category_edit.is_(True)
-			if ~cls.forum_id.is_(None)
-			else user.parsed_permissions["category_edit"]
+		return sqlalchemy.and_(
+			cls._action_query_view(user),
+			(
+				ForumParsedPermissions.category_edit.is_(True)
+				if ~cls.forum_id.is_(None)
+				else user.parsed_permissions["category_edit"]
+			)
 		)
 
 	@classmethod
@@ -222,13 +218,14 @@ class Category(
 		)
 
 	action_queries = {
-		"create": _action_query_create,
 		"delete": _action_query_delete,
 		"edit": _action_query_edit,
 		"view": _action_query_view
 	}
 	"""Actions and their required permissions translated to be evaluable within
-	SQL queries.
+	SQL queries. Unless arbitrary additional attributes come into play, these
+	permissions will generally be the same as
+	:attr:`instance_actions <.Group.instance_actions>`.
 
 	.. seealso::
 		:attr:`.Category.instance_actions`
@@ -268,7 +265,7 @@ class Category(
 		:param user: The user whose permissions should be evaluated.
 		:param session: The SQLAlchemy session to execute additional queries with.
 		:param additional_actions: Additional actions that a user must be able to
-			perform on this category, other than the default ``view`` action.
+			perform on categories, other than the default ``view`` action.
 		:param conditions: Any additional conditions. :data:`True` by default,
 			meaning there are no conditions.
 		:param limit: A limit.

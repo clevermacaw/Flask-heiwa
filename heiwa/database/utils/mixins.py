@@ -543,7 +543,8 @@ class PermissionControlMixin:
 		:param user: The user whose permissions should be evaluated.
 		:param session: The SQLAlchemy session to execute additional queries with.
 		:param additional_actions: Additional actions that a user must be able to
-			perform on this object, other than the default ``view`` action.
+			perform on instances of the mixed-in class, other than the default
+			``view`` action.
 		:param conditions: Any additional conditions. :data:`True` by default,
 			meaning there are no conditions.
 		:param limit: A limit.
