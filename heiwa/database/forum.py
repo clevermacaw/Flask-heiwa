@@ -781,61 +781,61 @@ class Forum(
 		:meth:`.Forum.get_child_level`
 	"""
 
-	class_actions = {
-		"create": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+	static_actions = {
+		"create": lambda user: (
+			Forum.get_static_permission(user, "view") and
 			user.parsed_permissions["forum_create"]
 		),
-		"create_child_forum": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"create_child_forum": lambda user: (
+			Forum.get_static_permission(user, "view") and
 			user.parsed_permissions["forum_create"]
 		),
-		"create_thread": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"create_thread": lambda user: (
+			Forum.get_static_permission(user, "view") and
 			user.parsed_permissions["thread_view"] and
 			user.parsed_permissions["thread_create"]
 		),
-		"create_thread_locked": lambda cls, user: (
-			cls.get_class_permission(user, "create_thread") and
+		"create_thread_locked": lambda user: (
+			Forum.get_static_permission(user, "create_thread") and
 			user.parsed_permissions["thread_edit_lock_own"]
 		),
-		"create_thread_pinned": lambda cls, user: (
-			cls.get_class_permission(user, "create_thread") and
+		"create_thread_pinned": lambda user: (
+			Forum.get_static_permission(user, "create_thread") and
 			user.parsed_permissions["thread_edit_pin"]
 		),
-		"delete": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"delete": lambda user: (
+			Forum.get_static_permission(user, "view") and
 			user.parsed_permissions["forum_delete"]
 		),
-		"edit": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"edit": lambda user: (
+			Forum.get_static_permission(user, "view") and
 			user.parsed_permissions["forum_edit"]
 		),
-		"edit_permissions_group": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
-			cls.get_class_permission(user, "edit")
+		"edit_permissions_group": lambda user: (
+			Forum.get_static_permission(user, "view") and
+			Forum.get_static_permission(user, "edit")
 		),
-		"edit_permissions_user": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
-			cls.get_class_permission(user, "edit")
+		"edit_permissions_user": lambda user: (
+			Forum.get_static_permission(user, "view") and
+			Forum.get_static_permission(user, "edit")
 		),
-		"edit_subscription": lambda cls, user: (
-			cls.get_class_permission(user, "view")
+		"edit_subscription": lambda user: (
+			Forum.get_static_permission(user, "view")
 		),
-		"merge": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"merge": lambda user: (
+			Forum.get_static_permission(user, "view") and
 			user.parsed_permissions["forum_merge"]
 		),
-		"move": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"move": lambda user: (
+			Forum.get_static_permission(user, "view") and
 			user.parsed_permissions["forum_move"]
 		),
-		"view": lambda cls, user: user.parsed_permissions["forum_view"],
-		"view_permissions_group": lambda cls, user: (
-			cls.get_class_permission(user, "view")
+		"view": lambda user: user.parsed_permissions["forum_view"],
+		"view_permissions_group": lambda user: (
+			Forum.get_static_permission(user, "view")
 		),
-		"view_permissions_user": lambda cls, user: (
-			cls.get_class_permission(user, "view")
+		"view_permissions_user": lambda user: (
+			Forum.get_static_permission(user, "view")
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all threads, without
@@ -982,7 +982,7 @@ class Forum(
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given forum. Unlike
-	:attr:`class_actions <.Forum.class_actions>`, this can vary by each forum.
+	:attr:`static_actions <.Forum.static_actions>`, this can vary by each forum.
 
 	``create_child_forum``:
 		Whether or not a user can create child forums within this forum. This

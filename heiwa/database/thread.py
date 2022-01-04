@@ -278,59 +278,59 @@ class Thread(
 		:class:`.ThreadVote`
 	"""
 
-	class_actions = {
-		"create": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+	static_actions = {
+		"create": lambda user: (
+			Post.get_static_permission(user, "view") and
 			user.parsed_permissions["thread_create"]
 		),
-		"create_post": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"create_post": lambda user: (
+			Post.get_static_permission(user, "view") and
 			user.parsed_permissions["post_view"] and
 			user.parsed_permissions["post_create"]
 		),
-		"delete": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
+		"delete": lambda user: (
+			Post.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_delete_own"] or
 				user.parsed_permissions["thread_delete_any"]
 			)
 		),
-		"edit": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
+		"edit": lambda user: (
+			Post.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_edit_own"] or
 				user.parsed_permissions["thread_edit_any"]
 			)
 		),
-		"edit_lock": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
+		"edit_lock": lambda user: (
+			Post.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_edit_lock_own"] or
 				user.parsed_permissions["thread_edit_lock_any"]
 			)
 		),
-		"edit_pin": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"edit_pin": lambda user: (
+			Post.get_static_permission(user, "view") and
 			user.parsed_permissions["thread_edit_pin"]
 		),
-		"edit_subscription": lambda cls, user: (
-			cls.get_class_permission(user, "view")
+		"edit_subscription": lambda user: (
+			Post.get_static_permission(user, "view")
 		),
-		"edit_vote": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"edit_vote": lambda user: (
+			Post.get_static_permission(user, "view") and
 			user.parsed_permissions["thread_edit_vote"]
 		),
-		"merge": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
+		"merge": lambda user: (
+			Post.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_merge_own"] or
 				user.parsed_permissions["thread_merge_any"]
 			)
 		),
-		"move": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
+		"move": lambda user: (
+			Post.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_move_own"] or
 				user.parsed_permissions["thread_move_any"]
 			)
 		),
-		"view": lambda cls, user: user.parsed_permissions["thread_view"],
-		"view_vote": lambda cls, user: cls.get_class_permission(user, "view")
+		"view": lambda user: user.parsed_permissions["thread_view"],
+		"view_vote": lambda user: Post.get_static_permission(user, "view")
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all threads, without
 	any indication of which thread it is.
@@ -398,6 +398,11 @@ class Thread(
 	``view_vote``:
 		Whether or not a user can view their votes for threads. As long as they
 		have permission to view them, this will always be :data:`True` by default.
+
+	.. seealso::
+		:attr:`.Thread.instance_actions`
+
+		:attr:`.Thread.action_queries`
 	"""
 
 	instance_actions = {
@@ -483,7 +488,7 @@ class Thread(
 		"view_vote": lambda self, user: self.get_instance_permission(user, "view")
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given thread. Unlike
-	:attr:`class_actions <.Thread.class_actions>`, this can vary by each thread.
+	:attr:`static_actions <.Thread.static_actions>`, this can vary by each thread.
 
 	``create_post``:
 		Whether or not a user can create posts this thread. This depends on the
@@ -551,6 +556,86 @@ class Thread(
 		:class:`.ForumParsedPermissions`
 
 		:meth:`.Forum.reparse_permissions`
+
+		:attr:`.Thread.static_actions`
+
+		:attr:`.Thread.action_queries`
+	"""
+
+	@staticmethod
+	def _action_query_create_post(user) -> bool:
+		r"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to create :class:`.Post`\ s in threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .post import Post
+
+		return sqlalchemy.and_(
+			Thread._action_query_view(user),
+			Post.action_queries["view"](user),
+			Post.action_queries["create"](user)
+		)
+
+	@staticmethod
+	def _action_query_delete(user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to delete threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		return sqlalchemy.and_(
+			Thread.action_queries["view"](user),
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					Thread.user_id == user.id,
+					ForumParsedPermissions.thread_delete_own.is_(True)
+				),
+				ForumParsedPermissions.thread_delete_any.is_(True)
+			)
+		)
+
+	@staticmethod
+	def _action_query_edit(user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to delete threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		return sqlalchemy.and_(
+			Thread.action_queries["view"](user),
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					Thread.user_id == user.id,
+					ForumParsedPermissions.thread_edit_own.is_(True)
+				),
+				ForumParsedPermissions.thread_edit_any.is_(True)
+			)
+		)
+
+	# TODO: py 3.10
+	action_queries = {
+		"create_post": _action_query_create_post,
+		"delete": _action_query_delete,
+		"edit": _action_query_edit,
+	}
+	"""Actions and their required permissions translated to be evaluable within
+	SQL queries. Unless arbitrary additional attributes come into play, these
+	permissions will generally be the same as
+	:attr:`instance_actions <.Thread.instance_actions>`.
+
+	.. seealso::
+		:attr:`.Thread.instance_actions`
+		:attr:`.Thread.static_actions`
 	"""
 
 	NOTIFICATION_TYPES = (

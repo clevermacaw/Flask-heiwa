@@ -435,24 +435,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	for their respective forums, they're automatically calculated.
 	"""
 
-	inner_conditions = sqlalchemy.and_(
-		database.Thread.forum_id == database.ForumParsedPermissions.forum_id,
-		database.ForumParsedPermissions.user_id == flask.g.user.id
-	)
-
-	parsed_forum_permissions_exist_query = (
-		generate_parsed_forum_permissions_exist_query(inner_conditions)
-	)
-
-	conditions = sqlalchemy.or_(
-		~parsed_forum_permissions_exist_query,
-		generate_parsed_forum_permissions_exist_query(
-			sqlalchemy.and_(
-				inner_conditions,
-				database.ForumParsedPermissions.thread_view.is_(True)
-			)
-		)
-	)
+	conditions = True
 
 	if "filter" in flask.g.json:
 		conditions = sqlalchemy.and_(
@@ -468,42 +451,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		flask.g.json["order"]["by"]
 	)
 
-	thread_without_parsed_forum_permissions_exists = False
-	first_iteration = True
-
-	while first_iteration or thread_without_parsed_forum_permissions_exists:
-		first_iteration = False
-		thread_without_parsed_forum_permissions_exists = False
-
-		rows = flask.g.sa_session.execute(
-			sqlalchemy.select(
-				database.Thread,
-				parsed_forum_permissions_exist_query
-			).
-			where(conditions).
-			order_by(
-				sqlalchemy.asc(order_column)
-				if flask.g.json["order"]["asc"]
-				else sqlalchemy.desc(order_column)
-			).
-			limit(flask.g.json["limit"]).
-			offset(flask.g.json["offset"])
-		).all()
-
-		threads = []
-
-		for row in rows:
-			thread, parsed_forum_permissions_exist = row
-
-			if not parsed_forum_permissions_exist:
-				thread_without_parsed_forum_permissions_exists = True
-
-				thread.forum.reparse_permissions(flask.g.user)
-
-			threads.append(thread)
-
-		if thread_without_parsed_forum_permissions_exists:
-			flask.g.sa_session.commit()
+	# TODO
 
 	return flask.jsonify(threads), statuses.OK
 
@@ -1122,5 +1070,5 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify(
-		database.Thread.get_allowed_class_actions(flask.g.user)
+		database.Thread.get_allowed_static_actions(flask.g.user)
 	), statuses.OK

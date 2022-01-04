@@ -264,9 +264,8 @@ class BasePermissionMixin:
 class CDWMixin:
 	"""A mixin used to simplify the creation and deletion of objects."""
 
-	@classmethod
+	@staticmethod
 	def create(
-		cls: CDWMixin,
 		session: sqlalchemy.orm.Session,
 		*args,
 		**kwargs
@@ -275,7 +274,7 @@ class CDWMixin:
 		and calls the :meth:`write <.CDWMixin.write>` method.
 		"""
 
-		self = cls(
+		self = __class__(
 			*args,
 			**kwargs
 		)
@@ -384,18 +383,18 @@ class IdMixin:
 class PermissionControlMixin:
 	"""A helper mixin used to handle permissions."""
 
-	class_actions = {}
+	static_actions = {}
 	"""The actions a user is / isn't allowed to perform on any instance of the
 	mixed-in object.
 
 	.. seealso::
-		:meth:`.PermissionControlMixin.get_allowed_class_actions`
+		:meth:`.PermissionControlMixin.get_allowed_static_actions`
 	"""
 
 	instance_actions = {}
 	"""The actions a user is / isn't allowed to perform on one given instance of
 	the mixed-in object. Unlike
-	:attr:`class_actions <.PermissionControlMixin.class_actions>`, this can and
+	:attr:`static_actions <.PermissionControlMixin.static_actions>`, this can and
 	should vary with each instance.
 
 	.. seealso::
@@ -421,20 +420,17 @@ class PermissionControlMixin:
 		:meth:`.PermissionControlMixin.get_allowed_columns`
 	"""
 
-	@classmethod
-	def get_allowed_class_actions(
-		cls: PermissionControlMixin,
-		user
-	) -> typing.List[str]:
+	@staticmethod
+	def get_allowed_static_actions(user) -> typing.List[str]:
 		"""Returns all actions that ``user`` is allowed to perform as per the
 		mixed-in class's
-		:attr:`class_actions <.PermissionControlMixin.class_actions>`.
+		:attr:`static_actions <.PermissionControlMixin.static_actions>`.
 		"""
 
 		return [
 			action_name
-			for action_name, action_func in cls.class_actions.items()
-			if action_func(cls, user)
+			for action_name, action_func in __class__.static_actions.items()
+			if action_func(__class__, user)
 		]
 
 	def get_allowed_instance_actions(
@@ -443,7 +439,7 @@ class PermissionControlMixin:
 	) -> typing.List[str]:
 		"""Returns all actions that ``user`` is allowed to perform as per the
 		current instance of the mixed-in class's
-		:attr:`class_actions <.PermissionControlMixin.instance_actions>`.
+		:attr:`static_actions <.PermissionControlMixin.instance_actions>`.
 		"""
 
 		return [
@@ -479,22 +475,21 @@ class PermissionControlMixin:
 			if column_func(self, user)
 		]
 
-	@classmethod
-	def get_class_permission(
-		cls: PermissionControlMixin,
+	@staticmethod
+	def get_static_permission(
 		user,
 		action: str
 	) -> bool:
 		"""Returns whether or not ``user`` is allowed to perform ``action``, as
 		per the mixed-in class's
-		:attr:`class_actions <.PermissionControlMixin.class_actions>`. If
+		:attr:`static_actions <.PermissionControlMixin.static_actions>`. If
 		``action`` isn't present there, :data:`True` is automatically returned.
 		"""
 
-		if action not in cls.class_actions:
+		if action not in __class__.static_actions:
 			return True
 
-		return cls.class_actions[action](cls, user)
+		return __class__.static_actions[action](user)
 
 	def get_instance_permission(
 		self: PermissionControlMixin,
@@ -512,10 +507,9 @@ class PermissionControlMixin:
 
 		return self.instance_actions[action](self, user)
 
-	@classmethod
+	@staticmethod
 	@abc.abstractmethod
 	def get(
-		cls: PermissionControlMixin,
 		user,
 		session: sqlalchemy.orm.Session,
 		additional_actions: typing.Union[

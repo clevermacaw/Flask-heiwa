@@ -209,13 +209,13 @@ def validate_json(
 	],
 	*args,
 	**kwargs
-) -> collections.abc.Callable[
-	collections.abc.Callable[
-		typing.Any,
+) -> typing.Callable[
+	typing.Callable[
+		[typing.Any],
 		typing.Any
 	],
-	collections.abc.Callable[
-		typing.Any,
+	typing.Callable[
+		[typing.Any],
 		typing.Any
 	]
 ]:
@@ -233,12 +233,12 @@ def validate_json(
 	"""
 
 	def wrapper(
-		function: collections.abc.Callable[
-			typing.Any,
+		function: typing.Callable[
+			[typing.Any],
 			typing.Any
 		]
-	) -> collections.abc.Callable[
-		typing.Any,
+	) -> typing.Callable[
+		[typing.Any],
 		typing.Any
 	]:
 		@functools.wraps(function)

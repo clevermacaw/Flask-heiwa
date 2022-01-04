@@ -1,6 +1,5 @@
 """Authentication for the API."""
 
-import collections.abc
 import datetime
 import functools
 import typing
@@ -15,12 +14,12 @@ __version__ = "3.2.5"
 
 
 def authenticate_via_jwt(
-	function: collections.abc.Callable[
-		typing.Any,
+	function: typing.Callable[
+		[typing.Any],
 		typing.Any
 	]
-) -> collections.abc.Callable[
-	typing.Any,
+) -> typing.Callable[
+	[typing.Any],
 	typing.Any
 ]:
 	"""If the HTTP ``Authorization`` header is present, derives the current

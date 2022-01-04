@@ -894,5 +894,5 @@ def authorized_actions_root() -> typing.Tuple[flask.Response, int]:
 	"""
 
 	return flask.jsonify(
-		database.Post.get_allowed_class_actions(flask.g.user)
+		database.Post.get_allowed_static_actions(flask.g.user)
 	), statuses.OK

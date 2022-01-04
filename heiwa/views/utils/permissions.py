@@ -1,4 +1,3 @@
-import collections.abc
 import functools
 import typing
 
@@ -20,13 +19,13 @@ def requires_permission(
 		sqlalchemy.orm.DeclarativeMeta,
 		heiwa.database.Base
 	]
-) -> collections.abc.Callable[
-	collections.abc.Callable[
-		typing.Any,
+) -> typing.Callable[
+	typing.Callable[
+		[typing.Any],
 		typing.Any
 	],
-	collections.abc.Callable[
-		typing.Any,
+	typing.Callable[
+		[typing.Any],
 		typing.Any
 	]
 ]:
@@ -36,12 +35,12 @@ def requires_permission(
 	"""
 
 	def wrapper(
-		function: collections.abc.Callable[
-			typing.Any,
+		function: typing.Callable[
+			[typing.Any],
 			typing.Any
 		]
-	) -> collections.abc.Callable[
-		typing.Any,
+	) -> typing.Callable[
+		[typing.Any],
 		typing.Any
 	]:
 		@functools.wraps(function)
@@ -73,7 +72,7 @@ def validate_permission(
 	if isinstance(resource, sqlalchemy.orm.DeclarativeMeta):
 		resource_name = resource.__name__
 
-		allowed = resource.get_class_permission(
+		allowed = resource.get_static_permission(
 			user,
 			action
 		)

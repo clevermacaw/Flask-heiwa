@@ -181,35 +181,35 @@ class Post(
 		lazy=True
 	)
 
-	class_actions = {
-		"create": lambda cls, user: (
-			cls.get_instance_permission(user, "view") and
+	static_actions = {
+		"create": lambda user: (
+			Post.get_instance_permission(user, "view") and
 			user.parsed_permissions["post_create"]
 		),
-		"delete": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
+		"delete": lambda user: (
+			Post.get_static_permission(user, "view") and (
 				user.parsed_permissions["post_delete_own"] or
 				user.parsed_permissions["post_delete_any"]
 			)
 		),
-		"edit": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
+		"edit": lambda user: (
+			Post.get_static_permission(user, "view") and (
 				user.parsed_permissions["post_edit_own"] or
 				user.parsed_permissions["post_edit_any"]
 			)
 		),
-		"edit_vote": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"edit_vote": lambda user: (
+			Post.get_static_permission(user, "view") and
 			user.parsed_permissions["post_edit_vote"]
 		),
-		"move": lambda cls, user: (
-			cls.get_class_permission(user, "view") and (
+		"move": lambda user: (
+			Post.get_static_permission(user, "view") and (
 				user.parsed_permissions["post_move_own"] or
 				user.parsed_permissions["post_move_any"]
 			)
 		),
-		"view": lambda cls, user: user.parsed_permissions["post_view"],
-		"view_vote": lambda cls, user: cls.get_class_permission(user, "view")
+		"view": lambda user: user.parsed_permissions["post_view"],
+		"view_vote": lambda user: Post.get_static_permission(user, "view")
 	}
 
 	instance_actions = {

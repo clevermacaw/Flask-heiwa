@@ -58,7 +58,8 @@ class ConfiguredLockFlask(flask.Flask):
 		elif not configured:
 			open(location, "w").close()
 
-		self.configured.fget.cache_clear()
+		# FIXME
+		# self.configured.fget.cache_clear()
 
 
 def create_app() -> ConfiguredLockFlask:

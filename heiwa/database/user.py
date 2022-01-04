@@ -490,27 +490,27 @@ class User(
 		lazy=True
 	)
 
-	class_actions = {
-		"delete": lambda cls, user: True,
-		"edit": lambda cls, user: cls.get_class_permission(user, "view"),
-		"edit_ban": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+	static_actions = {
+		"delete": lambda user: True,
+		"edit": lambda user: User.get_static_permission(user, "view"),
+		"edit_ban": lambda user: (
+			User.get_static_permission(user, "view") and
 			user.parsed_permissions["user_edit_ban"]
 		),
-		"edit_block": lambda cls, user: cls.get_class_permission(user, "view"),
-		"edit_follow": lambda cls, user: cls.get_class_permission(user, "view"),
-		"edit_group": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"edit_block": lambda user: User.get_static_permission(user, "view"),
+		"edit_follow": lambda user: User.get_static_permission(user, "view"),
+		"edit_group": lambda user: (
+			User.get_static_permission(user, "view") and
 			user.parsed_permissions["user_edit_groups"]
 		),
-		"edit_permissions": lambda cls, user: (
-			cls.get_class_permission(user, "view") and
+		"edit_permissions": lambda user: (
+			User.get_static_permission(user, "view") and
 			user.parsed_permissions["user_edit_permissions"]
 		),
-		"view": lambda cls, user: True,
-		"view_ban": lambda cls, user: cls.get_class_permission(user, "view"),
-		"view_groups": lambda cls, user: cls.get_class_permission(user, "view"),
-		"view_permissions": lambda cls, user: cls.get_class_permission(user, "view")
+		"view": lambda user: True,
+		"view_ban": lambda user: User.get_static_permission(user, "view"),
+		"view_groups": lambda user: User.get_static_permission(user, "view"),
+		"view_permissions": lambda user: User.get_static_permission(user, "view")
 	}
 	r"""Actions a given user is allowed to perform on any user, without any
 	indication of which one it is.
@@ -568,6 +568,7 @@ class User(
 
 	.. seealso::
 		:attr:`.User.instance_actions`
+
 		:attr:`.User.action_queries`
 	"""
 
@@ -623,7 +624,7 @@ class User(
 		)
 	}
 	r"""Actions a given user is allowed to perform on another given user. Unlike
-	:attr:`class_actions <.User.class_actions>`, their identities are known and
+	:attr:`static_actions <.User.static_actions>`, their identities are known and
 	results may vary for each set of users.
 
 	``delete``:
@@ -695,7 +696,8 @@ class User(
 		this will always be :data:`True`.
 
 	.. seealso::
-		:attr:`.User.class_actions`
+		:attr:`.User.static_actions`
+
 		:attr:`.User.action_queries`
 	"""
 
@@ -744,7 +746,7 @@ class User(
 			user.highest_group.level > User.highest_group.level
 		),
 		"edit_permissions": lambda user: sqlalchemy.and_(
-			User.action_queries["view"](user)
+			User.action_queries["view"](user),
 			user.parsed_permissions["user_edit_permissions"],
 			user.highest_group.level > User.highest_group.level
 		),
@@ -760,7 +762,8 @@ class User(
 
 	.. seealso::
 		:attr:`.User.instance_actions`
-		:attr:`.User.class_actions`
+
+		:attr:`.User.static_actions`
 	"""
 
 	viewable_columns = {
@@ -914,9 +917,8 @@ class User(
 		if self.parsed_permissions == {}:
 			self.reparse_permissions(session)
 
-	@classmethod
+	@staticmethod
 	def get(
-		cls: User,
 		user,
 		session: sqlalchemy.orm.Session,
 		additional_actions: typing.Union[
@@ -963,7 +965,7 @@ class User(
 
 		return (
 			sqlalchemy.select(
-				cls if not ids_only else cls.id
+				User if not ids_only else User.id
 			).
 			where(
 				sqlalchemy.and_(

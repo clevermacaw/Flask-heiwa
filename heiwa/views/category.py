@@ -13,18 +13,20 @@ category_blueprint = flask.Blueprint(
 )
 category_blueprint.json_encoder = encoders.JSONEncoder
 
-# TODO
 
 # WARNING: This endpoint is not finished, and is only meant for testing
 # environments.
 @category_blueprint.route("", methods=["GET"])
 @authentication.authenticate_via_jwt
 def list_():
-	print(
-		database.Category.get(
-			flask.g.user,
-			flask.g.sa_session
-		)
+	return flask.jsonify(
+		flask.g.sa_session.execute(
+			database.Category.get(
+				flask.g.user,
+				flask.g.sa_session,
+				additional_actions=["delete"]
+			)
+		).scalars().all()
 	)
 
 	return "Did it work?"

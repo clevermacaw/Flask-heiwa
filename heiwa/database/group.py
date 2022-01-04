@@ -119,15 +119,15 @@ class Group(
 	it's default for all users.
 	"""
 
-	class_actions = {
-		"create": lambda cls, user: user.parsed_permissions["group_create"],
-		"delete": lambda cls, user: user.parsed_permissions["group_delete"],
-		"edit": lambda cls, user: user.parsed_permissions["group_edit"],
-		"edit_permissions": lambda cls, user: (
+	static_actions = {
+		"create": lambda user: user.parsed_permissions["group_create"],
+		"delete": lambda user: user.parsed_permissions["group_delete"],
+		"edit": lambda user: user.parsed_permissions["group_edit"],
+		"edit_permissions": lambda user: (
 			user.parsed_permissions["group_edit_permissions"]
 		),
-		"view": lambda cls, user: True,
-		"view_permissions": lambda cls, user: cls.get_class_permission(user, "view")
+		"view": lambda user: True,
+		"view_permissions": lambda user: Group.get_static_permission(user, "view")
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all groups, without
 	any indication of which group it is.
@@ -183,7 +183,7 @@ class Group(
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given group. Unlike
-	:attr:`class_actions <.Group.class_actions>`, this can vary by each group.
+	:attr:`static_actions <.Group.static_actions>`, this can vary by each group.
 
 	``delete``:
 		Whether or not a user can delete this group. This will be :data:`True`
