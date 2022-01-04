@@ -183,38 +183,38 @@ class Post(
 
 	static_actions = {
 		"create": lambda user: (
-			Post.get_instance_permission(user, "view") and
+			Post.instance_actions["view"](user) and
 			user.parsed_permissions["post_create"]
 		),
 		"delete": lambda user: (
-			Post.get_static_permission(user, "view") and (
+			Post.static_actions["view"](user) and (
 				user.parsed_permissions["post_delete_own"] or
 				user.parsed_permissions["post_delete_any"]
 			)
 		),
 		"edit": lambda user: (
-			Post.get_static_permission(user, "view") and (
+			Post.static_actions["view"](user) and (
 				user.parsed_permissions["post_edit_own"] or
 				user.parsed_permissions["post_edit_any"]
 			)
 		),
 		"edit_vote": lambda user: (
-			Post.get_static_permission(user, "view") and
+			Post.static_actions["view"](user) and
 			user.parsed_permissions["post_edit_vote"]
 		),
 		"move": lambda user: (
-			Post.get_static_permission(user, "view") and (
+			Post.static_actions["view"](user) and (
 				user.parsed_permissions["post_move_own"] or
 				user.parsed_permissions["post_move_any"]
 			)
 		),
 		"view": lambda user: user.parsed_permissions["post_view"],
-		"view_vote": lambda user: Post.get_static_permission(user, "view")
+		"view_vote": lambda user: Post.static_actions["view"](user)
 	}
 
 	instance_actions = {
 		"delete": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
+			self.instance_actions["view"](user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).post_delete_own
@@ -223,7 +223,7 @@ class Post(
 			)
 		),
 		"edit": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
+			self.instance_actions["view"](user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).post_edit_own
@@ -232,11 +232,11 @@ class Post(
 			)
 		),
 		"edit_vote": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.forum.get_parsed_permissions(user).post_edit_vote
 		),
 		"move": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
+			self.instance_actions["view"](user) and (
 				(
 					self.thread.user_id == user.id and
 					self.forum.get_parsed_permissions(user).post_move_own
@@ -245,7 +245,7 @@ class Post(
 			) and (
 				not hasattr(self, "future_thread") or
 				(
-					self.future_thread.get_instance_permission(user, "view") and
+					self.future_thread.instance_actions["view"](user) and
 					(
 						(
 							self.future_thread.user_id == user.id and
@@ -260,7 +260,7 @@ class Post(
 			self.forum.get_parsed_permissions(user).post_view
 		),
 		"view_vote": lambda self, user: (
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		)
 	}
 

@@ -127,7 +127,7 @@ class Group(
 			user.parsed_permissions["group_edit_permissions"]
 		),
 		"view": lambda user: True,
-		"view_permissions": lambda user: Group.get_static_permission(user, "view")
+		"view_permissions": lambda user: Group.static_actions["view"](user)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all groups, without
 	any indication of which group it is.
@@ -163,23 +163,23 @@ class Group(
 
 	instance_actions = {
 		"delete": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			user.parsed_permissions["group_delete"] and
 			self.level < user.highest_group.level
 		),
 		"edit": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			user.parsed_permissions["group_edit"] and
 			self.level < user.highest_group.level
 		),
 		"edit_permissions": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			user.parsed_permissions["group_edit_permissions"] and
 			self.level < user.highest_group.level
 		),
 		"view": lambda self, user: True,
 		"view_permissions": lambda self, user: (
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given group. Unlike

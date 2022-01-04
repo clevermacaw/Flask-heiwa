@@ -781,61 +781,99 @@ class Forum(
 		:meth:`.Forum.get_child_level`
 	"""
 
+	def _static_action_create_thread(user) -> bool:
+		r"""Checks whether or not the ``user`` is allowed to create
+		:class:`.Thread`\ s without knowledge of which forum it'll be done in.
+
+		:param user: The user.
+
+		:returns: The result.
+		"""
+
+		from .thread import Thread
+
+		return Thread.static_actions["create"](user)
+
+	def _static_action_create_thread_locked(user) -> bool:
+		r"""Checks whether or not the ``user`` is allowed to create locked
+		:class:`.Thread`\ s without knowledge of which forum it'll be done in.
+
+		:param user: The user.
+
+		:returns: The result.
+		"""
+
+		from .thread import Thread
+
+		return Thread.static_actions["edit_lock"](user)
+
+	def _static_action_create_thread_pinned(user) -> bool:
+		r"""Checks whether or not the ``user`` is allowed to create pinned
+		:class:`.Thread`\ s without knowledge of which forum it'll be done in.
+
+		:param user: The user.
+
+		:returns: The result.
+		"""
+
+		from .thread import Thread
+
+		return Thread.static_actions["edit_pin"](user)
+
 	static_actions = {
 		"create": lambda user: (
-			Forum.get_static_permission(user, "view") and
+			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_create"]
 		),
 		"create_child_forum": lambda user: (
-			Forum.get_static_permission(user, "view") and
+			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_create"]
 		),
 		"create_thread": lambda user: (
-			Forum.get_static_permission(user, "view") and
-			user.parsed_permissions["thread_view"] and
-			user.parsed_permissions["thread_create"]
+			Forum.static_actions["view"](user) and
+			Forum._static_action_create_thread(user)
 		),
 		"create_thread_locked": lambda user: (
-			Forum.get_static_permission(user, "create_thread") and
-			user.parsed_permissions["thread_edit_lock_own"]
+			Forum.static_actions["create_thread"](user) and
+			Forum._static_action_create_thread_locked(user)
 		),
 		"create_thread_pinned": lambda user: (
-			Forum.get_static_permission(user, "create_thread") and
-			user.parsed_permissions["thread_edit_pin"]
+			Forum.static_actions["create_thread"](user) and
+			Forum._static_action_create_thread_pinned(user)
 		),
 		"delete": lambda user: (
-			Forum.get_static_permission(user, "view") and
+			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_delete"]
 		),
 		"edit": lambda user: (
-			Forum.get_static_permission(user, "view") and
+			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_edit"]
 		),
 		"edit_permissions_group": lambda user: (
-			Forum.get_static_permission(user, "view") and
-			Forum.get_static_permission(user, "edit")
+			Forum.static_actions["view"](user) and
+			Forum.static_actions["edit"](user)
 		),
 		"edit_permissions_user": lambda user: (
-			Forum.get_static_permission(user, "view") and
-			Forum.get_static_permission(user, "edit")
+			Forum.static_actions["view"](user) and
+			Forum.static_actions["edit"](user)
 		),
 		"edit_subscription": lambda user: (
-			Forum.get_static_permission(user, "view")
+			Forum.static_actions["view"](user)
 		),
 		"merge": lambda user: (
-			Forum.get_static_permission(user, "view") and
+			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_merge"]
 		),
 		"move": lambda user: (
-			Forum.get_static_permission(user, "view") and
+			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_move"]
 		),
 		"view": lambda user: user.parsed_permissions["forum_view"],
 		"view_permissions_group": lambda user: (
-			Forum.get_static_permission(user, "view")
+			Forum.static_actions["view"](user)
 		),
 		"view_permissions_user": lambda user: (
-			Forum.get_static_permission(user, "view")
+			Forum.static_actions["view"](user)
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all threads, without
@@ -920,65 +958,72 @@ class Forum(
 		Whether or not a user is allowed to view users' permissions for forums.
 		As long as the user is allowed to view forums, always :data:`True` by
 		default.
+
+	.. seealso::
+		:attr:`.Forum.instance_actions`
+
+		:attr:`.Forum.action_queries`
 	"""
 
 	instance_actions = {
 		"create_child_forum": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.get_parsed_permissions(user).forum_create
 		),
 		"create_thread": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.get_parsed_permissions(user).thread_view and
 			self.get_parsed_permissions(user).thread_create
 		),
 		"create_thread_locked": lambda self, user: (
-			self.get_instance_permission(user, "create_thread") and
-			self.get_parsed_permissions(user).thread_edit_lock_own
+			self.instance_actions["create_thread"](user) and (
+				self.get_parsed_permissions(user).thread_edit_lock_own or
+				self.get_parsed_permissions(user).thread_edit_lock_any
+			)
 		),
 		"create_thread_pinned": lambda self, user: (
-			self.get_instance_permission(user, "create_thread") and
+			self.instance_actions["create_thread"](user) and
 			self.get_parsed_permissions(user).thread_edit_pin
 		),
 		"delete": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.get_parsed_permissions(user).forum_delete
 		),
 		"edit": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.get_parsed_permissions(user).forum_edit
 		),
 		"edit_permissions_group": lambda self, user: (
-			self.get_instance_permission(user, "view") and
-			self.get_instance_permission(user, "edit")
+			self.instance_actions["view"](user) and
+			self.instance_actions["edit"](user)
 		),
 		"edit_permissions_user": lambda self, user: (
-			self.get_instance_permission(user, "view") and
-			self.get_instance_permission(user, "edit")
+			self.instance_actions["view"](user) and
+			self.instance_actions["edit"](user)
 		),
 		"edit_subscription": lambda self, user: (
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		),
 		"merge": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.get_parsed_permissions(user).forum_merge and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.get_instance_permission(user, "merge")
+				self.future_forum.instance_actions["merge"](user)
 			)
 		),
 		"move": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.get_parsed_permissions(user).forum_move and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.get_instance_permission(user, "move")
+				self.future_forum.instance_actions["move"](user)
 			)
 		),
 		"view": lambda self, user: self.get_parsed_permissions(user).forum_view,
 		"view_permissions_group": lambda self, user: (
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		),
 		"view_permissions_user": lambda self, user: (
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given forum. Unlike
@@ -1055,6 +1100,66 @@ class Forum(
 		Whether or not a user is allowed to view users' permissions for this
 		forum. As long as they are allowed to view the forum itself, this will
 		always be :data:`True` by default.
+
+	.. seealso::
+		:attr:`.Forum.static_actions`
+
+		:attr:`.Forum.action_queries`
+	"""
+
+	action_queries = {
+		"create_child_forum": lambda user: sqlalchemy.and_(
+			Forum.action_queries["view"](user),
+			ForumParsedPermissions.forum_create.is_(True)
+		),
+		"create_thread": lambda user: sqlalchemy.and_(
+			Forum.action_queries["view"](user),
+			ForumParsedPermissions.thread_view.is_(True),
+			ForumParsedPermissions.thread_create.is_(True)
+		),
+		"create_thread_locked": lambda user: sqlalchemy.and_(
+			Forum.action_queries["create_thread"](user),
+			sqlalchemy.or_(
+				ForumParsedPermissions.thread_edit_lock_own.is_(True),
+				ForumParsedPermissions.thread_edit_lock_any.is_(True)
+			)
+		),
+		"create_thread_pinned": lambda user: sqlalchemy.and_(
+			Forum.action_queries["create_thread"](user),
+			ForumParsedPermissions.thread_edit_pin.is_(True)
+		),
+		"delete": lambda user: sqlalchemy.and_(
+			Forum.action_queries["view"](user),
+			ForumParsedPermissions.forum_delete
+		),
+		"edit": lambda user: sqlalchemy.and_(
+			Forum.action_queries["view"](user),
+			ForumParsedPermissions.forum_edit
+		),
+		"edit_permissions_group": lambda user: Forum.action_queries["edit"](user),
+		"edit_permissions_user": lambda user: Forum.action_queries["edit"](user),
+		"edit_subscription": lambda user: Forum.action_queries["view"](user),
+		"merge": lambda user: sqlalchemy.and_(
+			Forum.action_queries["view"](user),
+			ForumParsedPermissions.forum_merge.is_(True)
+		),
+		"move": lambda user: sqlalchemy.and_(
+			Forum.action_queries["view"](user),
+			ForumParsedPermissions.forum_move.is_(True)
+		),
+		"view": lambda user: ForumParsedPermissions.forum_view.is_(True),
+		"view_permissions_group": lambda user: Forum.action_queries["view"](user),
+		"view_permissions_user": lambda user: Forum.action_queries["view"](user)
+	}
+	"""Actions and their required permissions translated to be evaluable within
+	SQL queries. Unless arbitrary additional attributes come into play, these
+	permissions will generally be the same as
+	:attr:`instance_actions <.Forum.instance_actions>`.
+
+	.. seealso::
+		:attr:`.Forum.instance_actions`
+
+		:attr:`.Forum.static_actions`
 	"""
 
 	def delete(
@@ -1106,6 +1211,144 @@ class Forum(
 		)
 
 		CDWMixin.delete(self, session)
+
+	@staticmethod
+	def get(
+		user,
+		session: sqlalchemy.orm.Session,
+		additional_actions: typing.Union[
+			None,
+			typing.Iterable[str]
+		] = None,
+		conditions: typing.Union[
+			bool,
+			sqlalchemy.sql.expression.BinaryExpression,
+			sqlalchemy.sql.expression.ClauseList
+		] = True,
+		limit: typing.Union[
+			None,
+			int
+		] = None,
+		offset: typing.Union[
+			None,
+			int
+		] = None,
+		ids_only: bool = False
+	) -> sqlalchemy.sql.Select:
+		"""Generates a selection query with permissions already handled.
+
+		Since the forums' permissions may not be parsed, this will always emit
+		additional queries to check.
+
+		:param user: The user whose permissions should be evaluated.
+		:param session: The SQLAlchemy session to execute additional queries with.
+		:param additional_actions: Additional actions that a user must be able to
+			perform on forums, other than the default ``view`` action.
+		:param conditions: Any additional conditions. :data:`True` by default,
+			meaning there are no conditions.
+		:param limit: A limit.
+		:param offset: An offset.
+		:param ids_only: Whether or not to only return a query for IDs.
+
+		:returns: The query.
+		"""
+
+		inner_conditions = (
+			sqlalchemy.and_(
+				ForumParsedPermissions.forum_id == Forum.id,
+				ForumParsedPermissions.user_id == user.id
+			)
+		)
+
+		first_iteration = True
+		forum_without_parsed_permissions_exists = False
+
+		while (first_iteration or forum_without_parsed_permissions_exists):
+			first_iteration = False
+
+			rows = session.execute(
+				sqlalchemy.select(
+					Forum.id,
+					(
+						sqlalchemy.select(ForumParsedPermissions.forum_id).
+						where(inner_conditions).
+						exists()
+					)
+				).
+				where(
+					sqlalchemy.and_(
+						conditions,
+						sqlalchemy.or_(
+							~(
+								sqlalchemy.select(ForumParsedPermissions.forum_id).
+								where(inner_conditions).
+								exists()
+							),
+							(
+								sqlalchemy.select(ForumParsedPermissions.forum_id).
+								where(
+									sqlalchemy.and_(
+										inner_conditions,
+										Forum.action_queries["view"](user),
+										sqlalchemy.and_(
+											Forum.action_queries[action](user)
+											for action in additional_actions
+										) if additional_actions is not None else True
+									)
+								).
+								exists()
+							)
+						)
+					)
+				).
+				limit(limit).
+				offset(offset)
+			).all()
+
+			if len(rows) == 0:
+				# No need to hit the database with a complicated query twice
+				return (
+					# Just in case
+					sqlalchemy.select(Forum if not ids_only else Forum.id).
+					where(False)
+				)
+
+			forum_ids = []
+			unparsed_permission_forum_ids = []
+
+			for row in rows:
+				forum_id, parsed_permissions_exist = row
+
+				if not parsed_permissions_exist:
+					forum_without_parsed_permissions_exists = True
+					unparsed_permission_forum_ids.append(forum_id)
+
+					continue
+
+				forum_ids.append(forum_id)
+
+			if forum_without_parsed_permissions_exists:
+				for forum in (
+					session.execute(
+						sqlalchemy.select(Forum).
+						where(Forum.id.in_(unparsed_permission_forum_ids))
+					).scalars()
+				):
+					forum.reparse_permissions(user)
+
+			return (
+				sqlalchemy.select(
+					Forum if not ids_only else Forum.id
+				).
+				where(
+					sqlalchemy.and_(
+						Forum.id.in_(forum_ids),
+						conditions
+					)
+				).
+				limit(limit).
+				offset(offset)
+			)
 
 	def _get_child_forum_and_own_ids(
 		self: Forum,

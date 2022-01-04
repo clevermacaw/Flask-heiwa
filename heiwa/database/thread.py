@@ -278,63 +278,71 @@ class Thread(
 		:class:`.ThreadVote`
 	"""
 
-	# TODO: Move to functions where models are imported, so we don't
-	# have to repeat action permission conditions unless absolutely
-	# necessary
+	def _static_action_create_post(user) -> bool:
+		r"""Checks whether or not the ``user`` is allowed to create
+		:class:`.Post`\ s without knowledge of which thread it'll be done in.
+
+		:param user: The user.
+
+		:returns: The result.
+		"""
+
+		from .post import Post
+
+		return Post.static_actions["create"](user)
 
 	static_actions = {
 		"create": lambda user: (
-			Thread.get_static_permission(user, "view") and
+			Thread.static_actions["view"](user) and
 			user.parsed_permissions["thread_create"]
 		),
 		"create_post": lambda user: (
-			Thread.get_static_permission(user, "view") and
-			user.parsed_permissions["post_view"] and
-			user.parsed_permissions["post_create"]
+			Thread.static_actions["view"](user) and
+			Thread._static_action_create_post(user)
 		),
 		"delete": lambda user: (
-			Thread.get_static_permission(user, "view") and (
+			Thread.static_actions["view"](user) and (
 				user.parsed_permissions["thread_delete_own"] or
 				user.parsed_permissions["thread_delete_any"]
 			)
 		),
 		"edit": lambda user: (
-			Thread.get_static_permission(user, "view") and (
+			Thread.static_actions["view"](user) and (
 				user.parsed_permissions["thread_edit_own"] or
 				user.parsed_permissions["thread_edit_any"]
 			)
 		),
 		"edit_lock": lambda user: (
-			Thread.get_static_permission(user, "view") and (
+			Thread.static_actions["view"](user) and (
 				user.parsed_permissions["thread_edit_lock_own"] or
 				user.parsed_permissions["thread_edit_lock_any"]
 			)
 		),
 		"edit_pin": lambda user: (
-			Thread.get_static_permission(user, "view") and
+			Thread.static_actions["view"](user) and
 			user.parsed_permissions["thread_edit_pin"]
 		),
 		"edit_subscription": lambda user: (
-			Thread.get_static_permission(user, "view")
+			Thread.static_actions["view"](user)
 		),
 		"edit_vote": lambda user: (
-			Thread.get_static_permission(user, "view") and
+			Thread.static_actions["view"](user) and
 			user.parsed_permissions["thread_edit_vote"]
 		),
 		"merge": lambda user: (
-			Thread.get_static_permission(user, "view") and (
+			Thread.static_actions["view"](user) and (
 				user.parsed_permissions["thread_merge_own"] or
 				user.parsed_permissions["thread_merge_any"]
 			)
 		),
 		"move": lambda user: (
-			Thread.get_static_permission(user, "view") and (
+			Thread.static_actions["view"](user) and (
 				user.parsed_permissions["thread_move_own"] or
 				user.parsed_permissions["thread_move_any"]
 			)
 		),
 		"view": lambda user: user.parsed_permissions["thread_view"],
-		"view_vote": lambda user: Thread.get_static_permission(user, "view")
+		"view_vote": lambda user: Thread.static_actions["view"](user)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all threads, without
 	any indication of which thread it is.
@@ -411,12 +419,12 @@ class Thread(
 
 	instance_actions = {
 		"create_post": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.forum.get_parsed_permissions(user).post_view and
 			self.forum.get_parsed_permissions(user).post_create
 		),
 		"delete": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
+			self.instance_actions["view"](user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_delete_own
@@ -425,7 +433,7 @@ class Thread(
 			)
 		),
 		"edit": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
+			self.instance_actions["view"](user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_edit_own
@@ -434,7 +442,7 @@ class Thread(
 			)
 		),
 		"edit_lock": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
+			self.instance_actions["view"](user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_edit_lock_own
@@ -443,18 +451,18 @@ class Thread(
 			)
 		),
 		"edit_pin": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.forum.get_parsed_permissions(user).thread_edit_pin
 		),
 		"edit_subscription": lambda self, user: (
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		),
 		"edit_vote": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			self.forum.get_parsed_permissions(user).thread_edit_vote
 		),
 		"merge": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
+			self.instance_actions["view"](user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_merge_own
@@ -462,11 +470,11 @@ class Thread(
 				self.forum.get_parsed_permissions(user).thread_merge_any
 			) and (
 				not hasattr(self, "future_thread") or
-				self.future_thread.get_instance_permission(user, "merge")
+				self.future_thread.instance_actions["merge"](user)
 			)
 		),
 		"move": lambda self, user: (
-			self.get_instance_permission(user, "view") and (
+			self.instance_actions["view"](user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_move_own
@@ -475,7 +483,7 @@ class Thread(
 			) and (
 				not hasattr(self, "future_forum") or
 				(
-					self.future_forum.get_instance_permission(user, "view") and
+					self.future_forum.instance_actions["view"](user) and
 					(
 						(
 							self.future_forum.user_id == user.id and
@@ -489,7 +497,7 @@ class Thread(
 		"view": lambda self, user: (
 			self.forum.get_parsed_permissions(user).thread_view
 		),
-		"view_vote": lambda self, user: self.get_instance_permission(user, "view")
+		"view_vote": lambda self, user: self.instance_actions["view"](user)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given thread. Unlike
 	:attr:`static_actions <.Thread.static_actions>`, this can vary by each thread.
@@ -576,12 +584,12 @@ class Thread(
 		:returns: The query.
 		"""
 
-		from .post import Post
+		from .forum import ForumParsedPermissions
 
 		return sqlalchemy.and_(
 			Thread._action_query_view(user),
-			Post.action_queries["view"](user),
-			Post.action_queries["create"](user)
+			ForumParsedPermissions.post_view.is_(True),
+			ForumParsedPermissions.post_create.is_(True)
 		)
 
 	@staticmethod
@@ -767,6 +775,7 @@ class Thread(
 
 	.. seealso::
 		:attr:`.Thread.instance_actions`
+
 		:attr:`.Thread.static_actions`
 	"""
 
@@ -863,6 +872,150 @@ class Thread(
 			)
 
 		CDWMixin.write(self, session)
+
+	@staticmethod
+	def get(
+		user,
+		session: sqlalchemy.orm.Session,
+		additional_actions: typing.Union[
+			None,
+			typing.Iterable[str]
+		] = None,
+		conditions: typing.Union[
+			bool,
+			sqlalchemy.sql.expression.BinaryExpression,
+			sqlalchemy.sql.expression.ClauseList
+		] = True,
+		limit: typing.Union[
+			None,
+			int
+		] = None,
+		offset: typing.Union[
+			None,
+			int
+		] = None,
+		ids_only: bool = False
+	) -> sqlalchemy.sql.Select:
+		"""Generates a selection query with permissions already handled.
+
+		Since this thread's :class:`.Forum`'s permissions may not be parsed, this
+		will always emit additional queries to check.
+
+		:param user: The user whose permissions should be evaluated.
+		:param session: The SQLAlchemy session to execute additional queries with.
+		:param additional_actions: Additional actions that a user must be able to
+			perform on threads, other than the default ``view`` action.
+		:param conditions: Any additional conditions. :data:`True` by default,
+			meaning there are no conditions.
+		:param limit: A limit.
+		:param offset: An offset.
+		:param ids_only: Whether or not to only return a query for IDs.
+
+		:returns: The query.
+		"""
+
+		from .forum import Forum, ForumParsedPermissions
+
+		inner_conditions = (
+			sqlalchemy.and_(
+				ForumParsedPermissions.forum_id == Thread.forum_id,
+				ForumParsedPermissions.user_id == user.id
+			)
+		)
+
+		first_iteration = True
+		thread_without_parsed_forum_permissions_exists = False
+
+		while (first_iteration or thread_without_parsed_forum_permissions_exists):
+			first_iteration = False
+
+			rows = session.execute(
+				sqlalchemy.select(
+					Thread.id,
+					Thread.forum_id,
+					(
+						sqlalchemy.select(ForumParsedPermissions.forum_id).
+						where(inner_conditions).
+						exists()
+					)
+				).
+				where(
+					sqlalchemy.and_(
+						conditions,
+						sqlalchemy.or_(
+							~(
+								sqlalchemy.select(ForumParsedPermissions.forum_id).
+								where(inner_conditions).
+								exists()
+							),
+							(
+								sqlalchemy.select(ForumParsedPermissions.forum_id).
+								where(
+									sqlalchemy.and_(
+										inner_conditions,
+										Thread.action_queries["view"](user),
+										sqlalchemy.and_(
+											Thread.action_queries[action](user)
+											for action in additional_actions
+										) if additional_actions is not None else True
+									)
+								).
+								exists()
+							)
+						)
+					)
+				).
+				limit(limit).
+				offset(offset)
+			).all()
+
+			if len(rows) == 0:
+				# No need to hit the database with a complicated query twice
+				return (
+					sqlalchemy.select(Thread if not ids_only else Thread.id).
+					where(False)
+				)
+
+			thread_ids = []
+			unparsed_permission_forum_ids = []
+
+			for row in rows:
+				(
+					thread_id,
+					forum_id,
+					parsed_permissions_exist
+				) = row
+
+				if not parsed_permissions_exist:
+					thread_without_parsed_forum_permissions_exists = True
+					unparsed_permission_forum_ids.append(forum_id)
+
+					continue
+
+				thread_ids.append(thread_id)
+
+			if thread_without_parsed_forum_permissions_exists:
+				for forum in (
+					session.execute(
+						sqlalchemy.select(Forum).
+						where(Forum.id.in_(unparsed_permission_forum_ids))
+					).scalars()
+				):
+					forum.reparse_permissions(user)
+
+			return (
+				sqlalchemy.select(
+					Thread if not ids_only else Thread.id
+				).
+				where(
+					sqlalchemy.and_(
+						Thread.id.in_(thread_ids),
+						conditions
+					)
+				).
+				limit(limit).
+				offset(offset)
+			)
 
 	def get_subscriber_ids(
 		self: Thread,

@@ -476,38 +476,6 @@ class PermissionControlMixin:
 		]
 
 	@staticmethod
-	def get_static_permission(
-		user,
-		action: str
-	) -> bool:
-		"""Returns whether or not ``user`` is allowed to perform ``action``, as
-		per the mixed-in class's
-		:attr:`static_actions <.PermissionControlMixin.static_actions>`. If
-		``action`` isn't present there, :data:`True` is automatically returned.
-		"""
-
-		if action not in __class__.static_actions:
-			return True
-
-		return __class__.static_actions[action](user)
-
-	def get_instance_permission(
-		self: PermissionControlMixin,
-		user,
-		action: str
-	) -> bool:
-		"""Returns whether or not ``user`` is allowed to perform ``action``, as
-		per this instance of the mixed-in class's
-		:attr:`instance_actions <.PermissionControlMixin.instance_actions>`. If
-		``action`` isn't present there, :data:`True` is automatically returned.
-		"""
-
-		if action not in self.instance_actions:
-			return True
-
-		return self.instance_actions[action](self, user)
-
-	@staticmethod
 	@abc.abstractmethod
 	def get(
 		user,

@@ -72,17 +72,11 @@ def validate_permission(
 	if isinstance(resource, sqlalchemy.orm.DeclarativeMeta):
 		resource_name = resource.__name__
 
-		allowed = resource.get_static_permission(
-			user,
-			action
-		)
+		allowed = allowed = resource.static_actions[action](user)
 	else:
 		resource_name = resource.__class__.__name__
 
-		allowed = resource.get_instance_permission(
-			user,
-			action
-		)
+		allowed = resource.instance_actions[action](user)
 
 	if not allowed:
 		raise heiwa.exceptions.APINoPermission({

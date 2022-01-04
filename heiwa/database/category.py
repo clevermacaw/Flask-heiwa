@@ -127,7 +127,7 @@ class Category(
 		"view": lambda self, user: (
 			user.parsed_permissions["forum_view"]
 			if self.forum_id is None
-			else self.forum.get_instance_permission(user, "view")
+			else self.forum.instance_actions["view"](user)
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all categories, without
@@ -323,8 +323,7 @@ class Category(
 								where(
 									sqlalchemy.and_(
 										inner_conditions,
-										# TODO: Translate permissions
-										ForumParsedPermissions.category_view.is_(True),
+										Category.action_queries["view"](user),
 										sqlalchemy.and_(
 											Category.action_queries[action](user)
 											for action in additional_actions
@@ -341,10 +340,9 @@ class Category(
 			).all()
 
 			if len(rows) == 0:
-				# No need to hit the database with a complicated
-				# query twice
+				# No need to hit the database with a complicated query twice
 				return (
-					sqlalchemy.select(Category).
+					sqlalchemy.select(Category if not ids_only else Category.id).
 					where(False)
 				)
 

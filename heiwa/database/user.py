@@ -492,25 +492,25 @@ class User(
 
 	static_actions = {
 		"delete": lambda user: True,
-		"edit": lambda user: User.get_static_permission(user, "view"),
+		"edit": lambda user: User.static_actions["view"](user),
 		"edit_ban": lambda user: (
-			User.get_static_permission(user, "view") and
+			User.static_actions["view"](user) and
 			user.parsed_permissions["user_edit_ban"]
 		),
-		"edit_block": lambda user: User.get_static_permission(user, "view"),
-		"edit_follow": lambda user: User.get_static_permission(user, "view"),
+		"edit_block": lambda user: User.static_actions["view"](user),
+		"edit_follow": lambda user: User.static_actions["view"](user),
 		"edit_group": lambda user: (
-			User.get_static_permission(user, "view") and
+			User.static_actions["view"](user) and
 			user.parsed_permissions["user_edit_groups"]
 		),
 		"edit_permissions": lambda user: (
-			User.get_static_permission(user, "view") and
+			User.static_actions["view"](user) and
 			user.parsed_permissions["user_edit_permissions"]
 		),
 		"view": lambda user: True,
-		"view_ban": lambda user: User.get_static_permission(user, "view"),
-		"view_groups": lambda user: User.get_static_permission(user, "view"),
-		"view_permissions": lambda user: User.get_static_permission(user, "view")
+		"view_ban": lambda user: User.static_actions["view"](user),
+		"view_groups": lambda user: User.static_actions["view"](user),
+		"view_permissions": lambda user: User.static_actions["view"](user)
 	}
 	r"""Actions a given user is allowed to perform on any user, without any
 	indication of which one it is.
@@ -575,20 +575,20 @@ class User(
 	instance_actions = {
 		"delete": lambda self, user: (
 			self.id == user.id or (
-				self.get_instance_permission(user, "view") and
+				self.instance_actions["view"](user) and
 				user.parsed_permissions["user_delete"] and
 				user.highest_group.level > self.highest_group.level
 			)
 		),
 		"edit": lambda self, user: (
 			self.id == user.id or (
-				self.get_instance_permission(user, "view") and
+				self.instance_actions["view"](user) and
 				user.parsed_permissions["user_edit"] and
 				user.highest_group.level > self.highest_group.level
 			)
 		),
 		"edit_ban": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			user.parsed_permissions["user_edit_ban"] and (
 				self.id == user.id or
 				user.highest_group.level > self.highest_group.level
@@ -596,14 +596,14 @@ class User(
 		),
 		"edit_block": lambda self, user: (
 			self.id != user.id and
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		),
 		"edit_follow": lambda self, user: (
 			self.id != user.id and
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		),
 		"edit_group": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			user.parsed_permissions["user_edit_groups"] and
 			user.highest_group.level > self.highest_group.level and
 			(
@@ -612,15 +612,15 @@ class User(
 			)
 		),
 		"edit_permissions": lambda self, user: (
-			self.get_instance_permission(user, "view") and
+			self.instance_actions["view"](user) and
 			user.parsed_permissions["user_edit_permissions"] and
 			user.highest_group.level > self.highest_group.level
 		),
 		"view": lambda self, user: True,
-		"view_ban": lambda self, user: self.get_instance_permission(user, "view"),
-		"view_groups": lambda self, user: self.get_instance_permission(user, "view"),
+		"view_ban": lambda self, user: self.instance_actions["view"](user),
+		"view_groups": lambda self, user: self.instance_actions["view"](user),
 		"view_permissions": lambda self, user: (
-			self.get_instance_permission(user, "view")
+			self.instance_actions["view"](user)
 		)
 	}
 	r"""Actions a given user is allowed to perform on another given user. Unlike
@@ -948,7 +948,7 @@ class User(
 
 		.. note::
 			Viewing users is allowed for everyone, so this function should
-			primarily be used to evaluate ``addition_actions``
+			primarily be used to evaluate ``additional_actions``.
 
 		:param user: The user whose permissions should be evaluated.
 		:param session: The SQLAlchemy session to execute additional queries with.
@@ -969,6 +969,7 @@ class User(
 			).
 			where(
 				sqlalchemy.and_(
+					User.action_queries["view"](user),
 					sqlalchemy.and_(
 						User.action_queries[action]
 						for action in additional_actions
