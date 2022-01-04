@@ -1008,7 +1008,8 @@ def delete_permissions_group(
 
 	group = find_group_by_id(
 		group_id,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	forum.edited_group = group
@@ -1067,7 +1068,8 @@ def edit_permissions_group(
 
 	group = find_group_by_id(
 		group_id,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	forum.edited_group = group
@@ -1144,7 +1146,8 @@ def view_permissions_group(
 
 	group = find_group_by_id(
 		group_id,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -1189,7 +1192,8 @@ def delete_permissions_user(
 
 	user = find_user_by_id(
 		user_id,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	forum.edited_user = user
@@ -1246,7 +1250,8 @@ def edit_permissions_user(
 
 	user = find_user_by_id(
 		user_id,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	forum.edited_user = user
@@ -1321,7 +1326,8 @@ def view_permissions_user(
 
 	validate_user_exists(
 		user_id,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(

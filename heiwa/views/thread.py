@@ -311,71 +311,6 @@ SEARCH_SCHEMA_REGISTRY = generate_search_schema_registry({
 })
 
 
-def get_thread_ids_from_search(
-	conditions: typing.Union[
-		sqlalchemy.sql.expression.BinaryExpression,
-		sqlalchemy.sql.expression.ClauseList
-	],
-	parsed_forum_permissions_exist_query: sqlalchemy.sql.selectable.Exists
-) -> typing.List[uuid.UUID]:
-	"""Returns the IDs of threads that match the current search query, and
-	``conditions``.
-	"""
-
-	if "filter" in flask.g.json:
-		conditions = sqlalchemy.and_(
-			conditions,
-			parse_search(
-				flask.g.json["filter"],
-				database.Thread
-			)
-		)
-
-	order_column = getattr(
-		database.Thread,
-		flask.g.json["order"]["by"]
-	)
-
-	thread_without_parsed_forum_permissions_exists = False
-	first_iteration = True
-
-	while first_iteration or thread_without_parsed_forum_permissions_exists:
-		first_iteration = False
-		thread_without_parsed_forum_permissions_exists = False
-
-		rows = flask.g.sa_session.execute(
-			sqlalchemy.select(
-				database.Thread.id,
-				parsed_forum_permissions_exist_query
-			).
-			where(conditions).
-			order_by(
-				sqlalchemy.asc(order_column)
-				if flask.g.json["order"]["asc"]
-				else sqlalchemy.desc(order_column)
-			).
-			limit(flask.g.json["limit"]).
-			offset(flask.g.json["offset"])
-		).all()
-
-		thread_ids = []
-
-		for row in rows:
-			thread_id, parsed_forum_permissions_exist = row
-
-			if not parsed_forum_permissions_exist:
-				thread_without_parsed_forum_permissions_exists = True
-
-				thread_id.forum.reparse_permissions(flask.g.user)
-
-			thread_ids.append(thread_id)
-
-		if thread_without_parsed_forum_permissions_exists:
-			flask.g.sa_session.commit()
-
-	return thread_ids
-
-
 @thread_blueprint.route("", methods=["POST"])
 @validators.validate_json(CREATE_EDIT_SCHEMA)
 @authentication.authenticate_via_jwt
@@ -451,9 +386,22 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		flask.g.json["order"]["by"]
 	)
 
-	# TODO
-
-	return flask.jsonify(threads), statuses.OK
+	return flask.jsonify(
+		session.execute(
+			database.Thread.get(
+				flask.g.user,
+				flask.g.session,
+				conditions=conditions,
+				order_by=(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				),
+				limit=flask.g.json["limit"],
+				offset=flask.g.json["offset"]
+			)
+		).scalars().all()
+	), statuses.OK
 
 
 @thread_blueprint.route("", methods=["DELETE"])
@@ -469,62 +417,29 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	don't exist for their respective forums, they're automatically calculated.
 	"""
 
-	inner_conditions = sqlalchemy.and_(
-		database.Thread.forum_id == database.ForumParsedPermissions.forum_id,
-		database.ForumParsedPermissions.user_id == flask.g.user.id
-	)
-
-	parsed_forum_permissions_exist_query = (
-		generate_parsed_forum_permissions_exist_query(inner_conditions)
-	)
-
-	thread_ids = get_thread_ids_from_search(
-		sqlalchemy.or_(
-			~parsed_forum_permissions_exist_query,
-			generate_parsed_forum_permissions_exist_query(
-				sqlalchemy.and_(
-					inner_conditions,
-					database.ForumParsedPermissions.thread_view.is_(True),
-					sqlalchemy.or_(
-						sqlalchemy.and_(
-							database.Thread.user_id == flask.g.user.id,
-							database.ForumParsedPermissions.thread_delete_own.is_(True)
-						),
-						database.ForumParsedPermissions.thread_delete_any.is_(True)
-					)
+	session.execute(
+		sqlalchemy.delete(database.Thread).
+		where(
+			database.Thread.id.in_(
+				database.Thread.get(
+					flask.g.user,
+					flask.g.session,
+					additional_actions=["delete"],
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
+					),
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"],
+					ids_only=True
 				)
 			)
-		),
-		parsed_forum_permissions_exist_query
+		)
 	)
 
-	if len(thread_ids) != 0:
-		flask.g.sa_session.execute(
-			sqlalchemy.delete(database.Notification).
-			where(
-				sqlalchemy.or_(
-					sqlalchemy.and_(
-						database.Notification.type.in_(database.Thread.NOTIFICATION_TYPES),
-						database.Notification.identifier.in_(thread_ids)
-					),
-					sqlalchemy.and_(
-						database.Notification.type.in_(database.Post.NOTIFICATION_TYPES),
-						database.Notification.identifier.in_(
-							sqlalchemy.select(database.Post.id).
-							where(database.Post.thread_id.in_(thread_ids))
-						)
-					)
-				)
-			).
-			execution_options(synchronize_session="fetch")
-		)
-
-		flask.g.sa_session.execute(
-			sqlalchemy.delete(database.Thread).
-			where(database.Thread.id.in_(thread_ids))
-		)
-
-		flask.g.sa_session.commit()
+	session.commit()
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 
@@ -574,53 +489,38 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	don't exist for their respective forums, they're automatically calculated.
 	"""
 
-	inner_conditions = sqlalchemy.and_(
-		database.Thread.forum_id == database.ForumParsedPermissions.forum_id,
-		database.ForumParsedPermissions.user_id == flask.g.user.id
-	)
+	additional_actions=["edit"]
 
-	parsed_forum_permissions_exist_query = (
-		generate_parsed_forum_permissions_exist_query(inner_conditions)
-	)
+	if "is_locked" in flask.g.json["values"]:
+		additional_actions.append("edit_lock")
 
-	thread_ids = get_thread_ids_from_search(
-		sqlalchemy.or_(
-			~parsed_forum_permissions_exist_query,
-			generate_parsed_forum_permissions_exist_query(
-				sqlalchemy.and_(
-					inner_conditions,
-					database.ForumParsedPermissions.thread_view.is_(True),
-					sqlalchemy.or_(
-						sqlalchemy.and_(
-							database.Thread.user_id == flask.g.user.id,
-							database.ForumParsedPermissions.thread_edit_own.is_(True)
-						),
-						database.ForumParsedPermissions.thread_edit_any.is_(True)
+	if "is_pinned" in flask.g.json["values"]:
+		additional_actions.append("edit_pin")
+
+	session.execute(
+		sqlalchemy.update(database.Thread).
+		where(
+			database.Thread.id.in_(
+				database.Thread.get(
+					flask.g.user,
+					flask.g.session,
+					additional_actions=additional_actions,
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
 					),
-					sqlalchemy.or_(
-						sqlalchemy.and_(
-							database.Thread.user_id == flask.g.user.id,
-							database.ForumParsedPermissions.thread_edit_lock_own.is_(True)
-						),
-						database.ForumParsedPermissions.thread_edit_lock_any.is_(True)
-					) if "is_locked" in flask.g.json else True,
-					(
-						database.ForumParsedPermissions.thread_edit_pin.is_(True)
-					) if "is_pinned" in flask.g.json else True
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"],
+					ids_only=True
 				)
 			)
-		),
-		parsed_forum_permissions_exist_query
+		).
+		values(**flask.g.json["values"])
 	)
 
-	if len(thread_ids) != 0:
-		flask.g.sa_session.execute(
-			sqlalchemy.update(database.Thread).
-			where(database.Thread.id.in_(thread_ids)).
-			values(**flask.g.json["values"])
-		)
-
-		flask.g.sa_session.commit()
+	session.commit()
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 

@@ -1225,6 +1225,10 @@ class Forum(
 			sqlalchemy.sql.expression.BinaryExpression,
 			sqlalchemy.sql.expression.ClauseList
 		] = True,
+		order_by: typing.Union[
+			None,
+			sqlalchemy.sql.elements.UnaryExpression
+		] = None,
 		limit: typing.Union[
 			None,
 			int
@@ -1246,6 +1250,7 @@ class Forum(
 			perform on forums, other than the default ``view`` action.
 		:param conditions: Any additional conditions. :data:`True` by default,
 			meaning there are no conditions.
+		:param order_by: An expression to order by.
 		:param limit: A limit.
 		:param offset: An offset.
 		:param ids_only: Whether or not to only return a query for IDs.
@@ -1301,6 +1306,7 @@ class Forum(
 						)
 					)
 				).
+				order_by(order_by).
 				limit(limit).
 				offset(offset)
 			).all()
@@ -1336,18 +1342,15 @@ class Forum(
 				):
 					forum.reparse_permissions(user)
 
+				session.commit()
+
+			if ids_only:
+				return sqlalchemy.select(forum_ids)
+
 			return (
-				sqlalchemy.select(
-					Forum if not ids_only else Forum.id
-				).
-				where(
-					sqlalchemy.and_(
-						Forum.id.in_(forum_ids),
-						conditions
-					)
-				).
-				limit(limit).
-				offset(offset)
+				sqlalchemy.select(Forum).
+				where(Forum.id.in_(forum_ids)).
+				order_by(order_by)
 			)
 
 	def _get_child_forum_and_own_ids(
@@ -1751,7 +1754,10 @@ class Forum(
 					permission_name
 				]
 
-		existing_parsed_permissions = self.get_parsed_permissions(user)
+		existing_parsed_permissions = self.get_parsed_permissions(
+			user,
+			auto_parse=False
+		)
 
 		if existing_parsed_permissions is None:
 			ForumParsedPermissions.create(

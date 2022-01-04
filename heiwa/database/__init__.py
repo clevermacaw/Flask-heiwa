@@ -54,4 +54,4 @@ __all__ = [
 	"user_groups",
 	"utils"
 ]
-__version__ = "0.35.9"
+__version__ = "0.35.10"

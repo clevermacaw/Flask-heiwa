@@ -341,7 +341,8 @@ def get_user_self_or_id(
 	if id_ is not None:
 		user = find_user_by_id(
 			id_,
-			session
+			session,
+			flask.g.user
 		)
 	else:
 		user = flask.g.user
@@ -837,7 +838,8 @@ def delete_ban(
 
 	user = find_user_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -878,7 +880,8 @@ def edit_ban(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	user = find_user_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -972,7 +975,8 @@ def create_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	user = find_user_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -1027,7 +1031,8 @@ def delete_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	user = find_user_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -1065,7 +1070,8 @@ def view_block(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	validate_user_exists(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	return flask.jsonify(
@@ -1219,7 +1225,8 @@ def create_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	user = find_user_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -1264,7 +1271,8 @@ def delete_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	user = find_user_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -1303,7 +1311,8 @@ def view_follow(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	validate_user_exists(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	return flask.jsonify(
@@ -1383,7 +1392,8 @@ def add_group(
 
 	group = find_group_by_id(
 		group_id,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	user.edited_group = group
@@ -1448,7 +1458,8 @@ def delete_group(
 
 	group = find_group_by_id(
 		group_id,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	user.edited_group = group

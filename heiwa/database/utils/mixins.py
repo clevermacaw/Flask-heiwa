@@ -264,8 +264,9 @@ class BasePermissionMixin:
 class CDWMixin:
 	"""A mixin used to simplify the creation and deletion of objects."""
 
-	@staticmethod
+	@classmethod
 	def create(
+		cls: CDWMixin,
 		session: sqlalchemy.orm.Session,
 		*args,
 		**kwargs
@@ -274,7 +275,7 @@ class CDWMixin:
 		and calls the :meth:`write <.CDWMixin.write>` method.
 		"""
 
-		self = __class__(
+		self = cls(
 			*args,
 			**kwargs
 		)
@@ -420,8 +421,11 @@ class PermissionControlMixin:
 		:meth:`.PermissionControlMixin.get_allowed_columns`
 	"""
 
-	@staticmethod
-	def get_allowed_static_actions(user) -> typing.List[str]:
+	@classmethod
+	def get_allowed_static_actions(
+		cls: PermissionControlMixin,
+		user
+	) -> typing.List[str]:
 		"""Returns all actions that ``user`` is allowed to perform as per the
 		mixed-in class's
 		:attr:`static_actions <.PermissionControlMixin.static_actions>`.
@@ -429,8 +433,8 @@ class PermissionControlMixin:
 
 		return [
 			action_name
-			for action_name, action_func in __class__.static_actions.items()
-			if action_func(__class__, user)
+			for action_name, action_func in cls.static_actions.items()
+			if action_func(cls, user)
 		]
 
 	def get_allowed_instance_actions(
@@ -489,6 +493,10 @@ class PermissionControlMixin:
 			sqlalchemy.sql.expression.BinaryExpression,
 			sqlalchemy.sql.expression.ClauseList
 		] = True,
+		order_by: typing.Union[
+			None,
+			sqlalchemy.sql.elements.UnaryExpression
+		] = None,
 		limit: typing.Union[
 			None,
 			int
@@ -509,6 +517,7 @@ class PermissionControlMixin:
 			``view`` action.
 		:param conditions: Any additional conditions. :data:`True` by default,
 			meaning there are no conditions.
+		:param order_by: An expression to order by.
 		:param limit: A limit.
 		:param offset: An offset.
 		:param ids_only: Whether or not to only return a query for IDs.

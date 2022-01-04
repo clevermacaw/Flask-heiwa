@@ -483,7 +483,8 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	group = find_group_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -511,7 +512,8 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	group = find_group_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -546,7 +548,8 @@ def view(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 	return flask.jsonify(
 		find_group_by_id(
 			id_,
-			flask.g.sa_session
+			flask.g.sa_session,
+			flask.g.user
 		)
 	), statuses.OK
 
@@ -564,7 +567,8 @@ def authorized_actions_group(
 	return flask.jsonify(
 		find_group_by_id(
 			id_,
-			flask.g.sa_session
+			flask.g.sa_session,
+			flask.g.user
 		).get_allowed_instance_actions(flask.g.user)
 	)
 
@@ -577,7 +581,8 @@ def delete_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	group = find_group_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -610,7 +615,8 @@ def edit_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	group = find_group_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(
@@ -660,7 +666,8 @@ def view_permissions(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 
 	group = find_group_by_id(
 		id_,
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	validate_permission(

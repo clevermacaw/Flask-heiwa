@@ -254,6 +254,10 @@ class Category(
 			sqlalchemy.sql.expression.BinaryExpression,
 			sqlalchemy.sql.expression.ClauseList
 		] = True,
+		order_by: typing.Union[
+			None,
+			sqlalchemy.sql.elements.UnaryExpression
+		] = None,
 		limit: typing.Union[
 			None,
 			int
@@ -276,6 +280,7 @@ class Category(
 			perform on categories, other than the default ``view`` action.
 		:param conditions: Any additional conditions. :data:`True` by default,
 			meaning there are no conditions.
+		:param order_by: An expression to order by.
 		:param limit: A limit.
 		:param offset: An offset.
 		:param ids_only: Whether or not to only return a query for IDs.
@@ -335,6 +340,7 @@ class Category(
 						)
 					)
 				).
+				order_by(order_by).
 				limit(limit).
 				offset(offset)
 			).all()
@@ -376,16 +382,13 @@ class Category(
 				):
 					forum.reparse_permissions(user)
 
+				session.commit()
+
+			if ids_only:
+				return sqlalchemy.select(category_ids)
+
 			return (
-				sqlalchemy.select(
-					Category if not ids_only else Category.id
-				).
-				where(
-					sqlalchemy.and_(
-						Category.id.in_(category_ids),
-						conditions
-					)
-				).
-				limit(limit).
-				offset(offset)
+				sqlalchemy.select(Category).
+				where(Category.id.in_(category_ids)).
+				order_by(order_by)
 			)

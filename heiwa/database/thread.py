@@ -873,8 +873,9 @@ class Thread(
 
 		CDWMixin.write(self, session)
 
-	@staticmethod
+	@classmethod
 	def get(
+		cls: Thread,
 		user,
 		session: sqlalchemy.orm.Session,
 		additional_actions: typing.Union[
@@ -886,6 +887,10 @@ class Thread(
 			sqlalchemy.sql.expression.BinaryExpression,
 			sqlalchemy.sql.expression.ClauseList
 		] = True,
+		order_by: typing.Union[
+			None,
+			sqlalchemy.sql.elements.UnaryExpression
+		] = None,
 		limit: typing.Union[
 			None,
 			int
@@ -907,6 +912,7 @@ class Thread(
 			perform on threads, other than the default ``view`` action.
 		:param conditions: Any additional conditions. :data:`True` by default,
 			meaning there are no conditions.
+		:param order_by: An expression to order by.
 		:param limit: A limit.
 		:param offset: An offset.
 		:param ids_only: Whether or not to only return a query for IDs.
@@ -918,7 +924,7 @@ class Thread(
 
 		inner_conditions = (
 			sqlalchemy.and_(
-				ForumParsedPermissions.forum_id == Thread.forum_id,
+				ForumParsedPermissions.forum_id == cls.forum_id,
 				ForumParsedPermissions.user_id == user.id
 			)
 		)
@@ -931,8 +937,8 @@ class Thread(
 
 			rows = session.execute(
 				sqlalchemy.select(
-					Thread.id,
-					Thread.forum_id,
+					cls.id,
+					cls.forum_id,
 					(
 						sqlalchemy.select(ForumParsedPermissions.forum_id).
 						where(inner_conditions).
@@ -953,9 +959,9 @@ class Thread(
 								where(
 									sqlalchemy.and_(
 										inner_conditions,
-										Thread.action_queries["view"](user),
+										cls.action_queries["view"](user),
 										sqlalchemy.and_(
-											Thread.action_queries[action](user)
+											cls.action_queries[action](user)
 											for action in additional_actions
 										) if additional_actions is not None else True
 									)
@@ -965,6 +971,7 @@ class Thread(
 						)
 					)
 				).
+				order_by(order_by).
 				limit(limit).
 				offset(offset)
 			).all()
@@ -972,7 +979,7 @@ class Thread(
 			if len(rows) == 0:
 				# No need to hit the database with a complicated query twice
 				return (
-					sqlalchemy.select(Thread if not ids_only else Thread.id).
+					sqlalchemy.select(cls if not ids_only else cls.id).
 					where(False)
 				)
 
@@ -1003,18 +1010,15 @@ class Thread(
 				):
 					forum.reparse_permissions(user)
 
+				session.commit()
+
+			if ids_only:
+				return sqlalchemy.select(thread_ids)
+
 			return (
-				sqlalchemy.select(
-					Thread if not ids_only else Thread.id
-				).
-				where(
-					sqlalchemy.and_(
-						Thread.id.in_(thread_ids),
-						conditions
-					)
-				).
-				limit(limit).
-				offset(offset)
+				sqlalchemy.select(Thread).
+				where(Thread.id.in_(thread_ids)).
+				order_by(order_by)
 			)
 
 	def get_subscriber_ids(

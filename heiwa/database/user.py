@@ -930,6 +930,10 @@ class User(
 			sqlalchemy.sql.expression.BinaryExpression,
 			sqlalchemy.sql.expression.ClauseList
 		] = True,
+		order_by: typing.Union[
+			None,
+			sqlalchemy.sql.elements.UnaryExpression
+		] = None,
 		limit: typing.Union[
 			None,
 			int
@@ -956,6 +960,7 @@ class User(
 			perform on users, other than the default ``view`` action.
 		:param conditions: Any additional conditions. :data:`True` by default,
 			meaning there are no conditions.
+		:param order_by: An expression to order by.
 		:param limit: A limit.
 		:param offset: An offset.
 		:param ids_only: Whether or not to only return a query for IDs.
@@ -977,6 +982,7 @@ class User(
 					conditions
 				)
 			).
+			order_by(order_by).
 			limit(limit).
 			offset(offset)
 		)

@@ -264,7 +264,8 @@ def create() -> typing.Tuple[flask.Response, int]:
 
 	validate_user_exists(
 		flask.g.json["receiver_id"],
-		flask.g.sa_session
+		flask.g.sa_session,
+		flask.g.user
 	)
 
 	if flask.g.sa_session.execute(
@@ -450,7 +451,8 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	if "receiver_id" in flask.g.json["values"]:
 		validate_user_exists(
 			flask.g.json["values"]["receiver_id"],
-			flask.g.sa_session
+			flask.g.sa_session,
+			flask.g.user
 		)
 
 	# Don't change read status of sent messages
