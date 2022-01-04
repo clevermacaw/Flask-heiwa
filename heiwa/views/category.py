@@ -24,7 +24,7 @@ def list_():
 			database.Category.get(
 				flask.g.user,
 				flask.g.sa_session,
-				additional_actions=["delete"]
+				additional_actions=["delete", "edit"]
 			)
 		).scalars().all()
 	)

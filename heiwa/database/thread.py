@@ -590,6 +590,8 @@ class Thread(
 		:returns: The query.
 		"""
 
+		from .forum import ForumParsedPermissions
+
 		return sqlalchemy.and_(
 			Thread.action_queries["view"](user),
 			sqlalchemy.or_(
@@ -611,6 +613,8 @@ class Thread(
 		:returns: The query.
 		"""
 
+		from .forum import ForumParsedPermissions
+
 		return sqlalchemy.and_(
 			Thread.action_queries["view"](user),
 			sqlalchemy.or_(
@@ -622,11 +626,72 @@ class Thread(
 			)
 		)
 
-	# TODO: py 3.10
+	@staticmethod
+	def _action_query_edit_lock(user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to lock / unlock threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Thread.action_queries["view"](user),
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					Thread.user_id == user.id,
+					ForumParsedPermissions.thread_edit_lock_own.is_(True)
+				),
+				ForumParsedPermissions.thread_edit_lock_any.is_(True)
+			)
+		)
+
+	@staticmethod
+	def _action_query_edit_pin(user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to pin / unpin threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Thread.action_queries["view"](user),
+			ForumParsedPermissions.thread_edit_pin.is_(True)
+		)
+
+	@staticmethod
+	def _action_query_edit_vote(user) -> bool:
+		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+		allowed to vote on threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Thread.action_queries["view"](user),
+			ForumParsedPermissions.thread_edit_vote.is_(True)
+		)
+
 	action_queries = {
 		"create_post": _action_query_create_post,
 		"delete": _action_query_delete,
 		"edit": _action_query_edit,
+		"edit_lock_own": _action_query_edit_lock,
+		"edit_pin": _action_query_edit_pin,
+		"edit_subscription": lambda user: Thread.action_queries["view"](user),
+		"edit_vote": _action_query_edit_vote,
+		
 	}
 	"""Actions and their required permissions translated to be evaluable within
 	SQL queries. Unless arbitrary additional attributes come into play, these
