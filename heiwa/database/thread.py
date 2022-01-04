@@ -278,59 +278,63 @@ class Thread(
 		:class:`.ThreadVote`
 	"""
 
+	# TODO: Move to functions where models are imported, so we don't
+	# have to repeat action permission conditions unless absolutely
+	# necessary
+
 	static_actions = {
 		"create": lambda user: (
-			Post.get_static_permission(user, "view") and
+			Thread.get_static_permission(user, "view") and
 			user.parsed_permissions["thread_create"]
 		),
 		"create_post": lambda user: (
-			Post.get_static_permission(user, "view") and
+			Thread.get_static_permission(user, "view") and
 			user.parsed_permissions["post_view"] and
 			user.parsed_permissions["post_create"]
 		),
 		"delete": lambda user: (
-			Post.get_static_permission(user, "view") and (
+			Thread.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_delete_own"] or
 				user.parsed_permissions["thread_delete_any"]
 			)
 		),
 		"edit": lambda user: (
-			Post.get_static_permission(user, "view") and (
+			Thread.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_edit_own"] or
 				user.parsed_permissions["thread_edit_any"]
 			)
 		),
 		"edit_lock": lambda user: (
-			Post.get_static_permission(user, "view") and (
+			Thread.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_edit_lock_own"] or
 				user.parsed_permissions["thread_edit_lock_any"]
 			)
 		),
 		"edit_pin": lambda user: (
-			Post.get_static_permission(user, "view") and
+			Thread.get_static_permission(user, "view") and
 			user.parsed_permissions["thread_edit_pin"]
 		),
 		"edit_subscription": lambda user: (
-			Post.get_static_permission(user, "view")
+			Thread.get_static_permission(user, "view")
 		),
 		"edit_vote": lambda user: (
-			Post.get_static_permission(user, "view") and
+			Thread.get_static_permission(user, "view") and
 			user.parsed_permissions["thread_edit_vote"]
 		),
 		"merge": lambda user: (
-			Post.get_static_permission(user, "view") and (
+			Thread.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_merge_own"] or
 				user.parsed_permissions["thread_merge_any"]
 			)
 		),
 		"move": lambda user: (
-			Post.get_static_permission(user, "view") and (
+			Thread.get_static_permission(user, "view") and (
 				user.parsed_permissions["thread_move_own"] or
 				user.parsed_permissions["thread_move_any"]
 			)
 		),
 		"view": lambda user: user.parsed_permissions["thread_view"],
-		"view_vote": lambda user: Post.get_static_permission(user, "view")
+		"view_vote": lambda user: Thread.get_static_permission(user, "view")
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all threads, without
 	any indication of which thread it is.
@@ -563,8 +567,8 @@ class Thread(
 	"""
 
 	@staticmethod
-	def _action_query_create_post(user) -> bool:
-		r"""Generates a SQLAlchemy query representing whether or not ``user`` is
+	def _action_query_create_post(user) -> sqlalchemy.sql.Selectable:
+		r"""Generates a selectable condition representing whether or not ``user`` is
 		allowed to create :class:`.Post`\ s in threads.
 
 		:param user: The user, a :class:`.User`.
@@ -581,8 +585,8 @@ class Thread(
 		)
 
 	@staticmethod
-	def _action_query_delete(user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+	def _action_query_delete(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
 		allowed to delete threads.
 
 		:param user: The user, a :class:`.User`.
@@ -604,8 +608,8 @@ class Thread(
 		)
 
 	@staticmethod
-	def _action_query_edit(user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+	def _action_query_edit(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
 		allowed to delete threads.
 
 		:param user: The user, a :class:`.User`.
@@ -627,8 +631,8 @@ class Thread(
 		)
 
 	@staticmethod
-	def _action_query_edit_lock(user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+	def _action_query_edit_lock(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
 		allowed to lock / unlock threads.
 
 		:param user: The user, a :class:`.User`.
@@ -650,8 +654,8 @@ class Thread(
 		)
 
 	@staticmethod
-	def _action_query_edit_pin(user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+	def _action_query_edit_pin(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
 		allowed to pin / unpin threads.
 
 		:param user: The user, a :class:`.User`.
@@ -667,8 +671,8 @@ class Thread(
 		)
 
 	@staticmethod
-	def _action_query_edit_vote(user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+	def _action_query_edit_vote(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
 		allowed to vote on threads.
 
 		:param user: The user, a :class:`.User`.
@@ -683,6 +687,66 @@ class Thread(
 			ForumParsedPermissions.thread_edit_vote.is_(True)
 		)
 
+	@staticmethod
+	def _action_query_merge(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
+		allowed to merge threads with other threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Thread.action_queries["view"](user),
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					Thread.user_id == user.id,
+					ForumParsedPermissions.thread_merge_own.is_(True)
+				),
+				ForumParsedPermissions.thread_merge_any.is_(True)
+			)
+		)
+
+	@staticmethod
+	def _action_query_move(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
+		allowed to move threads to other forums.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Thread.action_queries["view"](user),
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					Thread.user_id == user.id,
+					ForumParsedPermissions.thread_move_own.is_(True)
+				),
+				ForumParsedPermissions.thread_move_any.is_(True)
+			)
+		)
+
+	@staticmethod
+	def _action_query_view(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
+		allowed to view threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return ForumParsedPermissions.thread_view.is_(True)
+
 	action_queries = {
 		"create_post": _action_query_create_post,
 		"delete": _action_query_delete,
@@ -691,7 +755,10 @@ class Thread(
 		"edit_pin": _action_query_edit_pin,
 		"edit_subscription": lambda user: Thread.action_queries["view"](user),
 		"edit_vote": _action_query_edit_vote,
-		
+		"merge": _action_query_merge,
+		"move": _action_query_move,
+		"view": _action_query_view,
+		"view_vote": lambda user: Thread.action_queries["view"](user)
 	}
 	"""Actions and their required permissions translated to be evaluable within
 	SQL queries. Unless arbitrary additional attributes come into play, these

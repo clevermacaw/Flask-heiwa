@@ -160,9 +160,9 @@ class Category(
 	"""
 
 	@staticmethod
-	def _action_query_delete(user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
-		allowed to delete categories.
+	def _action_query_delete(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user``
+		is allowed to delete categories.
 
 		:param user: The user, a :class:`.User`.
 
@@ -183,8 +183,8 @@ class Category(
 		)
 
 	@staticmethod
-	def _action_query_edit(user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+	def _action_query_edit(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
 		allowed to edit categories.
 
 		:param user: The user, a :class:`.User`.
@@ -206,8 +206,8 @@ class Category(
 		)
 
 	@staticmethod
-	def _action_query_view(user) -> bool:
-		"""Generates a SQLAlchemy query representing whether or not ``user`` is
+	def _action_query_view(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
 		allowed to view categories.
 
 		:param user: The user, a :class:`.User`.

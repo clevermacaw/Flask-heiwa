@@ -970,7 +970,7 @@ class User(
 			where(
 				sqlalchemy.and_(
 					sqlalchemy.and_(
-						self.action_queries[action]
+						User.action_queries[action]
 						for action in additional_actions
 					) if additional_actions is not None else True,
 					conditions
