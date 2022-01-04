@@ -13,7 +13,6 @@ from .find_and_validate import (
 )
 from .jwt import create_jwt
 from .permissions import requires_permission, validate_permission
-from .query import generate_parsed_forum_permissions_exist_query
 from .schema import generate_search_schema, generate_search_schema_registry
 from .search import parse_search
 from .static import (
@@ -32,7 +31,6 @@ __all__ = [
 	"find_group_by_id",
 	"find_thread_by_id",
 	"find_user_by_id",
-	"generate_parsed_forum_permissions_exist_query",
 	"generate_search_schema",
 	"generate_search_schema_registry",
 	"parse_search",
@@ -43,4 +41,4 @@ __all__ = [
 	"validate_thread_exists",
 	"validate_user_exists"
 ]
-__version__ = "1.30.2"
+__version__ = "1.31.0"

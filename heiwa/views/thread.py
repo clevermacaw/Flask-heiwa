@@ -17,7 +17,6 @@ from .utils import (
 	SEARCH_MAX_IN_LIST_LENGTH,
 	find_forum_by_id,
 	find_thread_by_id,
-	generate_parsed_forum_permissions_exist_query,
 	generate_search_schema,
 	generate_search_schema_registry,
 	parse_search,
@@ -387,7 +386,7 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	)
 
 	return flask.jsonify(
-		session.execute(
+		flask.g.session.execute(
 			database.Thread.get(
 				flask.g.user,
 				flask.g.session,
@@ -417,29 +416,65 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	don't exist for their respective forums, they're automatically calculated.
 	"""
 
-	session.execute(
-		sqlalchemy.delete(database.Thread).
-		where(
-			database.Thread.id.in_(
-				database.Thread.get(
-					flask.g.user,
-					flask.g.session,
-					additional_actions=["delete"],
-					conditions=conditions,
-					order_by=(
-						sqlalchemy.asc(order_column)
-						if flask.g.json["order"]["asc"]
-						else sqlalchemy.desc(order_column)
-					),
-					limit=flask.g.json["limit"],
-					offset=flask.g.json["offset"],
-					ids_only=True
-				)
+	conditions = True
+
+	if "filter" in flask.g.json:
+		conditions = sqlalchemy.and_(
+			conditions,
+			parse_search(
+				flask.g.json["filter"],
+				database.Thread
 			)
 		)
+
+	order_column = getattr(
+		database.Thread,
+		flask.g.json["order"]["by"]
 	)
 
-	session.commit()
+	ids = flask.g.sa_session.execute(
+		database.Thread.get(
+			flask.g.user,
+			flask.g.session,
+			additional_actions=["delete"],
+			conditions=conditions,
+			order_by=(
+				sqlalchemy.asc(order_column)
+				if flask.g.json["order"]["asc"]
+				else sqlalchemy.desc(order_column)
+			),
+			limit=flask.g.json["limit"],
+			offset=flask.g.json["offset"],
+			ids_only=True
+		)
+	).scalars().all()
+
+	flask.g.sa_session.execute(
+		sqlalchemy.delete(database.Notification).
+		where(
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					database.Notification.type.in_(database.Thread.NOTIFICATION_TYPES),
+					database.Notification.identifier.in_(ids)
+				),
+				sqlalchemy.and_(
+					database.Notification.type.in_(database.Post.NOTIFICATION_TYPES),
+					database.Notification.identifier.in_(
+						sqlalchemy.select(database.Post.id).
+						where(database.Post.thread_id.in_(ids))
+					)
+				)
+			)
+		).
+		execution_options(synchronize_session="fetch")
+	)
+
+	flask.g.session.execute(
+		sqlalchemy.delete(database.Thread).
+		where(database.Thread.id.in_(ids))
+	)
+
+	flask.g.session.commit()
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 
@@ -489,38 +524,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	don't exist for their respective forums, they're automatically calculated.
 	"""
 
-	additional_actions=["edit"]
-
-	if "is_locked" in flask.g.json["values"]:
-		additional_actions.append("edit_lock")
-
-	if "is_pinned" in flask.g.json["values"]:
-		additional_actions.append("edit_pin")
-
-	session.execute(
-		sqlalchemy.update(database.Thread).
-		where(
-			database.Thread.id.in_(
-				database.Thread.get(
-					flask.g.user,
-					flask.g.session,
-					additional_actions=additional_actions,
-					conditions=conditions,
-					order_by=(
-						sqlalchemy.asc(order_column)
-						if flask.g.json["order"]["asc"]
-						else sqlalchemy.desc(order_column)
-					),
-					limit=flask.g.json["limit"],
-					offset=flask.g.json["offset"],
-					ids_only=True
-				)
-			)
-		).
-		values(**flask.g.json["values"])
-	)
-
-	session.commit()
+	# TODO
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 

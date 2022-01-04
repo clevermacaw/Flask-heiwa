@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import abc
 import datetime
 import typing
 
@@ -479,9 +478,9 @@ class PermissionControlMixin:
 			if column_func(self, user)
 		]
 
-	@staticmethod
-	@abc.abstractmethod
+	@classmethod
 	def get(
+		cls: PermissionControlMixin,
 		user,
 		session: sqlalchemy.orm.Session,
 		additional_actions: typing.Union[
@@ -525,7 +524,24 @@ class PermissionControlMixin:
 		:returns: The query.
 		"""
 
-		raise NotImplementedError
+		return (
+			sqlalchemy.select(
+				cls if not ids_only else cls.id
+			).
+			where(
+				sqlalchemy.and_(
+					cls.action_queries["view"](user),
+					sqlalchemy.and_(
+						cls.action_queries[action]
+						for action in additional_actions
+					) if additional_actions is not None else True,
+					conditions
+				)
+			).
+			order_by(order_by).
+			limit(limit).
+			offset(offset)
+		)
 
 
 class ReprMixin:

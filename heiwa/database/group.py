@@ -117,6 +117,11 @@ class Group(
 	"""A group's permissions. Not required to be set, except for the last group
 	whose :attr:`default_for <.Group.default_for>` column contains `*` - meaning
 	it's default for all users.
+
+	.. seealso::
+		:attr:`.Group.static_actions`
+
+		:attr:`.Group.action_queries`
 	"""
 
 	static_actions = {
@@ -159,6 +164,11 @@ class Group(
 	``view_permissions``:
 		Whether or not a user can view groups' permissions. By default, this
 		will always be :data:`True`.
+
+	.. seealso::
+		:attr:`.Group.instance_actions`
+
+		:attr:`.Group.action_queries`
 	"""
 
 	instance_actions = {
@@ -213,4 +223,39 @@ class Group(
 	``view_permissions``:
 		Whether or not a user can view this group's permissions. By default, this
 		will always be :data:`True`.
+
+		.. seealso::
+		:attr:`.Group.static_actions`
+
+		:attr:`.Group.action_queries`
+	"""
+
+	action_queries = {
+		"delete": lambda user: sqlalchemy.and_(
+			Group.action_queries["view"](user),
+			user.parsed_permissions["group_delete"],
+			Group.level < user.highest_group.level
+		),
+		"edit": lambda user: sqlalchemy.and_(
+			Group.action_queries["view"](user),
+			user.parsed_permissions["group_edit"],
+			Group.level < user.highest_group.level
+		),
+		"edit_permissions": lambda user: sqlalchemy.and_(
+			Group.action_queries["view"](user),
+			user.parsed_permissions["group_edit_permissions"],
+			Group.level < user.highest_group.level
+		),
+		"view": lambda user: True,
+		"view_permissions": lambda user: Group.action_queries["view"](user)
+	}
+	"""Actions and their required permissions translated to be evaluable within
+	SQL queries. Unless arbitrary additional attributes come into play, these
+	permissions will generally be the same as
+	:attr:`instance_actions <.Group.instance_actions>`.
+
+	.. seealso::
+		:attr:`.Group.instance_actions`
+
+		:attr:`.Group.static_actions`
 	"""

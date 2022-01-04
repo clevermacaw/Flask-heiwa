@@ -1212,8 +1212,9 @@ class Forum(
 
 		CDWMixin.delete(self, session)
 
-	@staticmethod
+	@classmethod
 	def get(
+		cls: Forum,
 		user,
 		session: sqlalchemy.orm.Session,
 		additional_actions: typing.Union[
@@ -1241,7 +1242,7 @@ class Forum(
 	) -> sqlalchemy.sql.Select:
 		"""Generates a selection query with permissions already handled.
 
-		Since the forums' permissions may not be parsed, this will always emit
+		Since forums' permissions may not be parsed, this will always emit
 		additional queries to check.
 
 		:param user: The user whose permissions should be evaluated.
@@ -1260,7 +1261,7 @@ class Forum(
 
 		inner_conditions = (
 			sqlalchemy.and_(
-				ForumParsedPermissions.forum_id == Forum.id,
+				ForumParsedPermissions.forum_id == cls.id,
 				ForumParsedPermissions.user_id == user.id
 			)
 		)
@@ -1273,7 +1274,7 @@ class Forum(
 
 			rows = session.execute(
 				sqlalchemy.select(
-					Forum.id,
+					cls.id,
 					(
 						sqlalchemy.select(ForumParsedPermissions.forum_id).
 						where(inner_conditions).
@@ -1294,9 +1295,9 @@ class Forum(
 								where(
 									sqlalchemy.and_(
 										inner_conditions,
-										Forum.action_queries["view"](user),
+										cls.action_queries["view"](user),
 										sqlalchemy.and_(
-											Forum.action_queries[action](user)
+											cls.action_queries[action](user)
 											for action in additional_actions
 										) if additional_actions is not None else True
 									)
@@ -1315,7 +1316,7 @@ class Forum(
 				# No need to hit the database with a complicated query twice
 				return (
 					# Just in case
-					sqlalchemy.select(Forum if not ids_only else Forum.id).
+					sqlalchemy.select(cls if not ids_only else cls.id).
 					where(False)
 				)
 
@@ -1336,8 +1337,8 @@ class Forum(
 			if forum_without_parsed_permissions_exists:
 				for forum in (
 					session.execute(
-						sqlalchemy.select(Forum).
-						where(Forum.id.in_(unparsed_permission_forum_ids))
+						sqlalchemy.select(cls).
+						where(cls.id.in_(unparsed_permission_forum_ids))
 					).scalars()
 				):
 					forum.reparse_permissions(user)
@@ -1348,8 +1349,8 @@ class Forum(
 				return sqlalchemy.select(forum_ids)
 
 			return (
-				sqlalchemy.select(Forum).
-				where(Forum.id.in_(forum_ids)).
+				sqlalchemy.select(cls).
+				where(cls.id.in_(forum_ids)).
 				order_by(order_by)
 			)
 

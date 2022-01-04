@@ -314,19 +314,22 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		flask.g.json["order"]["by"]
 	)
 
-	groups = flask.g.sa_session.execute(
-		sqlalchemy.select(database.Group).
-		where(conditions).
-		order_by(
-			sqlalchemy.asc(order_column)
-			if flask.g.json["order"]["asc"]
-			else sqlalchemy.desc(order_column)
-		).
-		limit(flask.g.json["limit"]).
-		offset(flask.g.json["offset"])
-	).scalars().all()
-
-	return flask.jsonify(groups), statuses.OK
+	return flask.jsonify(
+		flask.g.session.execute(
+			database.Group.get(
+				flask.g.user,
+				flask.g.session,
+				conditions=conditions,
+				order_by=(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				),
+				limit=flask.g.json["limit"],
+				offset=flask.g.json["offset"]
+			)
+		).scalars().all()
+	), statuses.OK
 
 
 @group_blueprint.route("", methods=["DELETE"])
@@ -340,6 +343,8 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all groups that match the requested filter if there is one,
 	and ``flask.g.user`` has permission to both view and delete.
 	"""
+
+	# TODO
 
 	order_column = getattr(
 		database.Group,

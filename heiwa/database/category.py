@@ -241,8 +241,9 @@ class Category(
 		:attr:`.Category.static_actions`
 	"""
 
-	@staticmethod
+	@classmethod
 	def get(
+		cls: Category,
 		user,
 		session: sqlalchemy.orm.Session,
 		additional_actions: typing.Union[
@@ -292,8 +293,8 @@ class Category(
 
 		inner_conditions = (
 			sqlalchemy.and_(
-				~Category.forum_id.is_(None),
-				ForumParsedPermissions.forum_id == Category.forum_id,
+				~cls.forum_id.is_(None),
+				ForumParsedPermissions.forum_id == cls.forum_id,
 				ForumParsedPermissions.user_id == user.id
 			)
 		)
@@ -306,8 +307,8 @@ class Category(
 
 			rows = session.execute(
 				sqlalchemy.select(
-					Category.id,
-					Category.forum_id,
+					cls.id,
+					cls.forum_id,
 					(
 						sqlalchemy.select(ForumParsedPermissions.forum_id).
 						where(inner_conditions).
@@ -328,9 +329,9 @@ class Category(
 								where(
 									sqlalchemy.and_(
 										inner_conditions,
-										Category.action_queries["view"](user),
+										cls.action_queries["view"](user),
 										sqlalchemy.and_(
-											Category.action_queries[action](user)
+											cls.action_queries[action](user)
 											for action in additional_actions
 										) if additional_actions is not None else True
 									)
@@ -348,7 +349,7 @@ class Category(
 			if len(rows) == 0:
 				# No need to hit the database with a complicated query twice
 				return (
-					sqlalchemy.select(Category if not ids_only else Category.id).
+					sqlalchemy.select(cls if not ids_only else cls.id).
 					where(False)
 				)
 
@@ -388,7 +389,7 @@ class Category(
 				return sqlalchemy.select(category_ids)
 
 			return (
-				sqlalchemy.select(Category).
-				where(Category.id.in_(category_ids)).
+				sqlalchemy.select(cls).
+				where(cls.id.in_(category_ids)).
 				order_by(order_by)
 			)

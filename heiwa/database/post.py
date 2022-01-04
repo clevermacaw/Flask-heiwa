@@ -211,6 +211,7 @@ class Post(
 		"view": lambda user: user.parsed_permissions["post_view"],
 		"view_vote": lambda user: Post.static_actions["view"](user)
 	}
+	""" TODO """
 
 	instance_actions = {
 		"delete": lambda self, user: (
@@ -263,6 +264,126 @@ class Post(
 			self.instance_actions["view"](user)
 		)
 	}
+	""" TODO """
+
+	@staticmethod
+	def _action_query_delete(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
+		allowed to delete posts.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Post.action_queries["view"](user),
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					Post.user_id == user.id,
+					ForumParsedPermissions.post_delete_own.is_(True)
+				),
+				ForumParsedPermissions.post_delete_any.is_(True)
+			)
+		)
+
+	@staticmethod
+	def _action_query_edit(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
+		allowed to edit posts.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Post.action_queries["view"](user),
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					Post.user_id == user.id,
+					ForumParsedPermissions.post_edit_own.is_(True)
+				),
+				ForumParsedPermissions.post_edit_any.is_(True)
+			)
+		)
+
+	@staticmethod
+	def _action_query_edit_vote(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
+		allowed to edit their votes on posts.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Post.action_queries["view"](user),
+			ForumParsedPermissions.post_edit_vote.is_(True)
+		)
+
+	@staticmethod
+	def _action_query_move(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
+		allowed to move posts to other threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return sqlalchemy.and_(
+			Post.action_queries["view"](user),
+			sqlalchemy.or_(
+				sqlalchemy.and_(
+					Post.user_id == user.id,
+					ForumParsedPermissions.post_move_own.is_(True)
+				),
+				ForumParsedPermissions.post_move_any.is_(True)
+			)
+		)
+
+	@staticmethod
+	def _action_query_view(user) -> sqlalchemy.sql.Selectable:
+		"""Generates a selectable condition representing whether or not ``user`` is
+		allowed to view posts.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The query.
+		"""
+
+		from .forum import ForumParsedPermissions
+
+		return ForumParsedPermissions.post_view.is_(True)
+
+	action_queries = {
+		"delete": _action_query_delete,
+		"edit": _action_query_edit,
+		"edit_vote": _action_query_edit_vote,
+		"move": _action_query_move,
+		"view": _action_query_view,
+		"view_vote": lambda user: Post.action_queries["view"](user)
+	}
+	"""Actions and their required permissions translated to be evaluable within
+	SQL queries. Unless arbitrary additional attributes come into play, these
+	permissions will generally be the same as
+	:attr:`instance_actions <.Post.instance_actions>`.
+
+	.. seealso::
+		:attr:`.Post.instance_actions`
+
+		:attr:`.Post.static_actions`
+	"""
 
 	NOTIFICATION_TYPES = (
 		enums.NotificationTypes.NEW_POST_FROM_FOLLOWEE,
@@ -343,3 +464,153 @@ class Post(
 			)
 
 		CDWMixin.write(self, session)
+
+	@classmethod
+	def get(
+		cls: Post,
+		user,
+		session: sqlalchemy.orm.Session,
+		additional_actions: typing.Union[
+			None,
+			typing.Iterable[str]
+		] = None,
+		conditions: typing.Union[
+			bool,
+			sqlalchemy.sql.expression.BinaryExpression,
+			sqlalchemy.sql.expression.ClauseList
+		] = True,
+		order_by: typing.Union[
+			None,
+			sqlalchemy.sql.elements.UnaryExpression
+		] = None,
+		limit: typing.Union[
+			None,
+			int
+		] = None,
+		offset: typing.Union[
+			None,
+			int
+		] = None,
+		ids_only: bool = False
+	) -> sqlalchemy.sql.Select:
+		"""Generates a selection query with permissions already handled.
+
+		Since the posts' :class:`.Thread`'s :class:`.Forum`'s permissions may
+		not be parsed, this will always emit additional queries to check.
+
+		:param user: The user whose permissions should be evaluated.
+		:param session: The SQLAlchemy session to execute additional queries with.
+		:param additional_actions: Additional actions that a user must be able to
+			perform on posts, other than the default ``view`` action.
+		:param conditions: Any additional conditions. :data:`True` by default,
+			meaning there are no conditions.
+		:param order_by: An expression to order by.
+		:param limit: A limit.
+		:param offset: An offset.
+		:param ids_only: Whether or not to only return a query for IDs.
+
+		:returns: The query.
+		"""
+
+		from .forum import Forum, ForumParsedPermissions
+		from .thread import Thread
+
+		inner_conditions = (
+			sqlalchemy.and_(
+				ForumParsedPermissions.forum_id == Thread.forum_id,
+				ForumParsedPermissions.user_id == user.id
+			)
+		)
+
+		first_iteration = True
+		post_without_parsed_forum_permissions_exists = False
+
+		while (first_iteration or post_without_parsed_forum_permissions_exists):
+			first_iteration = False
+
+			rows = session.execute(
+				sqlalchemy.select(
+					cls.id,
+					Thread.forum_id,
+					(
+						sqlalchemy.select(ForumParsedPermissions.forum_id).
+						where(inner_conditions).
+						exists()
+					)
+				).
+				where(
+					sqlalchemy.and_(
+						conditions,
+						Thread.id == Post.thread_id,
+						sqlalchemy.or_(
+							~(
+								sqlalchemy.select(ForumParsedPermissions.forum_id).
+								where(inner_conditions).
+								exists()
+							),
+							(
+								sqlalchemy.select(ForumParsedPermissions.forum_id).
+								where(
+									sqlalchemy.and_(
+										inner_conditions,
+										cls.action_queries["view"](user),
+										sqlalchemy.and_(
+											cls.action_queries[action](user)
+											for action in additional_actions
+										) if additional_actions is not None else True
+									)
+								).
+								exists()
+							)
+						)
+					)
+				).
+				order_by(order_by).
+				limit(limit).
+				offset(offset)
+			).all()
+
+			if len(rows) == 0:
+				# No need to hit the database with a complicated query twice
+				return (
+					sqlalchemy.select(cls if not ids_only else cls.id).
+					where(False)
+				)
+
+			post_ids = []
+			unparsed_permission_forum_ids = []
+
+			for row in rows:
+				(
+					post_id,
+					forum_id,
+					parsed_forum_permissions_exist
+				) = row
+
+				if not parsed_forum_permissions_exist:
+					post_without_parsed_forum_permissions_exists = True
+					unparsed_permission_forum_ids.append(forum_id)
+
+					continue
+
+				post_ids.append(post_id)
+
+			if post_without_parsed_forum_permissions_exists:
+				for forum in (
+					session.execute(
+						sqlalchemy.select(Forum).
+						where(Forum.id.in_(unparsed_permission_forum_ids))
+					).scalars()
+				):
+					forum.reparse_permissions(user)
+
+				session.commit()
+
+			if ids_only:
+				return sqlalchemy.select(post_ids)
+
+			return (
+				sqlalchemy.select(cls).
+				where(cls.id.in_(post_ids)).
+				order_by(order_by)
+			)

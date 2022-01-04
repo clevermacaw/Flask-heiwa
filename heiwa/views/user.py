@@ -376,19 +376,22 @@ def list_() -> typing.Tuple[flask.Response, int]:
 		flask.g.json["order"]["by"]
 	)
 
-	users = flask.g.sa_session.execute(
-		sqlalchemy.select(database.User).
-		where(conditions).
-		order_by(
-			sqlalchemy.asc(order_column)
-			if flask.g.json["order"]["asc"]
-			else sqlalchemy.desc(order_column)
-		).
-		limit(flask.g.json["limit"]).
-		offset(flask.g.json["offset"])
-	).scalars().all()
-
-	return flask.jsonify(users), statuses.OK
+	return flask.jsonify(
+		flask.g.session.execute(
+			database.User.get(
+				flask.g.user,
+				flask.g.session,
+				conditions=conditions,
+				order_by=(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				),
+				limit=flask.g.json["limit"],
+				offset=flask.g.json["offset"]
+			)
+		).scalars().all()
+	), statuses.OK
 
 
 @user_blueprint.route("/users", methods=["DELETE"])
@@ -403,22 +406,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	``flask.g.user`` has permission to delete.
 	"""
 
-	conditions = sqlalchemy.or_(
-		database.User.id == flask.g.user.id,
-		(
-			sqlalchemy.select(database.Group.level).
-			where(
-				database.Group.id.in_(
-					sqlalchemy.select(database.user_groups.c.group_id).
-					where(database.user_groups.c.user_id == database.User.id)
-				)
-			).
-			order_by(
-				sqlalchemy.desc(database.Group.level)
-			).
-			limit(1)
-		) < flask.g.user.highest_group.level
-	)
+	conditions = True
 
 	if "filter" in flask.g.json:
 		conditions = sqlalchemy.and_(
@@ -438,18 +426,21 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		sqlalchemy.delete(database.User).
 		where(
 			database.User.id.in_(
-				sqlalchemy.select(database.User).
-				where(conditions).
-				order_by(
-					sqlalchemy.asc(order_column)
-					if flask.g.json["order"]["asc"]
-					else sqlalchemy.desc(order_column)
-				).
-				limit(flask.g.json["limit"]).
-				offset(flask.g.json["offset"])
+				database.User.get(
+					flask.g.user,
+					flask.g.session,
+					additional_actions=["delete"],
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
+					),
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"]
+				)
 			)
-		).
-		execution_options(synchronize_session="fetch")
+		)
 	)
 
 	flask.g.sa_session.commit()
@@ -463,7 +454,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		**SEARCH_SCHEMA,
 		"values": {
 			"type": "dict",
-			"minlength": 2,
+			"minlength": 1,
 			"schema": {
 				"name": {
 					**ATTR_SCHEMAS["name"],
@@ -497,22 +488,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	``flask.g.user`` has permission to edit.
 	"""
 
-	conditions = sqlalchemy.or_(
-		database.User.id == flask.g.user.id,
-		(
-			sqlalchemy.select(database.Group.level).
-			where(
-				database.Group.id.in_(
-					sqlalchemy.select(database.user_groups.c.group_id).
-					where(database.user_groups.c.user_id == database.User.id)
-				)
-			).
-			order_by(
-				sqlalchemy.desc(database.Group.level)
-			).
-			limit(1)
-		) < flask.g.user.highest_group.level
-	)
+	conditions = True
 
 	if "filter" in flask.g.json:
 		conditions = sqlalchemy.and_(
@@ -532,19 +508,22 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 		sqlalchemy.update(database.User).
 		where(
 			database.User.id.in_(
-				sqlalchemy.select(database.User.id).
-				where(conditions).
-				order_by(
-					sqlalchemy.asc(order_column)
-					if flask.g.json["order"]["asc"]
-					else sqlalchemy.desc(order_column)
-				).
-				limit(flask.g.json["limit"]).
-				offset(flask.g.json["offset"])
+				database.User.get(
+					flask.g.user,
+					flask.g.session,
+					additional_actions=["edit"],
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
+					),
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"]
+				)
 			)
 		).
-		values(**flask.g.json["values"]).
-		execution_options(synchronize_session="fetch")
+		values(**flask.g.json["values"])
 	)
 
 	flask.g.sa_session.commit()
@@ -1137,19 +1116,22 @@ def list_followers(
 		flask.g.json["order"]["by"]
 	)
 
-	followers = flask.g.sa_session.execute(
-		sqlalchemy.select(database.User).
-		where(conditions).
-		order_by(
-			sqlalchemy.asc(order_column)
-			if flask.g.json["order"]["asc"]
-			else sqlalchemy.desc(order_column)
-		).
-		limit(flask.g.json["limit"]).
-		offset(flask.g.json["offset"])
-	).scalars().all()
-
-	return flask.jsonify(followers), statuses.OK
+	return flask.jsonify(
+		flask.g.session.execute(
+			database.User.get(
+				flask.g.user,
+				flask.g.session,
+				conditions=conditions,
+				order_by=(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				),
+				limit=flask.g.json["limit"],
+				offset=flask.g.json["offset"]
+			)
+		).scalars().all()
+	), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/followees", methods=["GET"])
@@ -1200,19 +1182,22 @@ def list_followees(
 		flask.g.json["order"]["by"]
 	)
 
-	followees = flask.g.sa_session.execute(
-		sqlalchemy.select(database.User).
-		where(conditions).
-		order_by(
-			sqlalchemy.asc(order_column)
-			if flask.g.json["order"]["asc"]
-			else sqlalchemy.desc(order_column)
-		).
-		limit(flask.g.json["limit"]).
-		offset(flask.g.json["offset"])
-	).scalars().all()
-
-	return flask.jsonify(followees), statuses.OK
+	return flask.jsonify(
+		flask.g.session.execute(
+			database.User.get(
+				flask.g.user,
+				flask.g.session,
+				conditions=conditions,
+				order_by=(
+					sqlalchemy.asc(order_column)
+					if flask.g.json["order"]["asc"]
+					else sqlalchemy.desc(order_column)
+				),
+				limit=flask.g.json["limit"],
+				offset=flask.g.json["offset"]
+			)
+		).scalars().all()
+	), statuses.OK
 
 
 @user_blueprint.route("/users/<uuid:id_>/follow", methods=["PUT"])

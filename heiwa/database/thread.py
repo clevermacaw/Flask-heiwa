@@ -903,8 +903,8 @@ class Thread(
 	) -> sqlalchemy.sql.Select:
 		"""Generates a selection query with permissions already handled.
 
-		Since this thread's :class:`.Forum`'s permissions may not be parsed, this
-		will always emit additional queries to check.
+		Since threads' :class:`.Forum`'s permissions may not be parsed, this will
+		always emit additional queries to check.
 
 		:param user: The user whose permissions should be evaluated.
 		:param session: The SQLAlchemy session to execute additional queries with.
@@ -1016,8 +1016,8 @@ class Thread(
 				return sqlalchemy.select(thread_ids)
 
 			return (
-				sqlalchemy.select(Thread).
-				where(Thread.id.in_(thread_ids)).
+				sqlalchemy.select(cls).
+				where(cls.id.in_(thread_ids)).
 				order_by(order_by)
 			)
 

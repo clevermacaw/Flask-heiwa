@@ -23,4 +23,4 @@ __all__ = [
 	"ReprMixin",
 	"UUID"
 ]
-__version__ = "1.11.10"
+__version__ = "1.11.11"
