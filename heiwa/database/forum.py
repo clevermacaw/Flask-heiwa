@@ -991,66 +991,66 @@ class Forum(
 
 	instance_actions = {
 		"create_child_forum": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.get_parsed_permissions(user).forum_create
 		),
 		"create_thread": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.get_parsed_permissions(user).thread_view and
 			self.get_parsed_permissions(user).thread_create
 		),
 		"create_thread_locked": lambda self, user: (
-			self.instance_actions["create_thread"](user) and (
+			self.instance_actions["create_thread"](self, user) and (
 				self.get_parsed_permissions(user).thread_edit_lock_own or
 				self.get_parsed_permissions(user).thread_edit_lock_any
 			)
 		),
 		"create_thread_pinned": lambda self, user: (
-			self.instance_actions["create_thread"](user) and
+			self.instance_actions["create_thread"](self, user) and
 			self.get_parsed_permissions(user).thread_edit_pin
 		),
 		"delete": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.get_parsed_permissions(user).forum_delete
 		),
 		"edit": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.get_parsed_permissions(user).forum_edit
 		),
 		"edit_permissions_group": lambda self, user: (
-			self.instance_actions["view"](user) and
-			self.instance_actions["edit"](user)
+			self.instance_actions["view"](self, user) and
+			self.instance_actions["edit"](self, user)
 		),
 		"edit_permissions_user": lambda self, user: (
-			self.instance_actions["view"](user) and
-			self.instance_actions["edit"](user)
+			self.instance_actions["view"](self, user) and
+			self.instance_actions["edit"](self, user)
 		),
 		"edit_subscription": lambda self, user: (
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		),
 		"merge": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.get_parsed_permissions(user).forum_merge and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.instance_actions["merge"](user)
+				self.future_forum.instance_actions["merge"](self, user)
 			)
 		),
 		"move": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.get_parsed_permissions(user).forum_move and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.instance_actions["move"](user)
+				self.future_forum.instance_actions["move"](self, user)
 			)
 		),
 		"move_thread_to": lambda self, user: (
-			self.instance_actions["create_thread"](user)
+			self.instance_actions["create_thread"](self, user)
 		),
 		"view": lambda self, user: self.get_parsed_permissions(user).forum_view,
 		"view_permissions_group": lambda self, user: (
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		),
 		"view_permissions_user": lambda self, user: (
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given forum. Unlike

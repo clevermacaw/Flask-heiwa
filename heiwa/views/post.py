@@ -315,10 +315,10 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	)
 
 	return flask.jsonify(
-		flask.g.session.execute(
+		flask.g.sa_session.execute(
 			database.Post.get(
 				flask.g.user,
-				flask.g.session,
+				flask.g.sa_session,
 				conditions=conditions,
 				order_by=(
 					sqlalchemy.asc(order_column)
@@ -365,7 +365,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	ids = flask.g.sa_session.execute(
 		database.Post.get(
 			flask.g.user,
-			flask.g.session,
+			flask.g.sa_session,
 			additional_actions=["delete"],
 			conditions=conditions,
 			order_by=(
@@ -390,12 +390,12 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		execution_options(synchronize_session="fetch")
 	)
 
-	flask.g.session.execute(
+	flask.g.sa_session.execute(
 		sqlalchemy.delete(database.Post).
 		where(database.Post.id.in_(ids))
 	)
 
-	flask.g.session.commit()
+	flask.g.sa_session.commit()
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 
@@ -435,6 +435,21 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	forums, they're automatically calculated.
 	"""
 
+	additional_actions = ["edit"]
+
+	if "thread_id" in flask.g.json["values"]:
+		validate_permission(
+			flask.g.user,
+			"move_post_to",
+			find_thread_by_id(
+				flask.g.json["values"]["thread_id"],
+				flask.g.sa_session,
+				flask.g.user
+			)
+		)
+
+		additional_actions.append("move")
+
 	conditions = True
 
 	if "filter" in flask.g.json:
@@ -451,9 +466,30 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 		flask.g.json["order"]["by"]
 	)
 
-	# TODO
+	flask.g.sa_session.execute(
+		sqlalchemy.update(database.Group).
+		where(
+			database.Group.id.in_(
+				database.Group.get(
+					flask.g.user,
+					flask.g.sa_session,
+					additional_actions=additional_actions,
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
+					),
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"]
+				)
+			)
+		).
+		values(**flask.g.json["values"]).
+		execution_options(synchronize_session="fetch")
+	)
 
-	flask.g.session.commit()
+	flask.g.sa_session.commit()
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 

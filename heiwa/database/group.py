@@ -173,23 +173,23 @@ class Group(
 
 	instance_actions = {
 		"delete": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			user.parsed_permissions["group_delete"] and
 			self.level < user.highest_group.level
 		),
 		"edit": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			user.parsed_permissions["group_edit"] and
 			self.level < user.highest_group.level
 		),
 		"edit_permissions": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			user.parsed_permissions["group_edit_permissions"] and
 			self.level < user.highest_group.level
 		),
 		"view": lambda self, user: True,
 		"view_permissions": lambda self, user: (
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given group. Unlike

@@ -386,10 +386,10 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	)
 
 	return flask.jsonify(
-		flask.g.session.execute(
+		flask.g.sa_session.execute(
 			database.Thread.get(
 				flask.g.user,
-				flask.g.session,
+				flask.g.sa_session,
 				conditions=conditions,
 				order_by=(
 					sqlalchemy.asc(order_column)
@@ -435,7 +435,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	ids = flask.g.sa_session.execute(
 		database.Thread.get(
 			flask.g.user,
-			flask.g.session,
+			flask.g.sa_session,
 			additional_actions=["delete"],
 			conditions=conditions,
 			order_by=(
@@ -469,12 +469,12 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		execution_options(synchronize_session="fetch")
 	)
 
-	flask.g.session.execute(
+	flask.g.sa_session.execute(
 		sqlalchemy.delete(database.Thread).
 		where(database.Thread.id.in_(ids))
 	)
 
-	flask.g.session.commit()
+	flask.g.sa_session.commit()
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 
@@ -524,7 +524,67 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	don't exist for their respective forums, they're automatically calculated.
 	"""
 
-	# TODO
+	additional_actions = ["edit"]
+
+	if "forum_id" in flask.g.json["values"]:
+		validate_permission(
+			flask.g.user,
+			"move_thread_to",
+			find_forum_by_id(
+				flask.g.json["values"]["forum_id"],
+				flask.g.sa_session,
+				flask.g.user
+			)
+		)
+
+		additional_actions.append("move")
+
+	if "is_locked" in flask.g.json["values"]:
+		additional_actions.append("edit_lock")
+
+	if "is_pinned" in flask.g.json["values"]:
+		additional_actions.append("edit_pin")
+
+	conditions = True
+
+	if "filter" in flask.g.json:
+		conditions = sqlalchemy.and_(
+			conditions,
+			parse_search(
+				flask.g.json["filter"],
+				database.Thread
+			)
+		)
+
+	order_column = getattr(
+		database.Thread,
+		flask.g.json["order"]["by"]
+	)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.update(database.Thread).
+		where(
+			database.Thread.id.in_(
+				database.Thread.get(
+					flask.g.user,
+					flask.g.sa_session,
+					additional_actions=additional_actions,
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
+					),
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"]
+				)
+			)
+		).
+		values(**flask.g.json["values"]).
+		execution_options(synchronize_session="fetch")
+	)
+
+	flask.g.sa_session.commit()
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 

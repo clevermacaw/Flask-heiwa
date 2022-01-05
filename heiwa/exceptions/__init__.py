@@ -75,7 +75,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.32.1"
+__version__ = "1.32.2"
 
 
 class APIException(Exception):
@@ -263,7 +263,8 @@ class APIForumUnchanged(APIException):
 class APIGroupCannotDeleteLastDefault(APIException):
 	"""Exception class for when a :class:`User <heiwa.database.User>` attempts to
 	delete the last :class:`Group <heiwa.database.Group>` whose
-	:attr:`default_for <heiwa.database.Group.default_for>` column contains ``*``.
+	:attr:`default_for <heiwa.database.Group.default_for>` column contains ``*``,
+	or edit it in such a way that it no longer contains that value there.
 	"""
 
 	code = statuses.FORBIDDEN

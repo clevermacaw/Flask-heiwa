@@ -183,7 +183,7 @@ class Post(
 
 	static_actions = {
 		"create": lambda user: (
-			Post.instance_actions["view"](user) and
+			Post.instance_actions["view"](self, user) and
 			user.parsed_permissions["post_create"]
 		),
 		"delete": lambda user: (
@@ -215,7 +215,7 @@ class Post(
 
 	instance_actions = {
 		"delete": lambda self, user: (
-			self.instance_actions["view"](user) and (
+			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).post_delete_own
@@ -224,7 +224,7 @@ class Post(
 			)
 		),
 		"edit": lambda self, user: (
-			self.instance_actions["view"](user) and (
+			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).post_edit_own
@@ -233,11 +233,11 @@ class Post(
 			)
 		),
 		"edit_vote": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.forum.get_parsed_permissions(user).post_edit_vote
 		),
 		"move": lambda self, user: (
-			self.instance_actions["view"](user) and (
+			self.instance_actions["view"](self, user) and (
 				(
 					self.thread.user_id == user.id and
 					self.forum.get_parsed_permissions(user).post_move_own
@@ -245,14 +245,14 @@ class Post(
 				self.forum.get_parsed_permissions(user).post_move_any
 			) and (
 				not hasattr(self, "future_thread") or
-				self.future_thread.instance_actions["move_post_to"](user)
+				self.future_thread.instance_actions["move_post_to"](self, user)
 			)
 		),
 		"view": lambda self, user: (
 			self.forum.get_parsed_permissions(user).post_view
 		),
 		"view_vote": lambda self, user: (
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		)
 	}
 	""" TODO """

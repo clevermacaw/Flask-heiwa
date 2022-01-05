@@ -127,7 +127,7 @@ class Category(
 		"view": lambda self, user: (
 			user.parsed_permissions["forum_view"]
 			if self.forum_id is None
-			else self.forum.instance_actions["view"](user)
+			else self.forum.instance_actions["view"](self, user)
 		)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all categories, without

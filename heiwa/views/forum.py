@@ -433,10 +433,10 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	)
 
 	return flask.jsonify(
-		flask.g.session.execute(
+		flask.g.sa_session.execute(
 			database.Forum.get(
 				flask.g.user,
-				flask.g.session,
+				flask.g.sa_session,
 				conditions=conditions,
 				order_by=(
 					sqlalchemy.asc(order_column)
@@ -482,7 +482,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	forum_ids = flask.g.sa_session.execute(
 		database.Forum.get(
 			flask.g.user,
-			flask.g.session,
+			flask.g.sa_session,
 			additional_actions=["delete"],
 			conditions=conditions,
 			order_by=(
@@ -521,12 +521,12 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		execution_options(synchronize_session="fetch")
 	)
 
-	flask.g.session.execute(
+	flask.g.sa_session.execute(
 		sqlalchemy.delete(database.Forum).
 		where(database.Forum.id.in_(forum_ids))
 	)
 
-	flask.g.session.commit()
+	flask.g.sa_session.commit()
 
 	return flask.jsonify({}), statuses.NO_CONTENT
 
@@ -575,6 +575,9 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 	haven't been calculated for them, they're automatically calculated.
 	"""
 
+	conditions = True
+	additional_actions = ["edit"]
+
 	if "category_id" in flask.g.json["values"]:
 		category = find_category_by_id(
 			flask.g.json["category_id"],
@@ -585,6 +588,11 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 		if "parent_forum_id" in flask.g.json["values"]:
 			if category.forum_id != flask.g.json["values"]["parent_forum_id"]:
 				raise exceptions.APIForumCategoryOutsideParent
+		else:
+			conditions = sqlalchemy.and_(
+				conditions,
+				database.Forum.parent_forum_id == category.forum_id
+			)
 
 	if "parent_forum_id" in flask.g.json["values"]:
 		parent_forum = find_forum_by_id(
@@ -607,7 +615,48 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 				flask.current_app.config["FORUM_MAX_CHILD_LEVEL"]
 			)
 
-	# TODO
+		additional_actions.append("move")
+
+		conditions = sqlalchemy.and_(
+			conditions,
+			database.Forum.id != parent_forum.id
+		)
+
+	if "filter" in flask.g.json:
+		conditions = sqlalchemy.and_(
+			conditions,
+			parse_search(
+				flask.g.json["filter"],
+				database.Forum
+			)
+		)
+
+	order_column = getattr(
+		database.Forum,
+		flask.g.json["order"]["by"]
+	)
+
+	flask.g.sa_session.execute(
+		sqlalchemy.update(database.Forum).
+		where(
+			database.Forum.id.in_(
+				database.Forum.get(
+					flask.g.user,
+					flask.g.sa_session,
+					additional_actions=additional_actions,
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
+					),
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"]
+				)
+			)
+		).
+		values(**flask.g.json["values"])
+	)
 
 	flask.g.sa_session.commit()
 

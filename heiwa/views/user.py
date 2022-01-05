@@ -377,10 +377,10 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	)
 
 	return flask.jsonify(
-		flask.g.session.execute(
+		flask.g.sa_session.execute(
 			database.User.get(
 				flask.g.user,
-				flask.g.session,
+				flask.g.sa_session,
 				conditions=conditions,
 				order_by=(
 					sqlalchemy.asc(order_column)
@@ -428,7 +428,7 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 			database.User.id.in_(
 				database.User.get(
 					flask.g.user,
-					flask.g.session,
+					flask.g.sa_session,
 					additional_actions=["delete"],
 					conditions=conditions,
 					order_by=(
@@ -510,7 +510,7 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 			database.User.id.in_(
 				database.User.get(
 					flask.g.user,
-					flask.g.session,
+					flask.g.sa_session,
 					additional_actions=["edit"],
 					conditions=conditions,
 					order_by=(
@@ -1117,10 +1117,10 @@ def list_followers(
 	)
 
 	return flask.jsonify(
-		flask.g.session.execute(
+		flask.g.sa_session.execute(
 			database.User.get(
 				flask.g.user,
-				flask.g.session,
+				flask.g.sa_session,
 				conditions=conditions,
 				order_by=(
 					sqlalchemy.asc(order_column)
@@ -1183,10 +1183,10 @@ def list_followees(
 	)
 
 	return flask.jsonify(
-		flask.g.session.execute(
+		flask.g.sa_session.execute(
 			database.User.get(
 				flask.g.user,
-				flask.g.session,
+				flask.g.sa_session,
 				conditions=conditions,
 				order_by=(
 					sqlalchemy.asc(order_column)

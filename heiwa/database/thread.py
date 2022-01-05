@@ -443,12 +443,12 @@ class Thread(
 
 	instance_actions = {
 		"create_post": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.forum.get_parsed_permissions(user).post_view and
 			self.forum.get_parsed_permissions(user).post_create
 		),
 		"delete": lambda self, user: (
-			self.instance_actions["view"](user) and (
+			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_delete_own
@@ -457,7 +457,7 @@ class Thread(
 			)
 		),
 		"edit": lambda self, user: (
-			self.instance_actions["view"](user) and (
+			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_edit_own
@@ -466,7 +466,7 @@ class Thread(
 			)
 		),
 		"edit_lock": lambda self, user: (
-			self.instance_actions["view"](user) and (
+			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_edit_lock_own
@@ -475,18 +475,18 @@ class Thread(
 			)
 		),
 		"edit_pin": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.forum.get_parsed_permissions(user).thread_edit_pin
 		),
 		"edit_subscription": lambda self, user: (
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		),
 		"edit_vote": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			self.forum.get_parsed_permissions(user).thread_edit_vote
 		),
 		"merge": lambda self, user: (
-			self.instance_actions["view"](user) and (
+			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_merge_own
@@ -494,11 +494,11 @@ class Thread(
 				self.forum.get_parsed_permissions(user).thread_merge_any
 			) and (
 				not hasattr(self, "future_thread") or
-				self.future_thread.instance_actions["merge"](user)
+				self.future_thread.instance_actions["merge"](self, user)
 			)
 		),
 		"move": lambda self, user: (
-			self.instance_actions["view"](user) and (
+			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
 					self.forum.get_parsed_permissions(user).thread_move_own
@@ -506,16 +506,16 @@ class Thread(
 				self.forum.get_parsed_permissions(user).thread_move_any
 			) and (
 				not hasattr(self, "future_forum") or
-				self.future_forum.instance_actions["move_thread_to"](user)
+				self.future_forum.instance_actions["move_thread_to"](self, user)
 			)
 		),
 		"move_post_to": lambda self, user: (
-			self.instance_actions["create_thread"](user)
+			self.instance_actions["create_thread"](self, user)
 		),
 		"view": lambda self, user: (
 			self.forum.get_parsed_permissions(user).thread_view
 		),
-		"view_vote": lambda self, user: self.instance_actions["view"](user)
+		"view_vote": lambda self, user: self.instance_actions["view"](self, user)
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on a given thread. Unlike
 	:attr:`static_actions <.Thread.static_actions>`, this can vary by each thread.

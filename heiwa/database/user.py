@@ -575,20 +575,20 @@ class User(
 	instance_actions = {
 		"delete": lambda self, user: (
 			self.id == user.id or (
-				self.instance_actions["view"](user) and
+				self.instance_actions["view"](self, user) and
 				user.parsed_permissions["user_delete"] and
 				user.highest_group.level > self.highest_group.level
 			)
 		),
 		"edit": lambda self, user: (
 			self.id == user.id or (
-				self.instance_actions["view"](user) and
+				self.instance_actions["view"](self, user) and
 				user.parsed_permissions["user_edit"] and
 				user.highest_group.level > self.highest_group.level
 			)
 		),
 		"edit_ban": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			user.parsed_permissions["user_edit_ban"] and (
 				self.id == user.id or
 				user.highest_group.level > self.highest_group.level
@@ -596,14 +596,14 @@ class User(
 		),
 		"edit_block": lambda self, user: (
 			self.id != user.id and
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		),
 		"edit_follow": lambda self, user: (
 			self.id != user.id and
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		),
 		"edit_group": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			user.parsed_permissions["user_edit_groups"] and
 			user.highest_group.level > self.highest_group.level and
 			(
@@ -612,15 +612,15 @@ class User(
 			)
 		),
 		"edit_permissions": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			user.parsed_permissions["user_edit_permissions"] and
 			user.highest_group.level > self.highest_group.level
 		),
 		"view": lambda self, user: True,
-		"view_ban": lambda self, user: self.instance_actions["view"](user),
-		"view_groups": lambda self, user: self.instance_actions["view"](user),
+		"view_ban": lambda self, user: self.instance_actions["view"](self, user),
+		"view_groups": lambda self, user: self.instance_actions["view"](self, user),
 		"view_permissions": lambda self, user: (
-			self.instance_actions["view"](user)
+			self.instance_actions["view"](self, user)
 		)
 	}
 	r"""Actions a given user is allowed to perform on another given user. Unlike

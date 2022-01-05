@@ -315,10 +315,10 @@ def list_() -> typing.Tuple[flask.Response, int]:
 	)
 
 	return flask.jsonify(
-		flask.g.session.execute(
+		flask.g.sa_session.execute(
 			database.Group.get(
 				flask.g.user,
-				flask.g.session,
+				flask.g.sa_session,
 				conditions=conditions,
 				order_by=(
 					sqlalchemy.asc(order_column)
@@ -343,8 +343,6 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 	"""Deletes all groups that match the requested filter if there is one,
 	and ``flask.g.user`` has permission to both view and delete.
 	"""
-
-	# TODO
 
 	order_column = getattr(
 		database.Group,
@@ -384,15 +382,19 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 		sqlalchemy.delete(database.Group).
 		where(
 			database.Group.id.in_(
-				sqlalchemy.select(database.Group.id).
-				where(conditions).
-				order_by(
-					sqlalchemy.asc(order_column)
-					if flask.g.json["order"]["asc"]
-					else sqlalchemy.desc(order_column)
-				).
-				limit(flask.g.json["limit"]).
-				offset(flask.g.json["offset"])
+				database.Group.get(
+					flask.g.user,
+					flask.g.sa_session,
+					additional_actions=["delete"],
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
+					),
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"]
+				)
 			)
 		).
 		execution_options(synchronize_session="fetch")
@@ -460,15 +462,19 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 		sqlalchemy.update(database.Group).
 		where(
 			database.Group.id.in_(
-				sqlalchemy.select(database.Group.id).
-				where(conditions).
-				order_by(
-					sqlalchemy.asc(order_column)
-					if flask.g.json["order"]["asc"]
-					else sqlalchemy.desc(order_column)
-				).
-				limit(flask.g.json["limit"]).
-				offset(flask.g.json["offset"])
+				database.Group.get(
+					flask.g.user,
+					flask.g.sa_session,
+					additional_actions=["edit"],
+					conditions=conditions,
+					order_by=(
+						sqlalchemy.asc(order_column)
+						if flask.g.json["order"]["asc"]
+						else sqlalchemy.desc(order_column)
+					),
+					limit=flask.g.json["limit"],
+					offset=flask.g.json["offset"]
+				)
 			)
 		).
 		values(**flask.g.json["values"]).
