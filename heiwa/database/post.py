@@ -245,16 +245,7 @@ class Post(
 				self.forum.get_parsed_permissions(user).post_move_any
 			) and (
 				not hasattr(self, "future_thread") or
-				(
-					self.future_thread.instance_actions["view"](user) and
-					(
-						(
-							self.future_thread.user_id == user.id and
-							self.future_thread.forum.get_parsed_permissions(user).post_move_own
-						) or
-						self.future_thread.forum.get_parsed_permissions(user).post_move_any
-					)
-				)
+				self.future_thread.instance_actions["move_post_to"](user)
 			)
 		),
 		"view": lambda self, user: (

@@ -14,7 +14,7 @@ __all__ = [
 	"ConfiguredLockFlask",
 	"create_app"
 ]
-__version__ = "0.16.17"
+__version__ = "0.16.18"
 
 
 class ConfiguredLockFlask(flask.Flask):

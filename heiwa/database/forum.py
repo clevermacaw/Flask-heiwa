@@ -792,7 +792,10 @@ class Forum(
 
 		from .thread import Thread
 
-		return Thread.static_actions["create"](user)
+		return (
+			Forum.static_actions["view"](user) and
+			Thread.static_actions["create"](user)
+		)
 
 	def _static_action_create_thread_locked(user) -> bool:
 		r"""Checks whether or not the ``user`` is allowed to create locked
@@ -805,7 +808,10 @@ class Forum(
 
 		from .thread import Thread
 
-		return Thread.static_actions["edit_lock"](user)
+		return (
+			Forum.static_actions["view"](user) and
+			Thread.static_actions["edit_lock"](user)
+		)
 
 	def _static_action_create_thread_pinned(user) -> bool:
 		r"""Checks whether or not the ``user`` is allowed to create pinned
@@ -818,7 +824,27 @@ class Forum(
 
 		from .thread import Thread
 
-		return Thread.static_actions["edit_pin"](user)
+		return (
+			Forum.static_actions["view"](user) and
+			Thread.static_actions["edit_pin"](user)
+		)
+
+	def _static_action_move_thread_to(user) -> bool:
+		r"""Checks whether or not the ``user`` is allowed to create move
+		:class:`.Thread`\s to forums, without knowledge of which forum it'll
+		be.
+
+		:param user: The user.
+
+		:returns: The result.
+		"""
+
+		from .thread import Thread
+
+		return (
+			Forum.static_actions["view"](user) and
+			Thread.static_actions["move"](user)
+		)
 
 	static_actions = {
 		"create": lambda user: (
@@ -829,18 +855,9 @@ class Forum(
 			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_create"]
 		),
-		"create_thread": lambda user: (
-			Forum.static_actions["view"](user) and
-			Forum._static_action_create_thread(user)
-		),
-		"create_thread_locked": lambda user: (
-			Forum.static_actions["create_thread"](user) and
-			Forum._static_action_create_thread_locked(user)
-		),
-		"create_thread_pinned": lambda user: (
-			Forum.static_actions["create_thread"](user) and
-			Forum._static_action_create_thread_pinned(user)
-		),
+		"create_thread": _static_action_create_thread,
+		"create_thread_locked": _static_action_create_thread_locked,
+		"create_thread_pinned": _static_action_create_thread_pinned,
 		"delete": lambda user: (
 			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_delete"]
@@ -868,6 +885,7 @@ class Forum(
 			Forum.static_actions["view"](user) and
 			user.parsed_permissions["forum_move"]
 		),
+		"move_thread_to": _static_action_move_thread_to,
 		"view": lambda user: user.parsed_permissions["forum_view"],
 		"view_permissions_group": lambda user: (
 			Forum.static_actions["view"](user)
@@ -944,6 +962,12 @@ class Forum(
 		as well as the ``forum_move`` value in their
 		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
+	``move_thread_to``:
+		Whether or not a user is allowed to move threads to forums, This depends
+		on the user being allowed to view both threads and forums, as well as
+		either the ``thread_move_own`` or ``thread_move_any`` value in their
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
 	``view``:
 		Whether or not a user is allowed to view forums. This depends on the
 		``forum_view`` value in the user's
@@ -1018,6 +1042,9 @@ class Forum(
 				self.future_forum.instance_actions["move"](user)
 			)
 		),
+		"move_thread_to": lambda self, user: (
+			self.instance_actions["create_thread"](user)
+		),
 		"view": lambda self, user: self.get_parsed_permissions(user).forum_view,
 		"view_permissions_group": lambda self, user: (
 			self.instance_actions["view"](user)
@@ -1087,6 +1114,10 @@ class Forum(
 		forum. If the ``future_forum`` attribute is set, the same conditions
 		must also apply to it.
 
+	``move_thread_to``:
+		Whether or not a user is allowed to move :class:`.Thread`\ s to this
+		forum. This depends on the user being allowed to create threads in it.
+
 	``view``:
 		Whether or not a user is allowed to view this forum. This depends on the
 		``forum_view`` value in this forum's permissions for that user.
@@ -1147,6 +1178,7 @@ class Forum(
 			Forum.action_queries["view"](user),
 			ForumParsedPermissions.forum_move.is_(True)
 		),
+		"move_thread_to": lambda user: Forum.action_queries["create_thread"](user),
 		"view": lambda user: ForumParsedPermissions.forum_view.is_(True),
 		"view_permissions_group": lambda user: Forum.action_queries["view"](user),
 		"view_permissions_user": lambda user: Forum.action_queries["view"](user)
@@ -1502,15 +1534,13 @@ class Forum(
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)
 
-		parsed_permissions = session.execute(
-			sqlalchemy.select(ForumParsedPermissions).
-			where(
-				sqlalchemy.and_(
-					ForumParsedPermissions.forum_id == self.id,
-					ForumParsedPermissions.user_id == user.id
-				)
+		parsed_permissions = session.get(
+			ForumParsedPermissions,
+			(
+				self.id,
+				user.id
 			)
-		).scalars().one_or_none()
+		)  # Don't query twice for the same thing
 
 		if parsed_permissions is None and auto_parse:
 			self.reparse_permissions(user)

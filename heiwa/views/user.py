@@ -45,7 +45,7 @@ def check_rsa_public_key_valid(
 	field: str,
 	value: bytes,
 	error: typing.Callable[[str, str], None]
-):
+) -> None:
 	"""Checks whether or not ``value`` is a valid RSA public key. If not, ``error``
 	is called. This function should be used within a Cerberus validator schema.
 	"""

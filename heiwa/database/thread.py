@@ -289,17 +289,34 @@ class Thread(
 
 		from .post import Post
 
-		return Post.static_actions["create"](user)
+		return (
+			Thread.static_actions["view"](user) and
+			Post.static_actions["create"](user)
+		)
+
+	def _static_action_move_post_to(user) -> bool:
+		r"""Checks whether or not the ``user`` is allowed to create move
+		:class:`.Post`\s to threads, without knowledge of which thread it'll
+		be.
+
+		:param user: The user.
+
+		:returns: The result.
+		"""
+
+		from .post import Post
+
+		return (
+			Thread.static_actions["view"](user) and
+			Post.static_actions["move"](user)
+		)
 
 	static_actions = {
 		"create": lambda user: (
 			Thread.static_actions["view"](user) and
 			user.parsed_permissions["thread_create"]
 		),
-		"create_post": lambda user: (
-			Thread.static_actions["view"](user) and
-			Thread._static_action_create_post(user)
-		),
+		"create_post": _static_action_create_post,
 		"delete": lambda user: (
 			Thread.static_actions["view"](user) and (
 				user.parsed_permissions["thread_delete_own"] or
@@ -341,6 +358,7 @@ class Thread(
 				user.parsed_permissions["thread_move_any"]
 			)
 		),
+		"move_post_to": _static_action_move_post_to,
 		"view": lambda user: user.parsed_permissions["thread_view"],
 		"view_vote": lambda user: Thread.static_actions["view"](user)
 	}
@@ -400,6 +418,12 @@ class Thread(
 		Whether or not a user can move threads to other forums. This depends
 		on the user being allowed to view them, as well as either the
 		``thread_move_own`` or ``thread_move_any`` value in the user's
+		:attr:`parsed_permissions <.User.parsed_permissions>`.
+
+	``move_post_to``:
+		Whether or not a user is allowed to move posts to threads, This depends
+		on the user being allowed to view both threads and posts, as well as the
+		either the ``thread_move_own`` or ``thread_move_any`` value in their
 		:attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``view``:
@@ -482,17 +506,11 @@ class Thread(
 				self.forum.get_parsed_permissions(user).thread_move_any
 			) and (
 				not hasattr(self, "future_forum") or
-				(
-					self.future_forum.instance_actions["view"](user) and
-					(
-						(
-							self.future_forum.user_id == user.id and
-							self.future_forum.get_parsed_permissions(user).thread_move_own
-						) or
-						self.future_forum.get_parsed_permissions(user).thread_move_any
-					)
-				)
+				self.future_forum.instance_actions["move_thread_to"](user)
 			)
+		),
+		"move_post_to": lambda self, user: (
+			self.instance_actions["create_thread"](user)
 		),
 		"view": lambda self, user: (
 			self.forum.get_parsed_permissions(user).thread_view
@@ -552,8 +570,12 @@ class Thread(
 		This depends on the user being allowed to view it, as well as them either
 		owning this thread and the ``thread_move_own`` value in the forum's
 		permissions, or them not owning it and the ``thread_move_any`` value. If
-		the ``future_forum`` attribute has been set, the same conditions must
-		also apply to it, and the user must have permission to view it.
+		the ``future_forum`` attribute is assigned, they must also have permission
+		to create threads in that forum.
+
+	``move_post_to``:
+		Whether or not a user is allowed to move posts to this forum. This depends
+		on them being able to create posts in this thread.
 
 	``view``:
 		Whether or not a user is allowed to view this thread. This depends on the
