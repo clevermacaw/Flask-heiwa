@@ -570,8 +570,8 @@ class Thread(
 		This depends on the user being allowed to view it, as well as them either
 		owning this thread and the ``thread_move_own`` value in the forum's
 		permissions, or them not owning it and the ``thread_move_any`` value. If
-		the ``future_forum`` attribute is assigned, they must also have permission
-		to create threads in that forum.
+		the ``future_forum`` attribute is assigned, it also depends on them being
+		allowed to move threads to it.
 
 	``move_post_to``:
 		Whether or not a user is allowed to move posts to this forum. This depends
