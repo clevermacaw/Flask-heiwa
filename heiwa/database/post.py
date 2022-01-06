@@ -183,7 +183,7 @@ class Post(
 
 	static_actions = {
 		"create": lambda user: (
-			Post.instance_actions["view"](self, user) and
+			Post.static_actions["view"](user) and
 			user.parsed_permissions["post_create"]
 		),
 		"delete": lambda user: (
