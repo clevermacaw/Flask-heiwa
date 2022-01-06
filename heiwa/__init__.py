@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import functools
 import os
 
 import flask
@@ -22,30 +21,39 @@ class ConfiguredLockFlask(flask.Flask):
 	everything has been set up for production use.
 	"""
 
-	@property
-	@functools.lru_cache()
-	def configured(self: ConfiguredLockFlask) -> bool:
-		"""Returns whether or not this app has been configured. This depends on
+	def __init__(self: ConfiguredLockFlask, *args, **kwargs) -> None:
+		"""Sets whether or not this app has been configured. This depends on
 		whether or not the file located where the ``CONFIGURED_LOCK_LOCATION``
 		environment variable (or ``'$current_working_directory/configured.lock'``,
 		if it's unset) describes exists. If it does exist, it has not been
 		configured. Otherwise, it has.
 		"""
 
-		return not os.path.isfile(
+		self._configured = not os.path.isfile(
 			os.environ.get(
 				"CONFIGURED_LOCK_LOCATION",
 				f"{os.getcwd()}/configured.lock"
 			)
 		)
 
+		flask.Flask.__init__(self, *args, **kwargs)
+
+	@property
+	def configured(self: ConfiguredLockFlask) -> bool:
+		"""Returns the value in the :attr:`.ConfiguredLockFlask._configured`
+		instance variable. This describes whther or not the current app has
+		been properly set up for production use.
+		"""
+
+		return self._configured
+
 	@configured.setter
 	def configured(
 		self: ConfiguredLockFlask,
-		configured: bool
+		is_configured: bool
 	) -> None:
-		"""Sets whether or not this app has been configured, creates or removes
-		the lock file, and clears the getter's cache.
+		"""Sets whether or not this app has been configured, and creates / removes
+		the lock file.
 		"""
 
 		location = os.environ.get(
@@ -53,13 +61,12 @@ class ConfiguredLockFlask(flask.Flask):
 			f"{os.getcwd()}/configured.lock"
 		)
 
-		if os.path.exists(location) and configured:
+		if os.path.exists(location) and is_configured:
 			os.remove(location)
-		elif not configured:
+		elif not is_configured:
 			open(location, "w").close()
 
-		# FIXME
-		# self.configured.fget.cache_clear()
+		self._configured = is_configured
 
 
 def create_app() -> ConfiguredLockFlask:
@@ -125,6 +132,8 @@ def create_app() -> ConfiguredLockFlask:
 				flask.current_app.SASession.remove()
 
 			return response
+
+		app.configured = True
 
 		from .errorhandlers import handle_api_exception, handle_http_exception
 
