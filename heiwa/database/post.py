@@ -181,6 +181,8 @@ class Post(
 		lazy=True
 	)
 
+	# TODO: Forum permission helper instead of forum rel.
+
 	static_actions = {
 		"create": lambda user: (
 			Post.static_actions["view"](user) and
@@ -211,7 +213,48 @@ class Post(
 		"view": lambda user: user.parsed_permissions["post_view"],
 		"view_vote": lambda user: Post.static_actions["view"](user)
 	}
-	""" TODO """
+	r"""Actions :class:`User`\ s are allowed to perform on all posts, without
+	any indication of which post it is.
+
+	``create``:
+		Whether or not the user can create posts. This depends on them
+		being able to ``view`` them, as well as the ``post_create`` value in
+		their permissions.
+
+	``delete``:
+		Whether or not a user can delete posts. This depends on them
+		being able to ``view`` them, as well as either the ``post_delete_own``
+		or the ``post_delete_any`` value in their permissions.
+
+	``edit``:
+		Whether or not a user can edit posts. This depends on them being able
+		to ``view`` them, as well as either the ``post_edit_own`` or
+		the ``post_edit_any`` value in their permissions.
+
+	``edit_vote``:
+		Whether or not a user can edit their votes on posts. This depends
+		on them being able to ``view`` posts, as well as the ``post_edit_vote``
+		value in their permissions.
+
+	``move``:
+		Whether or not a user can move posts. This depends on them being able
+		to ``view`` them, as well as either the ``post_move_own`` or
+		the ``post_move_any`` value in their permissions.
+
+	``view``:
+		Whether or not a user is allowed to view posts. This depends on the
+		``post_view`` value in their permissions.
+
+	``view_vote``:
+		Whether or not a user is allowed to view their vote on posts.
+		As long as they're allowed to ``view`` them, this will always be
+		:data:`True` by default.
+
+	.. seealso::
+		:attr:`.Post.static_actions`
+
+		:attr:`.Post.action_queries`
+	"""
 
 	instance_actions = {
 		"delete": lambda self, user: (
@@ -255,7 +298,48 @@ class Post(
 			self.instance_actions["view"](self, user)
 		)
 	}
-	""" TODO """
+	r"""Actions :class:`User`\ s are allowed to perform on a given post. Unlike
+	:attr:`static_actions <.Thread.static_actions>`, this can vary by each post.
+
+	``delete``:
+		Whether or not a user is allowed to delete this post. This depends on
+		them being allowed to ``view`` it, as well as them either owning it
+		and having the ``post_delete_own`` forum permission, or them having
+		the ``post_delete_any`` permission.
+
+	``edit``:
+		Whether or not a user is allowed to edit this post. This depends on
+		them being allowed to ``view`` it, as well as them either owning it
+		and having the ``post_edit_own`` forum permission, or them having
+		the ``post_edit_any`` permission.
+
+	``edit_vote``:
+		Whether or not a user is allowed to edit their vote on this post.
+		This depends on them being allowed to ``view`` it, as well as the
+		``post_edit_vote`` forum permission.
+
+	``move``:
+		Whether or not a user is allowed to move this post to another
+		:class:`.Thread`. This depends on them being allowed to ``view`` it,
+		as well as them either owning it and having the ``post_move_own``
+		forum permission, or them having the ``post_move_any`` permission.
+		If the ``future_thread`` attribute is assigned, the user must also
+		be allowed to perform the ``move_post_to`` action on that thread.
+
+	``view``:
+		Whether or not a user is allowed to view this post. This depends on
+		the ``post_view`` forum permission.
+
+	``view_vote``:
+		Whether or not a user is allowed to view their votes on this post.
+		As long as they have permission to ``view`` it, this will always be
+		:data:`True` by default.
+
+	.. seealso::
+		:attr:`.Post.static_actions`
+
+		:attr:`.Post.action_queries`
+	"""
 
 	@staticmethod
 	def _action_query_delete(user) -> sqlalchemy.sql.Selectable:
