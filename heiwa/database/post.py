@@ -181,8 +181,6 @@ class Post(
 		lazy=True
 	)
 
-	# TODO: Forum permission helper instead of forum rel.
-
 	static_actions = {
 		"create": lambda user: (
 			Post.static_actions["view"](user) and
@@ -256,41 +254,78 @@ class Post(
 		:attr:`.Post.action_queries`
 	"""
 
-	instance_actions = {
-		"delete": lambda self, user: (
+	def _instance_action_delete(self: Post, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to delete this post.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
 			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user).post_delete_own
+					parsed_permissions.post_delete_own
 				) or
-				self.forum.get_parsed_permissions(user).post_delete_any
+				parsed_permissions.post_delete_any
 			)
-		),
-		"edit": lambda self, user: (
+		)
+
+	def _instance_action_edit(self: Post, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to edit this post.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
 			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user).post_edit_own
+					parsed_permissions.post_edit_own
 				) or
-				self.forum.get_parsed_permissions(user).post_edit_any
+				parsed_permissions.post_edit_any
 			)
-		),
-		"edit_vote": lambda self, user: (
-			self.instance_actions["view"](self, user) and
-			self.forum.get_parsed_permissions(user).post_edit_vote
-		),
-		"move": lambda self, user: (
+		)
+
+	def _instance_action_move(self: Post, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to move this post to another
+		:class:`.Thread`.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
 			self.instance_actions["view"](self, user) and (
 				(
 					self.thread.user_id == user.id and
-					self.forum.get_parsed_permissions(user).post_move_own
+					parsed_permissions.post_move_own
 				) or
-				self.forum.get_parsed_permissions(user).post_move_any
+				parsed_permissions.post_move_any
 			) and (
 				not hasattr(self, "future_thread") or
 				self.future_thread.instance_actions["move_post_to"](self, user)
 			)
+		)
+
+	instance_actions = {
+		"delete": _instance_action_delete,
+		"edit": _instance_action_edit,
+		"edit_vote": lambda self, user: (
+			self.instance_actions["view"](self, user) and
+			self.forum.get_parsed_permissions(user).post_edit_vote
 		),
+		"move": _instance_action_move,
 		"view": lambda self, user: (
 			self.forum.get_parsed_permissions(user).post_view
 		),
