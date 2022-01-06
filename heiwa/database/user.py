@@ -923,7 +923,7 @@ class User(
 		or posts, or sent any messages.
 		"""
 
-		return sqlalchemy.orm.object_sesion(self).execute(User.has_content)
+		return sqlalchemy.orm.object_session(self).execute(User.has_content)
 
 	@has_content.expression
 	def has_content(cls: User) -> sqlalchemy.sql.Select:
@@ -931,45 +931,40 @@ class User(
 		any forums, has made any threads or posts, or sent any messages.
 		"""
 
+		from .forum import Forum
+		from .thread import Thread
+		from .post import Post
+		from .message import Message
+
 		return (
 			sqlalchemy.select(User.id).
 			where(
 				sqlalchemy.and_(
 					User.id == cls.id,
 					(
-						sqlalchemy.select(sqlalchemy.text("forums.user_id")).
-						select_from(sqlalchemy.text("forums")).
-						where(sqlalchemy.text("forums.user_id = users.id")).
+						sqlalchemy.select(Forum.user_id).
+						where(Forum.user_id == cls.id).
 						exists()
 					),
 					(
-						sqlalchemy.select(sqlalchemy.text("threads.user_id")).
-						select_from(sqlalchemy.text("threads")).
-						where(sqlalchemy.text("threads.user_id = users.id")).
+						sqlalchemy.select(Thread.user_id).
+						where(Thread.user_id == cls.id).
 						exists()
 					),
 					(
-						sqlalchemy.select(sqlalchemy.text("posts.user_id")).
-						select_from(sqlalchemy.text("posts")).
-						where(sqlalchemy.text("posts.user_id = users.id")).
+						sqlalchemy.select(Post.user_id).
+						where(Post.user_id == cls.id).
 						exists()
 					),
 					(
-						sqlalchemy.select(sqlalchemy.text("messages.sender_id")).
-						select_from(sqlalchemy.text("messages")).
-						where(sqlalchemy.text("messages.sender_id = users.id")).
+						sqlalchemy.select(Message.sender_id).
+						where(Message.sender_id == cls.id).
 						exists()
 					)
 				)
 			).
 			exists().
 			select()
-		)
-
-		return sqlalchemy.or_(
-			cls.thread_count != 0,
-			cls.post_count != 0,
-			cls.message_sent_count != 0
 		)
 
 	@sqlalchemy.ext.hybrid.hybrid_property
