@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import typing
 import uuid
 
@@ -1541,7 +1540,6 @@ class Forum(
 			self.parent_forum_id
 		)
 
-	@functools.lru_cache()
 	def get_parsed_permissions(
 		self: Forum,
 		user,
@@ -1769,8 +1767,6 @@ class Forum(
 
 		if session is None:
 			session = sqlalchemy.orm.object_session(self)
-
-		self.get_parsed_permissions.cache_clear()
 
 		parsed_permissions = {}
 
