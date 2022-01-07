@@ -79,28 +79,37 @@ class Category(
 	"""The :class:`.Forum` a category falls under."""
 
 	static_actions = {
-		"create": lambda user: user.parsed_permissions["category_create"],
-		"delete": lambda user: user.parsed_permissions["category_delete"],
-		"edit": lambda user: user.parsed_permissions["category_edit"],
+		"create": lambda user: (
+			Category.static_actions["view"](user) and
+			user.parsed_permissions["category_create"]
+		),
+		"delete": lambda user: (
+			Category.static_actions["view"](user) and
+			user.parsed_permissions["category_delete"]
+		),
+		"edit": lambda user: (
+			Category.static_actions["view"](user) and
+			user.parsed_permissions["category_edit"]
+		),
 		"view": lambda user: user.parsed_permissions["forum_view"]
 	}
 	r"""Actions :class:`User`\ s are allowed to perform on all categories, without
 	any indication of which thread it is.
 
 	``create``:
-		Whether or not a user can create categories. This depends on the
-		``category_create`` value in their
-		:attr:`parsed_permissions <.User.parsed_permissions>`.
+		Whether or not a user can create categories. This depends on them being
+		allowed to view categories, as well as the ``category_create`` value in
+		their :attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``delete``:
-		Whether or not a user can delete categories. This depends on the
-		``category_delete`` value in their
-		:attr:`parsed_permissions <.User.parsed_permissions>`.
+		Whether or not a user can delete categories. This depends on them being
+		allowed to view categories, as well as the ``category_delete`` value in
+		their :attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``edit``:
-		Whether or not a user can edit categories. This depends on the
-		``category_edit`` value in their
-		:attr:`parsed_permissions <.User.parsed_permissions>`.
+		Whether or not a user can edit categories. This depends on them being
+		allowed to view categories, as well as the ``category_edit`` value in
+		their :attr:`parsed_permissions <.User.parsed_permissions>`.
 
 	``view``:
 		Whether or not a user can view categories. This depends on the
@@ -115,14 +124,20 @@ class Category(
 
 	instance_actions = {
 		"delete": lambda self, user: (
-			user.parsed_permissions["category_delete"]
-			if self.forum_id is None
-			else self.forum.get_parsed_permissions(user).category_delete
+			self.instance_actions["view"](user) and
+			(
+				user.parsed_permissions["category_delete"]
+				if self.forum_id is None
+				else self.forum.get_parsed_permissions(user).category_delete
+			)
 		),
 		"edit": lambda self, user: (
-			user.parsed_permissions["category_edit"]
-			if self.forum_id is None
-			else self.forum.get_parsed_permissions(user).category_edit
+			self.instance_actions["view"](user) and
+			(
+				user.parsed_permissions["category_edit"]
+				if self.forum_id is None
+				else self.forum.get_parsed_permissions(user).category_edit
+			)
 		),
 		"view": lambda self, user: (
 			user.parsed_permissions["forum_view"]
@@ -134,15 +149,15 @@ class Category(
 	any indication of which thread it is.
 
 	``delete``:
-		Whether or not a user can delete this category. This depends on the
-		``category_delete`` value in their
+		Whether or not a user can delete this category. This depends on them being
+		able to view it, as well as the ``category_delete`` value in their
 		:attr:`parsed_permissions <.User.parsed_permissions>` if this category is
 		not associated with any forum, otherwise it depends on the same value in
 		the forum's permissions for them.
 
 	``edit``:
-		Whether or not a user can edit this category. This depends on the
-		``category_edit`` value in their
+		Whether or not a user can edit this category. This depends on them being
+		able to view it, as well as the ``category_edit`` value in their
 		:attr:`parsed_permissions <.User.parsed_permissions>` if this category is
 		not associated with any forum, otherwise it depends on the same value in
 		the forum's permissions for them.

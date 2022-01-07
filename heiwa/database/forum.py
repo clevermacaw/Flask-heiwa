@@ -989,22 +989,51 @@ class Forum(
 		:attr:`.Forum.action_queries`
 	"""
 
+	def _instance_action_create_thread(self: Forum, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to create a :class:`.Thread`
+		in this forum.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.get_parsed_permissions(user)
+
+		return (
+			self.instance_actions["view"](self, user) and
+			parsed_permissions.thread_view and
+			parsed_permissions.thread_create
+		)
+
+	def _instance_action_create_thread_locked(self: Forum, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to create a locked
+		:class:`.Thread` in this forum.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+
+		.. seealso::
+			:attr:`.Thread.is_locked`
+		"""
+
+		parsed_permissions = self.get_parsed_permissions(user)
+
+		return (
+			self.instance_actions["create_thread"](self, user) and (
+				parsed_permissions.thread_edit_lock_own or
+				parsed_permissions.thread_edit_lock_any
+			)
+		)
+
 	instance_actions = {
 		"create_child_forum": lambda self, user: (
 			self.instance_actions["view"](self, user) and
 			self.get_parsed_permissions(user).forum_create
 		),
-		"create_thread": lambda self, user: (
-			self.instance_actions["view"](self, user) and
-			self.get_parsed_permissions(user).thread_view and
-			self.get_parsed_permissions(user).thread_create
-		),
-		"create_thread_locked": lambda self, user: (
-			self.instance_actions["create_thread"](self, user) and (
-				self.get_parsed_permissions(user).thread_edit_lock_own or
-				self.get_parsed_permissions(user).thread_edit_lock_any
-			)
-		),
+		"create_thread": _instance_action_create_thread,
+		"create_thread_locked": _instance_action_create_thread_locked,
 		"create_thread_pinned": lambda self, user: (
 			self.instance_actions["create_thread"](self, user) and
 			self.get_parsed_permissions(user).thread_edit_pin
