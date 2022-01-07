@@ -75,7 +75,7 @@ __all__ = [
 	"APIUserPermissionsUnchanged",
 	"APIUserUnchanged"
 ]
-__version__ = "1.32.2"
+__version__ = "1.32.3"
 
 
 class APIException(Exception):
@@ -103,7 +103,6 @@ class APIException(Exception):
 				]
 			],
 		] = details,
-		*args,
 		**kwargs
 	) -> None:
 		"""Sets the :attr:`details <.APIException.details>` class variable to the
@@ -112,7 +111,7 @@ class APIException(Exception):
 
 		self.details = details
 
-		Exception.__init__(self, *args, **kwargs)
+		Exception.__init__(self, **kwargs)
 
 
 class APIAuthorizationHeaderInvalid(APIException):

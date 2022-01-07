@@ -934,7 +934,6 @@ class User(
 		from .forum import Forum
 		from .thread import Thread
 		from .post import Post
-		from .message import Message
 
 		return (
 			sqlalchemy.select(User.id).

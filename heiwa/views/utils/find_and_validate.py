@@ -142,8 +142,6 @@ def validate_category_exists(
 	) is None:
 		raise heiwa.exceptions.APICategoryNotFound(id_)
 
-	return
-
 
 def validate_forum_exists(
 	id_: uuid.UUID,
