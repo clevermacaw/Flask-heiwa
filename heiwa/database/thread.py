@@ -441,39 +441,136 @@ class Thread(
 		:attr:`.Thread.action_queries`
 	"""
 
-	instance_actions = {
-		"create_post": lambda self, user: (
+	def _instance_action_create_post(self: Thread, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to create a :class:`.Post`
+		in this thread.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
 			self.instance_actions["view"](self, user) and
-			self.forum.get_parsed_permissions(user).post_view and
-			self.forum.get_parsed_permissions(user).post_create
-		),
-		"delete": lambda self, user: (
+			parsed_permissions.post_view and
+			parsed_permissions.post_create
+		)
+
+	def _instance_action_delete(self: Thread, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to delete this thread.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
 			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user).thread_delete_own
+					parsed_permissions.thread_delete_own
 				) or
-				self.forum.get_parsed_permissions(user).thread_delete_any
+				parsed_permissions.thread_delete_any
 			)
-		),
-		"edit": lambda self, user: (
+		)
+
+	def _instance_action_edit(self: Thread, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to edit this thread.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
 			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user).thread_edit_own
+					parsed_permissions.thread_edit_own
 				) or
-				self.forum.get_parsed_permissions(user).thread_edit_any
+				parsed_permissions.thread_edit_any
 			)
-		),
-		"edit_lock": lambda self, user: (
+		)
+
+	def _instance_action_edit_lock(self: Thread, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to lock / unlock this thread.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
 			self.instance_actions["view"](self, user) and (
 				(
 					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user).thread_edit_lock_own
+					parsed_permissions.thread_edit_lock_own
 				) or
-				self.forum.get_parsed_permissions(user).thread_edit_lock_any
+				parsed_permissions.thread_edit_lock_any
 			)
-		),
+		)
+
+	def _instance_action_merge(self: Thread, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to merge this thread with
+		other threads.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
+			self.instance_actions["view"](self, user) and (
+				(
+					self.user_id == user.id and
+					parsed_permissions.thread_merge_own
+				) or
+				parsed_permissions.thread_merge_any
+			) and (
+				not hasattr(self, "future_thread") or
+				self.future_thread.instance_actions["merge"](self, user)
+			)
+		)
+
+	def _instance_action_move(self: Thread, user) -> bool:
+		"""Checks whether or not ``user`` is allowed to move this thread to
+		another :class:`.Forum`.
+
+		:param user: The user, a :class:`.User`.
+
+		:returns: The result of the check.
+		"""
+
+		parsed_permissions = self.forum.get_parsed_permissions(user)
+
+		return (
+			self.instance_actions["view"](self, user) and (
+				(
+					self.user_id == user.id and
+					parsed_permissions.thread_move_own
+				) or
+				parsed_permissions.thread_move_any
+			) and (
+				not hasattr(self, "future_forum") or
+				self.future_forum.instance_actions["move_thread_to"](self, user)
+			)
+		)
+
+	instance_actions = {
+		"create_post": _instance_action_create_post,
+		"delete": _instance_action_delete,
+		"edit": _instance_action_edit,
+		"edit_lock": _instance_action_edit_lock,
 		"edit_pin": lambda self, user: (
 			self.instance_actions["view"](self, user) and
 			self.forum.get_parsed_permissions(user).thread_edit_pin
@@ -485,30 +582,8 @@ class Thread(
 			self.instance_actions["view"](self, user) and
 			self.forum.get_parsed_permissions(user).thread_edit_vote
 		),
-		"merge": lambda self, user: (
-			self.instance_actions["view"](self, user) and (
-				(
-					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user).thread_merge_own
-				) or
-				self.forum.get_parsed_permissions(user).thread_merge_any
-			) and (
-				not hasattr(self, "future_thread") or
-				self.future_thread.instance_actions["merge"](self, user)
-			)
-		),
-		"move": lambda self, user: (
-			self.instance_actions["view"](self, user) and (
-				(
-					self.user_id == user.id and
-					self.forum.get_parsed_permissions(user).thread_move_own
-				) or
-				self.forum.get_parsed_permissions(user).thread_move_any
-			) and (
-				not hasattr(self, "future_forum") or
-				self.future_forum.instance_actions["move_thread_to"](self, user)
-			)
-		),
+		"merge": _instance_action_merge,
+		"move": _instance_action_move,
 		"move_post_to": lambda self, user: (
 			self.instance_actions["create_thread"](self, user)
 		),
