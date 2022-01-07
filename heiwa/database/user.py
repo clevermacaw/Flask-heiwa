@@ -60,6 +60,7 @@ user_blocks = sqlalchemy.Table(
 		primary_key=True
 	)
 )
+r"""A table defining which :class:`.User`\ s have blocked other users."""
 
 
 user_groups = sqlalchemy.Table(
@@ -86,6 +87,7 @@ user_groups = sqlalchemy.Table(
 		primary_key=True
 	)
 )
+r"""A table associating :class:`.User`\ s with respective :class:`.Group`\ s."""
 
 
 user_follows = sqlalchemy.Table(
@@ -112,6 +114,7 @@ user_follows = sqlalchemy.Table(
 		primary_key=True
 	)
 )
+r"""A table defining which :class:`.User`\ s have followed other users."""
 
 
 class UserBan(
@@ -543,7 +546,7 @@ class User(
 		user's :attr:`parsed_permissions <.User.parsed_permissions>`.
 
 		.. seealso::
-			:data:`.user_groups` (TODO)
+			:data:`.user_groups`
 
 	``edit_permissions``:
 		Whether or not a user can edit another user's permissions. This depends on
@@ -670,7 +673,7 @@ class User(
 		within's level being lower.
 
 		.. seealso::
-			:data:`.user_groups` (TODO)
+			:data:`.user_groups`
 
 	``edit_permissions``:
 		Whether or not a user can edit another user's permissions. This depends on

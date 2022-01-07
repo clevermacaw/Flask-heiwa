@@ -23,7 +23,19 @@ def find_category_by_id(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> heiwa.database.Category:
-	""" TODO """
+	"""Finds the :class:`Category <heiwa.database.Category>` with the given ID.
+
+	:param id_: The :attr:`id <heiwa.database.Category.id>` of the category to
+		find.
+	:param session: The session to find the category with.
+	:param user: The :class:`User <heiwa.database.User>` who must have permission
+		to view the category.
+
+	:raises heiwa.exceptions.APICategoryNotFound: Raised when the category doesn't
+		exist, or the user does not have permission to view it.
+
+	:returns: The category.
+	"""
 
 	category = session.execute(
 		heiwa.database.Category.get(
@@ -44,7 +56,18 @@ def find_forum_by_id(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> heiwa.database.Forum:
-	""" TODO """
+	"""Finds the :class:`Forum <heiwa.database.Forum>` with the given ID.
+
+	:param id_: The :attr:`id <heiwa.database.Forum.id>` of the forum to find.
+	:param session: The session to find the forum with.
+	:param user: The :class:`User <heiwa.database.User>` who must have permission
+		to view the forum.
+
+	:raises heiwa.exceptions.APIForumNotFound: Raised when the forum doesn't
+		exist, or the user does not have permission to view it.
+
+	:returns: The forum.
+	"""
 
 	forum = session.execute(
 		heiwa.database.Forum.get(
@@ -65,7 +88,18 @@ def find_group_by_id(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> heiwa.database.Group:
-	""" TODO """
+	"""Finds the :class:`Group <heiwa.database.Group>` with the given ID.
+
+	:param id_: The :attr:`id <heiwa.database.Group.id>` of the group to find.
+	:param session: The session to find the group with.
+	:param user: The :class:`User <heiwa.database.User>` who must have permission
+		to view the group.
+
+	:raises heiwa.exceptions.APIGroupNotFound: Raised when the group doesn't
+		exist, or the user does not have permission to view it.
+
+	:returns: The group.
+	"""
 
 	group = session.execute(
 		heiwa.database.Group.get(
@@ -86,7 +120,18 @@ def find_thread_by_id(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> heiwa.database.Thread:
-	""" TODO """
+	"""Finds the :class:`Thread <heiwa.database.Thread>` with the given ID.
+
+	:param id_: The :attr:`id <heiwa.database.Thread.id>` of the thread to find.
+	:param session: The session to find the thread with.
+	:param user: The :class:`User <heiwa.database.User>` who must have permission
+		to view the thread.
+
+	:raises heiwa.exceptions.APIThreadNotFound: Raised when the thread doesn't
+		exist, or the user does not have permission to view it.
+
+	:returns: The thread.
+	"""
 
 	thread = session.execute(
 		heiwa.database.Thread.get(
@@ -107,7 +152,17 @@ def find_user_by_id(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> heiwa.database.User:
-	""" TODO """
+	"""Finds the :class:`User <heiwa.database.User>` with the given ID.
+
+	:param id_: The :attr:`id <heiwa.database.User.id>` of the user to find.
+	:param session: The session to find the user with.
+	:param user: The user who must have permission to view the requested user.
+
+	:raises heiwa.exceptions.APIUserNotFound: Raised when the requested user
+		doesn't exist, or ``user`` lacks the permission to view them.
+
+	:returns: The user.
+	"""
 
 	user = session.execute(
 		heiwa.database.User.get(
@@ -128,7 +183,18 @@ def validate_category_exists(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> None:
-	""" TODO """
+	"""Validates that the :class:`Category <heiwa.database.Category>` with the
+	given ID exists.
+
+	:param id_: The :attr:`id <heiwa.database.Category.id>` of the category to
+		find.
+	:param session: The session to find the category with.
+	:param user: The :class:`User <heiwa.database.User>` who must have permission
+		to view the category.
+
+	:raises heiwa.exceptions.APICategoryNotFound: Raised when the category doesn't
+		exist, or the user does not have permission to view it.
+	"""
 
 	if (
 		session.execute(
@@ -148,7 +214,17 @@ def validate_forum_exists(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> None:
-	""" TODO """
+	"""Validates that the :class:`Forum <heiwa.database.Forum>` with the given
+	ID exists.
+
+	:param id_: The :attr:`id <heiwa.database.Forum.id>` of the forum to find.
+	:param session: The session to find the forum with.
+	:param user: The :class:`User <heiwa.database.User>` who must have permission
+		to view the forum.
+
+	:raises heiwa.exceptions.APIForumNotFound: Raised when the forum doesn't
+		exist, or the user does not have permission to view it.
+	"""
 
 	if not session.execute(
 		sqlalchemy.select(
@@ -170,7 +246,17 @@ def validate_thread_exists(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> heiwa.database.Thread:
-	""" TODO """
+	"""Validates that the :class:`Thread <heiwa.database.Thread>` with the given
+	ID exists.
+
+	:param id_: The :attr:`id <heiwa.database.Thread.id>` of the thread to find.
+	:param session: The session to find the thread with.
+	:param user: The :class:`User <heiwa.database.User>` who must have permission
+		to view the thread.
+
+	:raises heiwa.exceptions.APIThreadNotFound: Raised when the thread doesn't
+		exist, or the user does not have permission to view it.
+	"""
 
 	if not session.execute(
 		sqlalchemy.select(
@@ -192,7 +278,16 @@ def validate_user_exists(
 	session: sqlalchemy.orm.Session,
 	user: heiwa.database.User
 ) -> None:
-	""" TODO """
+	"""Validates that the :class:`User <heiwa.database.User>` with the given ID
+	exists.
+
+	:param id_: The :attr:`id <heiwa.database.User.id>` of the user to find.
+	:param session: The session to find the user with.
+	:param user: The user who must have permission to view the requested user.
+
+	:raises heiwa.exceptions.APIUserNotFound: Raised when the requested user
+		doesn't exist, or ``user`` lacks the permission to view them.
+	"""
 
 	if not session.execute(
 		sqlalchemy.select(

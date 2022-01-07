@@ -27,4 +27,4 @@ __all__ = [
 	"user_blueprint",
 	"utils"
 ]
-__version__ = "0.58.8"
+__version__ = "0.58.9"

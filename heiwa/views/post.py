@@ -234,7 +234,18 @@ def find_post_by_id(
 	session: sqlalchemy.orm.Session,
 	user: database.User
 ) -> database.Post:
-	""" TODO """
+	"""Finds the :class:`Post <heiwa.database.Post>` with the given ID.
+
+	:param id_: The :attr:`id <heiwa.database.Post.id>` of the post to find.
+	:param session: The session to find the post with.
+	:param user: The :class:`User <heiwa.database.User>` who must have permission
+		to view the post.
+
+	:raises heiwa.exceptions.APIPostNotFound: Raised when the post doesn't exist,
+		or the user does not have permission to view it.
+
+	:returns: The post.
+	"""
 
 	post = session.execute(
 		database.Post.get(
