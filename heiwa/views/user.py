@@ -105,6 +105,19 @@ ATTR_SCHEMAS = {
 		"minlength": 1,
 		"maxlength": database.User.status.property.columns[0].type.length
 	},
+	"extra_fields": {
+		"type": "dict",
+		"minlength": 1,
+		"maxlength": len(flask.current_app.config["USER_EXTRA_FIELDS"]),
+		"schema": {
+			key: {
+				**value,
+				"nullable": False,
+				"required": False
+			}
+			for key, value in flask.current_app.config["USER_EXTRA_FIELDS"].items()
+		}
+	},
 	"followee_count": {
 		"type": "integer",
 		"min": 0,
@@ -466,6 +479,11 @@ def mass_delete() -> typing.Tuple[flask.Response, int]:
 					"nullable": True,
 					"required": False
 				},
+				"extra_fields": {
+					**ATTR_SCHEMAS["extra_fields"],
+					"nullable": True,
+					"required": False,
+				},
 				"encrypted_private_key": {
 					**ATTR_SCHEMAS["encrypted_private_key"],
 					"nullable": True,
@@ -583,6 +601,11 @@ def delete(
 		**ATTR_SCHEMAS["status"],
 		"nullable": True,
 		"required": True
+	},
+	"extra_fields": {
+		**ATTR_SCHEMAS["extra_fields"],
+		"nullable": True,
+		"required": False,
 	},
 	"encrypted_private_key": {
 		**ATTR_SCHEMAS["encrypted_private_key"],

@@ -2,6 +2,7 @@ import hashlib
 
 import flask
 
+
 def generate_scrypt_hash(
 	origin: bytes,
 	dklen: int = 32

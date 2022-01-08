@@ -223,3 +223,11 @@ USER_AVATAR_TYPES = {
 	"image/png": "png",
 	"image/jpeg": "jpeg"
 }
+USER_EXTRA_FIELDS = {
+	"website": {
+		"type": "string",
+		"minlength": 8,
+		"maxlength": 2048,
+		"check_with": "is_public_url"
+	}
+}

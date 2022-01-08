@@ -341,6 +341,27 @@ class User(
 	messages on GitLab and social media.
 	"""
 
+	extra_fields = sqlalchemy.Column(
+		sqlalchemy.JSON,
+		nullable=True
+	)
+	"""Extra fields for a user. These are defined in the ``USER_EXTRA_FIELDS``
+	config key.
+
+	.. note::
+		The definition of which fields (if any) are allowed should be something
+		left up to the app config anyway, and since the storage of those values
+		in a database model and subsequent input validation would make things
+		needlessly complicated, their Cerberus validation schema is defined
+		instead, with the values being stored in this JSON column.
+
+		There is, however, a disadvantage to this approach. Ordering or filtering
+		by the values contained within these columns could be difficult, and the
+		storage of special SQL types (like
+		:class:`DateTime <sqlalchemy.DateTime>`) is impossible. If necessary,
+		they will be have to stored as ISO-8601 formatted strings instead.
+	"""
+
 	followee_count = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
 			sqlalchemy.func.count(user_follows.c.follower_id)
