@@ -124,7 +124,7 @@ class Category(
 
 	instance_actions = {
 		"delete": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			(
 				user.parsed_permissions["category_delete"]
 				if self.forum_id is None
@@ -132,7 +132,7 @@ class Category(
 			)
 		),
 		"edit": lambda self, user: (
-			self.instance_actions["view"](user) and
+			self.instance_actions["view"](self, user) and
 			(
 				user.parsed_permissions["category_edit"]
 				if self.forum_id is None
