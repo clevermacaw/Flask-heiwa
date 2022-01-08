@@ -87,7 +87,9 @@ user_groups = sqlalchemy.Table(
 		primary_key=True
 	)
 )
-r"""A table associating :class:`.User`\ s with respective :class:`.Group`\ s."""
+r"""A table associating :class:`.User`\ s with respective
+:class:`.Group`\ s.
+"""
 
 
 user_follows = sqlalchemy.Table(

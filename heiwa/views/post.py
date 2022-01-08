@@ -461,7 +461,16 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 		additional_actions.append("move")
 
-	conditions = True
+	conditions = (
+		sqlalchemy.select(database.Thread.id).
+		where(
+			sqlalchemy.and_(
+				database.Thread.id == database.Post.thread_id,
+				database.Thread.is_locked.is_(False)
+			)
+		).
+		exists()
+	)
 
 	if "filter" in flask.g.json:
 		conditions = sqlalchemy.and_(
@@ -523,6 +532,12 @@ def delete(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		post
 	)
 
+	if flask.g.sa_session.execute(
+		sqlalchemy.select(database.Thread.is_locked).
+		where(database.Thread.id == post.thread_id)
+	).scalars().one():
+		raise exceptions.APIThreadLocked
+
 	post.delete()
 
 	flask.g.sa_session.commit()
@@ -548,6 +563,12 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		"edit",
 		post
 	)
+
+	if flask.g.sa_session.execute(
+		sqlalchemy.select(database.Thread.is_locked).
+		where(database.Thread.id == post.thread_id)
+	).scalars().one():
+		raise exceptions.APIThreadLocked
 
 	unchanged = True
 
@@ -647,6 +668,12 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		post
 	)
 
+	if flask.g.sa_session.execute(
+		sqlalchemy.select(database.Thread.is_locked).
+		where(database.Thread.id == post.thread_id)
+	).scalars().one():
+		raise exceptions.APIThreadLocked
+
 	vote = flask.g.sa_session.execute(
 		sqlalchemy.select(database.PostVote).
 		where(
@@ -703,6 +730,12 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		"edit_vote",
 		post
 	)
+
+	if flask.g.sa_session.execute(
+		sqlalchemy.select(database.Thread.is_locked).
+		where(database.Thread.id == post.thread_id)
+	).scalars().one():
+		raise exceptions.APIThreadLocked
 
 	existing_vote = flask.g.sa_session.execute(
 		sqlalchemy.select(database.PostVote).

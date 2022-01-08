@@ -550,7 +550,7 @@ class APIRateLimitExceeded(APIException):
 class APIThreadLocked(APIException):
 	"""Exception class for when a :class:`User <heiwa.database.User>` attempts to
 	create a :class:`Post <heiwa.database.Post>` in, edit, or otherwise interact
-	with a locked :class:`Thread <heiwa.database.Thread>`. (FIXME)
+	with a locked :class:`Thread <heiwa.database.Thread>`.
 	"""
 
 	code = statuses.FORBIDDEN

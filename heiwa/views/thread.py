@@ -539,13 +539,18 @@ def mass_edit() -> typing.Tuple[flask.Response, int]:
 
 		additional_actions.append("move")
 
+	conditions = True
+
 	if "is_locked" in flask.g.json["values"]:
 		additional_actions.append("edit_lock")
+	else:
+		conditions = sqlalchemy.and_(
+			conditions,
+			database.Thread.is_locked.is_(False)
+		)
 
 	if "is_pinned" in flask.g.json["values"]:
 		additional_actions.append("edit_pin")
-
-	conditions = True
 
 	if "filter" in flask.g.json:
 		conditions = sqlalchemy.and_(
@@ -633,6 +638,15 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		thread
 	)
 
+	if thread.is_locked is not flask.g.json["is_locked"]:
+		validate_permission(
+			flask.g.user,
+			"edit_lock",
+			thread
+		)
+	elif thread.is_locked:
+		raise exceptions.APIThreadLocked
+
 	unchanged = True
 
 	for key, value in flask.g.json.items():
@@ -659,13 +673,6 @@ def edit(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		)
 
 		thread.forum = future_forum
-
-	if thread.is_locked is not flask.g.json["is_locked"]:
-		validate_permission(
-			flask.g.user,
-			"edit_lock",
-			thread
-		)
 
 	if thread.is_pinned is not flask.g.json["is_pinned"]:
 		validate_permission(
@@ -731,6 +738,10 @@ def merge(
 		flask.g.sa_session,
 		flask.g.user
 	)
+
+	if old_thread.is_locked:
+		raise exceptions.APIThreadLocked
+
 	new_thread = find_thread_by_id(
 		id_new,
 		flask.g.sa_session,
@@ -918,6 +929,9 @@ def create_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		thread
 	)
 
+	if thread.is_locked:
+		raise exceptions.APIThreadLocked
+
 	vote = flask.g.sa_session.execute(
 		sqlalchemy.select(database.ThreadVote).
 		where(
@@ -974,6 +988,9 @@ def delete_vote(id_: uuid.UUID) -> typing.Tuple[flask.Response, int]:
 		"edit_vote",
 		thread
 	)
+
+	if thread.is_locked:
+		raise exceptions.APIThreadLocked
 
 	existing_vote = flask.g.sa_session.execute(
 		sqlalchemy.select(database.ThreadVote).
