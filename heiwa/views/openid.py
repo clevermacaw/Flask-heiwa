@@ -12,7 +12,7 @@ import requests
 import sqlalchemy
 
 from .. import database, encoders, exceptions, statuses, validators
-from .utils import create_jwt
+from .utils import generate_jwt, generate_scrypt_hash
 
 __all__ = ["openid_blueprint"]
 
@@ -104,7 +104,9 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 		sqlalchemy.select(database.OpenIDAuthentication).
 		where(
 			sqlalchemy.and_(
-				database.OpenIDAuthentication.identifier == flask.g.identifier,
+				database.OpenIDAuthentication.identifier == generate_scrypt_hash(
+					flask.g.identifier.encode("utf-8")
+				),
 				database.OpenIDAuthentication.state == flask.g.json["state"]
 			)
 		)
@@ -191,7 +193,7 @@ def authorize(client_name: str) -> typing.Tuple[flask.Response, int]:
 		)
 
 		return flask.jsonify({
-			"token": create_jwt(user.id)
+			"token": generate_jwt(user.id)
 		}), status
 
 
@@ -225,9 +227,13 @@ def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 			nonce=nonce
 		)
 
+		hashed_identifier = generate_scrypt_hash(
+			flask.g.identifier.encode("utf-8")
+		)
+
 		existing_authentication = flask.g.sa_session.get(
 			database.OpenIDAuthentication,
-			flask.g.identifier
+			hashed_identifier
 		)
 
 		if existing_authentication is not None:
@@ -235,7 +241,7 @@ def login(client_name: str) -> typing.Tuple[flask.Response, int]:
 
 		database.OpenIDAuthentication.create(
 			flask.g.sa_session,
-			identifier=flask.g.identifier,
+			identifier=hashed_identifier,
 			nonce=nonce,
 			state=state
 		)

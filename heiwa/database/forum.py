@@ -1,3 +1,5 @@
+"""Forum models and tables."""
+
 from __future__ import annotations
 
 import typing
@@ -50,13 +52,15 @@ forum_subscribers = sqlalchemy.Table(
 		primary_key=True
 	)
 )
+r"""A table defining which :class:`.User`\ s have subscribed to which
+:class:`.Forum`\ s.
+"""
 
 
 @sqlalchemy.orm.declarative_mixin
 class ForumPermissionMixin:
-	"""A ``Forum`` helper mixin with columns corresponding to all permissions
-	relevant in forums, as well as their default values and a ``to_permissions``
-	method.
+	"""A helper mixin with columns corresponding to all permissions recognized
+	only in forums.
 	"""
 
 	category_create = sqlalchemy.Column(
@@ -227,6 +231,7 @@ class ForumPermissionMixin:
 		"thread_move_any": None,
 		"thread_view": None
 	}
+	"""The default values of all permissions. In this case, :data:`None`."""
 
 	def to_permissions(self: ForumPermissionMixin) -> typing.Dict[
 		str,
@@ -236,8 +241,8 @@ class ForumPermissionMixin:
 		]
 	]:
 		"""Transforms the values in this instance to the standard format for
-		permissions. (A dictionary, where string keys represent permissions,
-		and their value represents whether or not they're granted.)
+		permissions - a dictionary, where string keys represent permissions,
+		and their boolean value represents whether or not they're granted.
 		"""
 
 		return {
@@ -252,16 +257,8 @@ class ForumParsedPermissions(
 	ReprMixin,
 	Base
 ):
-	"""A ``Forum`` helper model to store cached parsed permissions for specific
-	users. Not meant to be exposed directly.
-
-	Contains:
-
-	#. A ``forum_id`` foreign key column, associating the instance with a
-	   ``Forum``.
-	#. A ``user_id`` foreign key column, associating the instance with a
-	   ``User``.
-	#. All columns from the ``ForumPermissionMixin``, but non-nullable.
+	r"""A helper model used to store cached forum permissions based on the
+	:class:`.ForumPermissionMixin` for :class:`.User`\ s.
 	"""
 
 	__tablename__ = "forum_parsed_permissions"
@@ -275,6 +272,10 @@ class ForumParsedPermissions(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.Forum.id>` of the :class:`.Forum` a set of cached
+	permissions relates to.
+	"""
+
 	user_id = sqlalchemy.Column(
 		UUID,
 		sqlalchemy.ForeignKey(
@@ -284,6 +285,9 @@ class ForumParsedPermissions(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.User.id>` of the :class:`.User` a set of cached
+	permissions relates to.
+	"""
 
 	category_create = sqlalchemy.Column(
 		sqlalchemy.Boolean,
@@ -453,6 +457,7 @@ class ForumParsedPermissions(
 		"thread_move_any": False,
 		"thread_view": False
 	}
+	"""The default values of all permissions. In this case, :data:`False`."""
 
 
 class ForumPermissionsGroup(
@@ -463,17 +468,8 @@ class ForumPermissionsGroup(
 	EditInfoMixin,
 	Base
 ):
-	r"""A ``Forum`` helper mixin to store permissions for specific ``Group``\ s.
-
-	Contains:
-
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-	#. A ``forum_id`` foreign key column, associating the instance with a
-	   ``Forum``.
-	#. A ``group_id`` foreign key column, associating the instance with a
-	   ``Group``.
-	#. All columns from the ``ForumPemrissionMixin``.
+	r"""A helper model used to store :class:`.Forum` permissions for
+	:class:`.Group`\ s, based on the :class:`.ForumPermissionMixin`.
 	"""
 
 	__tablename__ = "forum_permissions_group"
@@ -487,6 +483,10 @@ class ForumPermissionsGroup(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.Forum.id>` of the :class:`.Forum` a set of permissions
+	relates to.
+	"""
+
 	group_id = sqlalchemy.Column(
 		UUID,
 		sqlalchemy.ForeignKey(
@@ -496,13 +496,18 @@ class ForumPermissionsGroup(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.Group.id>` of the :class:`.Group` a set of permissions
+	relates to.
+	"""
 
 	def write(
 		self: ForumPermissionsGroup,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Deletes the parent forum's ``ForumParsedPermissions`` for the members of
-		this instance's ``group_id``.
+		"""Deletes the related :class:`.Forum`'s permissions for all users who
+		are part of the related :class:`.Group`.
+
+		:param session: The session to execute the deletion query with.
 		"""
 
 		from .user import user_groups
@@ -531,17 +536,8 @@ class ForumPermissionsUser(
 	EditInfoMixin,
 	Base
 ):
-	r"""A ``Forum`` helper mixin to store permissions for specific ``User``\ s.
-
-	Contains:
-
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-	#. A ``forum_id`` foreign key column, associating the instance with a
-	   ``Forum``.
-	#. A ``user_id`` foreign key column, associating the instance with a
-	   ``User``.
-	#. All columns from the ``ForumPemrissionMixin``.
+	r"""A helper model used to store :class:`.Forum` permissions for
+	:class:`.User`\ s, based on the :class:`.ForumPermissionMixin`.
 	"""
 
 	__tablename__ = "forum_permissions_user"
@@ -555,6 +551,10 @@ class ForumPermissionsUser(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.Forum.id>` of the :class:`.Forum` a set of permissions
+	relates to.
+	"""
+
 	user_id = sqlalchemy.Column(
 		UUID,
 		sqlalchemy.ForeignKey(
@@ -564,13 +564,18 @@ class ForumPermissionsUser(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.User.id>` of the :class:`.User` a set of permissions
+	relates to.
+	"""
 
 	def write(
 		self: ForumPermissionsUser,
 		session: sqlalchemy.orm.Session
 	) -> None:
-		"""Deletes the parent forum's ``ForumParsedPermissions`` for
-		the associated user.
+		"""Deletes the related :class:`.Forum`'s permissions for the
+		:class:`.User` who this set of permissions relates to.
+
+		:param session: The session to execute the deletion query with.
 		"""
 
 		session.execute(

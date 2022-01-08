@@ -1,3 +1,5 @@
+"""Custom types for SQLAlchemy columns."""
+
 from __future__ import annotations
 
 import typing

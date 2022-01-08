@@ -97,6 +97,9 @@ thread_subscribers = sqlalchemy.Table(
 		primary_key=True
 	)
 )
+r"""A table defining which :class:`.Thread`\ s which :class:`.User`\ s have
+subscribed to.
+"""
 
 
 class Thread(

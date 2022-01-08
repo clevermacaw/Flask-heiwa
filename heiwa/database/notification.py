@@ -1,3 +1,5 @@
+"""Notification models."""
+
 from __future__ import annotations
 
 import sqlalchemy
@@ -17,24 +19,7 @@ class Notification(
 	CreationTimestampMixin,
 	Base
 ):
-	"""Notification model.
-
-	Contains:
-
-	#. An ``id`` column from the ``IdMixin``.
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. A ``user_id`` foreign key column, associating this notification with its
-	   owner, a ``User``.
-	#. An ``is_read`` column, signifying whether or not this notification has
-	   been read. ``False`` by default.
-	#. A ``type`` column, containing what the type of this notification is.
-	   Uses the ``enums.NotificationTypes`` enums.
-	#. An ``identifier`` column, containing the UUID of which resource this
-	   notification concerns. As, despite the name, UUIDs may not *always* be
-	   unique across all threads, forums & other resources, and plugins would
-	   have to add their own foreign keys, it's been deemed unnecessary for it
-	   to be a foreign key.
-	"""
+	"""Notification model."""
 
 	__tablename__ = "notifications"
 
@@ -48,21 +33,36 @@ class Notification(
 		index=True,
 		nullable=False
 	)
+	"""The :attr:`id <.User.id>` of the :class:`.User` who received a
+	notification.
+	"""
 
 	is_read = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		default=False,
 		nullable=False
 	)
+	"""Whether or not a notification has been read by its receiver."""
+
 	type = sqlalchemy.Column(
 		sqlalchemy.Enum(enums.NotificationTypes),
 		nullable=False
 	)
-
-	# Don't include any foreign key here. It would be nice for cascading
-	# deletion, but could cause a number of issues in some cases.
+	"""The type of a notification. These types are defined in
+	:class:`NotificationTypes <heiwa.enums.NotificationTypes>`. The
+	``NOTIFICATION_TYPES`` attribute of models which can be subjects of
+	notifications define which ones relate to them.
+	"""
 
 	identifier = sqlalchemy.Column(
 		UUID,
 		nullable=False
 	)
+	"""The identifier (usually ``id`` attribute) of the object a notification
+	relates to.
+
+	.. note::
+		Since this can relate to multiple types of objects whose identifiers
+		aren't guaranteed not to collide, this column has not been defined as a
+		foreign or unique key.
+	"""

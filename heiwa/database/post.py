@@ -1,3 +1,5 @@
+"""Post models."""
+
 from __future__ import annotations
 
 import typing
@@ -30,16 +32,7 @@ class PostVote(
 	EditInfoMixin,
 	Base
 ):
-	"""A ``Post`` helper model for storing votes.
-
-	Contains:
-
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-	#. A ``post_id`` column, associating the instance with a ``Post``.
-	#. A ``user_id`` column, associating the instance with a ``User``.
-	#. An ``upvote`` column, signifying whether this is a downvote or an upvote.
-	"""
+	"""A helper model for storing :class:`.Post` votes."""
 
 	__tablename__ = "post_votes"
 
@@ -52,6 +45,8 @@ class PostVote(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.Post.id>` of the :class:`.Post` a vote relates to."""
+
 	user_id = sqlalchemy.Column(
 		UUID,
 		sqlalchemy.ForeignKey(
@@ -61,12 +56,19 @@ class PostVote(
 		),
 		primary_key=True
 	)
+	"""The :attr:`id <.User.id>` of the :class:`.User` who created a vote."""
 
 	upvote = sqlalchemy.Column(
 		sqlalchemy.Boolean,
 		index=True,
 		nullable=False
 	)
+	"""Whether or not a vote is an upvote, or a downvote, if :data:`True`, it's
+	considered an upvote, otherwise, it's considered a downvote.
+
+	.. seealso::
+		:attr:`.Forum.vote_value`
+	"""
 
 
 class Post(
@@ -78,21 +80,7 @@ class Post(
 	EditInfoMixin,
 	Base
 ):
-	"""Post model.
-
-	Contains:
-
-	#. An ``id`` column from the ``IdMixin``.
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. ``edit_timestamp`` and ``edit_count`` columns from the ``EditInfoMixin``.
-	#. A ``thread_id`` foreign key column, associating this post with its
-	   ``Thread``.
-	#. A ``user_id`` foreign key column, associating this post with its author,
-	   a ``User``.
-	#. A ``content`` column.
-	#. A dynamic ``vote_value`` column, corresponding to the total count of this
-	   post's upvotes, with the downvotes' count subtracted.
-	"""
+	"""Post model."""
 
 	__tablename__ = "posts"
 
@@ -106,6 +94,8 @@ class Post(
 		index=True,
 		nullable=False
 	)
+	"""The :attr:`id <.Thread.id>` of the :class:`.Thread` a post is in."""
+
 	user_id = sqlalchemy.Column(
 		UUID,
 		sqlalchemy.ForeignKey(
@@ -116,15 +106,21 @@ class Post(
 		index=True,
 		nullable=False
 	)
+	"""The :attr:`id <.User.id>` of the :class:`.User` who created a post. This
+	cannot be changed.
+	"""
 
 	subject = sqlalchemy.Column(
 		sqlalchemy.String(256),
 		nullable=True
 	)
+	"""The subject of a post."""
+
 	content = sqlalchemy.Column(
 		sqlalchemy.String(65536),
 		nullable=False
 	)
+	"""A post's content."""
 
 	vote_value = sqlalchemy.orm.column_property(
 		sqlalchemy.select(
@@ -150,9 +146,15 @@ class Post(
 		).
 		scalar_subquery()
 	)
+	"""The final value of a post's votes. Upvotes will add ``1``, downvotes
+	will subtract ``1``. If there are no votes at all, this will be ``0``.
+	Negative numbers are allowed.
+
+	.. seealso::
+		:class:`.PostVote`
+	"""
 
 	# Shortcut
-	# This can probably be better
 	forum = sqlalchemy.orm.relationship(
 		"Forum",
 		uselist=False,
@@ -161,6 +163,7 @@ class Post(
 		overlaps="forum",
 		lazy=True
 	)
+	"""A post's :class:`.Thread`'s :class:`.Forum`."""
 
 	thread = sqlalchemy.orm.relationship(
 		"Thread",
@@ -169,6 +172,7 @@ class Post(
 		overlaps="forum",
 		lazy=True
 	)
+	"""A post's :class:`.Thread`."""
 
 	votes = sqlalchemy.orm.relationship(
 		PostVote,
@@ -180,6 +184,11 @@ class Post(
 		passive_deletes="all",
 		lazy=True
 	)
+	"""A post's votes.
+
+	.. seealso::
+		:class:`.PostVote`
+	"""
 
 	static_actions = {
 		"create": lambda user: (

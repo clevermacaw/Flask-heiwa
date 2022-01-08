@@ -11,7 +11,8 @@ from .find_and_validate import (
 	validate_thread_exists,
 	validate_user_exists
 )
-from .jwt import create_jwt
+from .hash import generate_scrypt_hash
+from .jwt import generate_jwt
 from .permissions import requires_permission, validate_permission
 from .schema import generate_search_schema, generate_search_schema_registry
 from .search import parse_search
@@ -25,12 +26,13 @@ __all__ = [
 	"BASE_PERMISSION_SCHEMA",
 	"PERMISSION_KEY_SCHEMA",
 	"SEARCH_MAX_IN_LIST_LENGTH",
-	"create_jwt",
 	"find_category_by_id",
 	"find_forum_by_id",
 	"find_group_by_id",
 	"find_thread_by_id",
 	"find_user_by_id",
+	"generate_jwt",
+	"generate_scrypt_hash",
 	"generate_search_schema",
 	"generate_search_schema_registry",
 	"parse_search",

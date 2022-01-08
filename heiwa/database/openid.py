@@ -1,3 +1,5 @@
+"""Utility models for OpenID authentication."""
+
 from __future__ import annotations
 
 import sqlalchemy
@@ -14,15 +16,7 @@ class OpenIDAuthentication(
 	CreationTimestampMixin,
 	Base
 ):
-	"""CSRF / replay attack protection model for OpenID authentication.
-
-	Contains:
-
-	#. A ``creation_timestamp`` column from the ``CreationTimestampMixin``.
-	#. An ``identifier`` column, a unique identifier for the user requesting
-	   to authenticate. This will generally be an IP address.
-	#. ``nonce`` and ``state`` columns, used as per the OpenID protocol.
-	"""
+	"""CSRF / replay attack protection model for OpenID authentication."""
 
 	__tablename__ = "openid_authentication"
 
@@ -30,12 +24,18 @@ class OpenIDAuthentication(
 		sqlalchemy.String(64),
 		primary_key=True
 	)
+	"""The unique identifier for the user who requested to authenticate.
+	In general, this will be an IP address hashed using SCrypt.
+	"""
 
 	nonce = sqlalchemy.Column(
 		sqlalchemy.String(30),
 		nullable=False
 	)
+	"""An OpenID nonce."""
+
 	state = sqlalchemy.Column(
 		sqlalchemy.String(30),
 		nullable=False
 	)
+	"""An OpenID state."""

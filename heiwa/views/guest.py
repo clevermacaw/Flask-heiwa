@@ -1,12 +1,11 @@
 import datetime
-import hashlib
 import typing
 
 import flask
 import sqlalchemy
 
 from .. import database, encoders, exceptions, statuses
-from .utils import create_jwt
+from .utils import generate_jwt, generate_scrypt_hash
 
 __all__ = ["guest_blueprint"]
 
@@ -73,20 +72,9 @@ def token() -> typing.Tuple[flask.Response, int]:
 
 	flask.g.sa_session.commit()
 
-	# NOTE: The app's secret key isn't the greatest salt ever, but the best
-	# we can afford to use here, since we're searching for users based on its
-	# value. Unfortunately, this means using a random string is out of the
-	# question.
-
-	hashed_identifier = hashlib.scrypt(
-		flask.g.identifier.encode("utf-8"),
-		salt=flask.current_app.config["SECRET_KEY"].encode("utf-8"),
-		n=flask.current_app.config["GUEST_SCRYPT_N"],
-		r=flask.current_app.config["GUEST_SCRYPT_R"],
-		p=flask.current_app.config["GUEST_SCRYPT_P"],
-		maxmem=flask.current_app.config["GUEST_SCRYPT_MAXMEM"],
-		dklen=32
-	).hex()
+	hashed_identifier = generate_scrypt_hash(
+		flask.g.identifier.encode("utf-8")
+	)
 
 	existing_session_count = flask.g.sa_session.execute(
 		sqlalchemy.select(
@@ -127,7 +115,7 @@ def token() -> typing.Tuple[flask.Response, int]:
 	flask.g.sa_session.commit()
 
 	return flask.jsonify({
-		"token": create_jwt(
+		"token": generate_jwt(
 			user.id,
 			expires_after=flask.current_app.config["GUEST_SESSION_EXPIRES_AFTER"]
 		)

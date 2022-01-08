@@ -1,3 +1,5 @@
+"""Generators for SQLAlchemy columns and models."""
+
 import uuid
 
 import sqlalchemy

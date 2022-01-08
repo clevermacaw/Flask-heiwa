@@ -4,10 +4,10 @@ import uuid
 import authlib.jose
 import flask
 
-__all__ = ["create_jwt"]
+__all__ = ["generate_jwt"]
 
 
-def create_jwt(
+def generate_jwt(
 	user_id: uuid.UUID,
 	name: str = None,
 	expires_after: int = None

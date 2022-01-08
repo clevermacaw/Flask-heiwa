@@ -75,7 +75,7 @@ ATTR_SCHEMAS = {
 		"coerce": "decode_base64",
 		"length_divisible_by": 16,
 		"minlength": 16,  # Min. AES-CBC length, block size 16
-		"maxlength": 65552  # ~65536 character message, padding
+		"maxlength": 262160  # ~65536 character message with each char being 4 bytes
 	}
 }
 
