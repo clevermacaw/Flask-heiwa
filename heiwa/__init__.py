@@ -186,8 +186,6 @@ def create_app() -> ConfiguredLockFlask:
 
 			return response
 
-		app.configured = True
-
 		from .errorhandlers import handle_api_exception, handle_http_exception
 
 		for handler in (
@@ -265,6 +263,7 @@ def create_app() -> ConfiguredLockFlask:
 					sa_session.commit()
 
 		if (
+			app.configured and
 			app.last_configured
 			< datetime.datetime.fromtimestamp(
 				os.path.getmtime(config_location),
